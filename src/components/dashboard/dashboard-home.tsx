@@ -3,6 +3,7 @@ import {
   BookOpen,
   Bell,
   Calendar,
+  Folder,
   GraduationCap,
   Users,
 } from 'lucide-react'
@@ -140,6 +141,28 @@ export function DashboardHome({ data }: DashboardHomeProps) {
           </section>
         ) : null}
 
+        {role !== UserRole.dit ? (
+          <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
+            <div className="border-t-2 border-accent-gold pt-1">
+              <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
+                Active cases
+              </h2>
+            </div>
+            <p className="mt-3 font-mono text-3xl text-accent-gold">
+              {data.activeCasesCount}
+            </p>
+            <Link
+              href="/operations"
+              className={cn(
+                buttonVariants({ variant: 'outline', size: 'sm' }),
+                'mt-2 border-accent-teal/40 text-accent-teal'
+              )}
+            >
+              Open operations
+            </Link>
+          </section>
+        ) : null}
+
         {supervisionPlus ? (
           <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
             <div className="border-t-2 border-accent-gold pt-1">
@@ -208,6 +231,7 @@ export function DashboardHome({ data }: DashboardHomeProps) {
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             <QuickLink href="/schedule" label="Schedule" icon={Calendar} />
+            <QuickLink href="/operations" label="Operations" icon={Folder} />
             <QuickLink href="/directory" label="Directory" icon={Users} />
             <QuickLink href="/requests" label="Requests" icon={Bell} />
             <QuickLink href="/tn-code" label="TN Code" icon={BookOpen} />

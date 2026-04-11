@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import { FilePlus2, Search } from 'lucide-react'
 
 import type { ApprovalQueueRow, SubmissionListItem } from '@/lib/forms/queries'
@@ -31,6 +31,7 @@ type FormsLibraryViewProps = {
   canReview: boolean
   /** Server anchor for relative date filters (stable for this navigation). */
   listGeneratedAt: number
+  initialOpenSubmissionId?: string | null
 }
 
 export function FormsLibraryView({
@@ -39,14 +40,22 @@ export function FormsLibraryView({
   approvalQueue,
   canReview,
   listGeneratedAt,
+  initialOpenSubmissionId,
 }: FormsLibraryViewProps) {
   const router = useRouter()
   const [search, setSearch] = useState('')
-  const [drawerId, setDrawerId] = useState<string | null>(null)
+  const [drawerId, setDrawerId] = useState<string | null>(
+    initialOpenSubmissionId ?? null
+  )
   const [approvalMode, setApprovalMode] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [rangeFilter, setRangeFilter] = useState<string>('all')
   const [, startRefresh] = useTransition()
+
+  useEffect(() => {
+    if (!initialOpenSubmissionId) return
+    router.replace('/forms', { scroll: false })
+  }, [initialOpenSubmissionId, router])
 
   const filteredTemplates = useMemo(() => {
     const q = search.trim().toLowerCase()

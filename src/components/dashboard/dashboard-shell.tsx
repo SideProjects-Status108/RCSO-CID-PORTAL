@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, Shield } from 'lucide-react'
+import { Shield } from 'lucide-react'
 
 import { signOut } from '@/app/actions/auth'
 import { cn } from '@/lib/utils'
@@ -11,6 +11,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { NotificationBell } from '@/components/notifications/notification-bell'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,9 +21,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { dashboardNav, routeTitles } from '@/components/dashboard/nav-config'
-
-/** Phase 0 placeholder; wired to real unread counts in a later phase. */
-const REQUESTS_UNREAD = 0
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -35,12 +33,16 @@ type DashboardShellProps = {
   profile: Profile
   email: string | undefined
   children: React.ReactNode
+  initialUnreadNotifications: number
+  requestsInboxCount: number
 }
 
 export function DashboardShell({
   profile,
   email,
   children,
+  initialUnreadNotifications,
+  requestsInboxCount,
 }: DashboardShellProps) {
   const pathname = usePathname()
   const pageTitle =
@@ -86,12 +88,12 @@ export function DashboardShell({
                         variant="outline"
                         className={cn(
                           'h-5 min-w-5 justify-center border px-1 font-mono text-[10px]',
-                          REQUESTS_UNREAD > 0
+                          requestsInboxCount > 0
                             ? 'border-accent-gold/40 bg-accent-gold/15 text-accent-gold'
                             : 'border-border-subtle bg-bg-app text-text-secondary'
                         )}
                       >
-                        {REQUESTS_UNREAD > 99 ? '99+' : REQUESTS_UNREAD}
+                        {requestsInboxCount > 99 ? '99+' : requestsInboxCount}
                       </Badge>
                     ) : null}
                   </Link>
@@ -135,16 +137,7 @@ export function DashboardShell({
             {pageTitle}
           </h1>
           <div className="flex items-center gap-2">
-            <Link
-              href="/requests"
-              aria-label="Requests"
-              className={cn(
-                buttonVariants({ variant: 'ghost', size: 'icon' }),
-                'text-text-secondary hover:text-accent-gold'
-              )}
-            >
-              <Bell className="size-5" strokeWidth={1.75} />
-            </Link>
+            <NotificationBell initialUnread={initialUnreadNotifications} />
             <DropdownMenu>
               <DropdownMenuTrigger
                 className={cn(

@@ -12,6 +12,10 @@ import {
 } from '@/lib/forms/queries'
 import type { SubmissionDetail } from '@/lib/forms/queries'
 import type { FormFieldDefinition } from '@/types/forms'
+import {
+  notifyFormApprovalNeeded,
+  notifyFormReviewed,
+} from '@/lib/notifications/insert-notifications'
 
 function validateRequired(
   fields: FormFieldDefinition[],
@@ -155,6 +159,15 @@ export async function submitFormAction(input: {
       .eq('id', input.submissionId)
 
     if (error) throw new Error(error.message)
+    if (nextStatus === 'submitted' && template.requires_approval) {
+      await notifyFormApprovalNeeded({
+        submissionId: input.submissionId,
+        templateName: template.name,
+        submitterId: userId,
+        submitterDisplayName:
+          session.profile.full_name?.trim() || session.user.email || 'A user',
+      })
+    }
     revalidatePath('/forms')
     return { id: input.submissionId }
   }
@@ -173,8 +186,18 @@ export async function submitFormAction(input: {
     .single()
 
   if (error || !data) throw new Error(error?.message ?? 'Submit failed')
+  const newId = data.id as string
+  if (nextStatus === 'submitted' && template.requires_approval) {
+    await notifyFormApprovalNeeded({
+      submissionId: newId,
+      templateName: template.name,
+      submitterId: userId,
+      submitterDisplayName:
+        session.profile.full_name?.trim() || session.user.email || 'A user',
+    })
+  }
   revalidatePath('/forms')
-  return { id: data.id as string }
+  return { id: newId }
 }
 
 export async function approveSubmissionAction(input: {
@@ -188,6 +211,12 @@ export async function approveSubmissionAction(input: {
   }
 
   const supabase = await createClient()
+  const { data: row } = await supabase
+    .from('form_submissions')
+    .select('submitted_by, form_templates ( name )')
+    .eq('id', input.submissionId)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('form_submissions')
     .update({
@@ -200,6 +229,15 @@ export async function approveSubmissionAction(input: {
     .eq('status', 'submitted')
 
   if (error) throw new Error(error.message)
+  const ft = row?.form_templates as { name?: string } | null
+  if (row?.submitted_by) {
+    await notifyFormReviewed({
+      submissionId: input.submissionId,
+      templateName: ft?.name ?? 'Form',
+      submittedBy: String(row.submitted_by),
+      approved: true,
+    })
+  }
   revalidatePath('/forms')
 }
 
@@ -217,6 +255,12 @@ export async function rejectSubmissionAction(input: {
   if (!note) throw new Error('A rejection note is required')
 
   const supabase = await createClient()
+  const { data: row } = await supabase
+    .from('form_submissions')
+    .select('submitted_by, form_templates ( name )')
+    .eq('id', input.submissionId)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('form_submissions')
     .update({
@@ -229,5 +273,14 @@ export async function rejectSubmissionAction(input: {
     .eq('status', 'submitted')
 
   if (error) throw new Error(error.message)
+  const ft = row?.form_templates as { name?: string } | null
+  if (row?.submitted_by) {
+    await notifyFormReviewed({
+      submissionId: input.submissionId,
+      templateName: ft?.name ?? 'Form',
+      submittedBy: String(row.submitted_by),
+      approved: false,
+    })
+  }
   revalidatePath('/forms')
 }

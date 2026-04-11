@@ -55,12 +55,15 @@ export type FormSubmissionRow = {
 export type CaseRow = {
   id: string
   case_number: string
-  case_type: string | null
+  case_type_id: string
+  case_type_name?: string | null
+  case_type_prefix?: string | null
   assigned_detective: string | null
   status: 'active' | 'inactive' | 'closed'
   date_opened: string | null
   notes: string | null
   created_by: string
+  updated_by: string | null
   created_at: string
   updated_at: string
 }

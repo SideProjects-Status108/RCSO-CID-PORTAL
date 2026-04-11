@@ -11,9 +11,16 @@ import { FormsLibraryView } from '@/components/forms/forms-library-view'
 
 export const dynamic = 'force-dynamic'
 
-export default async function FormsPage() {
+export default async function FormsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ openSubmission?: string }>
+}) {
   const session = await getSessionUserWithProfile()
   if (!session) redirect('/login')
+
+  const sp = await searchParams
+  const initialOpenSubmissionId = sp.openSubmission ?? null
 
   // Request-scoped anchor for client date-range filters on "My submissions".
   // eslint-disable-next-line react-hooks/purity -- Date.now() is intentional per request
@@ -38,6 +45,7 @@ export default async function FormsPage() {
       approvalQueue={approvalQueue}
       canReview={canReview}
       listGeneratedAt={listGeneratedAt}
+      initialOpenSubmissionId={initialOpenSubmissionId}
     />
   )
 }

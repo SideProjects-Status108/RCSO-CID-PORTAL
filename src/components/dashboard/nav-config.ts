@@ -39,6 +39,7 @@ export const dashboardNav: NavItem[] = [
 export const routeTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/operations': 'Operations',
+  '/operations/case-types': 'Case types',
   '/forms': 'Forms & Documents',
   '/schedule': 'Schedule',
   '/map': 'Field Map',

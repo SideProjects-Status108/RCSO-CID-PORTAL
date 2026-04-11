@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 import { getSessionUser, getSessionUserWithProfile } from '@/lib/auth/get-session'
+import { fetchUnreadNotificationCount } from '@/lib/notifications/queries'
+import { countMyAssignedOpenRequests } from '@/lib/requests/queries'
 
 export default async function DashboardGroupLayout({
   children,
@@ -17,8 +19,18 @@ export default async function DashboardGroupLayout({
     redirect('/login')
   }
 
+  const [initialUnreadNotifications, requestsInboxCount] = await Promise.all([
+    fetchUnreadNotificationCount(session.user.id),
+    countMyAssignedOpenRequests(session.user.id),
+  ])
+
   return (
-    <DashboardShell profile={session.profile} email={session.user.email}>
+    <DashboardShell
+      profile={session.profile}
+      email={session.user.email}
+      initialUnreadNotifications={initialUnreadNotifications}
+      requestsInboxCount={requestsInboxCount}
+    >
       {children}
     </DashboardShell>
   )

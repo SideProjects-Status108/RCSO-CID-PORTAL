@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getSessionUserWithProfile } from '@/lib/auth/get-session'
 import { hasRole, UserRole, type UserRoleValue } from '@/lib/auth/roles'
 import type { ScheduleEventType, ScheduleEventStatus } from '@/types/schedule'
+import { notifySchedulePublished } from '@/lib/notifications/insert-notifications'
 
 function assertCanEditSchedule(
   viewerRole: UserRoleValue,
@@ -74,15 +75,52 @@ export async function saveScheduleEventAction(input: ScheduleEventInput) {
     status: input.status,
   }
 
+  let priorStatus: string | null | undefined
   if (input.id) {
+    const { data: existing } = await supabase
+      .from('schedule_events')
+      .select('status')
+      .eq('id', input.id)
+      .maybeSingle()
+    priorStatus = existing?.status as string | undefined
     const { error } = await supabase
       .from('schedule_events')
       .update(row)
       .eq('id', input.id)
     if (error) throw new Error(error.message)
   } else {
-    const { error } = await supabase.from('schedule_events').insert(row)
+    priorStatus = undefined
+    const { data: inserted, error } = await supabase
+      .from('schedule_events')
+      .insert(row)
+      .select('id')
+      .single()
     if (error) throw new Error(error.message)
+    if (
+      input.status === 'published' &&
+      inserted?.id &&
+      priorStatus !== 'published'
+    ) {
+      await notifySchedulePublished({
+        eventId: String(inserted.id),
+        assignedTo: input.assigned_to,
+        title: input.title,
+        startIso: input.start_datetime,
+      })
+    }
+  }
+
+  const becamePublished =
+    Boolean(input.id) &&
+    input.status === 'published' &&
+    priorStatus !== 'published'
+  if (becamePublished && input.id) {
+    await notifySchedulePublished({
+      eventId: input.id,
+      assignedTo: input.assigned_to,
+      title: input.title,
+      startIso: input.start_datetime,
+    })
   }
 
   revalidatePath('/schedule')

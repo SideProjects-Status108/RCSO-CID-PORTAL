@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Plus } from 'lucide-react'
@@ -44,6 +44,8 @@ type DirectoryViewProps = {
   viewerRole: UserRoleValue
   canManageDirectory: boolean
   canDeactivate: boolean
+  /** Open profile drawer for this auth user id when present. */
+  highlightUserId?: string | null
 }
 
 export function DirectoryView({
@@ -52,6 +54,7 @@ export function DirectoryView({
   viewerRole,
   canManageDirectory,
   canDeactivate,
+  highlightUserId,
 }: DirectoryViewProps) {
   const [rows, setRows] = useState(initialRows)
   const [search, setSearch] = useState('')
@@ -64,6 +67,7 @@ export function DirectoryView({
   const [editing, setEditing] = useState<PersonnelDirectoryRow | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const highlightOpenedRef = useRef(false)
 
   const filters = useMemo<PersonnelListFilters>(
     () => ({
@@ -93,6 +97,16 @@ export function DirectoryView({
   useEffect(() => {
     refresh()
   }, [refresh])
+
+  useEffect(() => {
+    if (!highlightUserId || highlightOpenedRef.current) return
+    const row = rows.find((r) => r.user_id === highlightUserId)
+    if (row) {
+      highlightOpenedRef.current = true
+      setSelected(row)
+      setDrawerOpen(true)
+    }
+  }, [highlightUserId, rows])
 
   const form = useForm<PersonnelFormValues>({
     resolver: zodResolver(personnelFormSchema),

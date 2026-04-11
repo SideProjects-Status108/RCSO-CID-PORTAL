@@ -10,9 +10,16 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-export default async function DirectoryPage() {
+export default async function DirectoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ userId?: string }>
+}) {
   const session = await getSessionUserWithProfile()
   if (!session) redirect('/login')
+
+  const sp = await searchParams
+  const highlightUserId = sp.userId ?? null
 
   const adminScope = hasRole(session.profile.role, [
     UserRole.admin,
@@ -39,6 +46,7 @@ export default async function DirectoryPage() {
       viewerRole={session.profile.role}
       canManageDirectory={canManageDirectory}
       canDeactivate={canDeactivate}
+      highlightUserId={highlightUserId}
     />
   )
 }

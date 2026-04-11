@@ -5,6 +5,11 @@ import { getSessionUserWithProfile } from '@/lib/auth/get-session'
 import { hasRole, UserRole } from '@/lib/auth/roles'
 import { fetchCurrentOnCall } from '@/lib/schedule/queries'
 import { fetchPersonnelByUserIds } from '@/lib/directory/queries'
+import {
+  countActiveCasesForUser,
+  countActiveCasesSupervision,
+} from '@/lib/operations/queries'
+import { countMyAssignedOpenRequests } from '@/lib/requests/queries'
 import type { ScheduleEventRow } from '@/types/schedule'
 
 async function countOpenRequestsForSupervision(): Promise<number> {
@@ -12,17 +17,6 @@ async function countOpenRequestsForSupervision(): Promise<number> {
   const { count, error } = await supabase
     .from('requests')
     .select('*', { count: 'exact', head: true })
-    .in('status', ['open', 'acknowledged', 'in_progress'])
-  if (error) return 0
-  return count ?? 0
-}
-
-async function countMyOpenRequests(userId: string): Promise<number> {
-  const supabase = await createClient()
-  const { count, error } = await supabase
-    .from('requests')
-    .select('*', { count: 'exact', head: true })
-    .eq('assigned_to', userId)
     .in('status', ['open', 'acknowledged', 'in_progress'])
   if (error) return 0
   return count ?? 0
@@ -154,8 +148,15 @@ export async function loadDashboardData() {
     : 0
   const myOpenRequestsCount =
     !supervisionPlus && role !== UserRole.dit
-      ? await countMyOpenRequests(uid)
+      ? await countMyAssignedOpenRequests(uid)
       : 0
+
+  const activeCasesCount =
+    role === UserRole.dit
+      ? 0
+      : supervisionPlus
+        ? await countActiveCasesSupervision()
+        : await countActiveCasesForUser(uid)
 
   const recentForms = await fetchRecentForms(uid)
 
@@ -169,6 +170,7 @@ export async function loadDashboardData() {
     unitWeek,
     openRequestsCount,
     myOpenRequestsCount,
+    activeCasesCount,
     recentForms,
   }
 }
