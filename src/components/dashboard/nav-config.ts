@@ -7,6 +7,7 @@ import {
   GraduationCap,
   Home,
   Map,
+  Settings,
   Users,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -17,6 +18,8 @@ export type NavItem = {
   icon: LucideIcon
   /** Phase 0: unread requests badge (real count wired in a later phase). */
   showRequestsBadge?: boolean
+  /** When true, only users with the admin role see this item. */
+  adminOnly?: boolean
 }
 
 export const dashboardNav: NavItem[] = [
@@ -34,6 +37,7 @@ export const dashboardNav: NavItem[] = [
   { label: 'Training', href: '/training', icon: GraduationCap },
   { label: 'Directory', href: '/directory', icon: Users },
   { label: 'TN Code', href: '/tn-code', icon: BookOpen },
+  { label: 'Settings', href: '/settings', icon: Settings, adminOnly: true },
 ]
 
 export const routeTitles: Record<string, string> = {
@@ -47,4 +51,5 @@ export const routeTitles: Record<string, string> = {
   '/training': 'Training',
   '/directory': 'Directory',
   '/tn-code': 'TN Code',
+  '/settings': 'Settings',
 }

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Shield } from 'lucide-react'
 
 import { signOut } from '@/app/actions/auth'
+import { hasRole, UserRole } from '@/lib/auth/roles'
 import { cn } from '@/lib/utils'
 import type { Profile } from '@/types/profile'
 import { buttonVariants } from '@/components/ui/button'
@@ -48,6 +49,7 @@ export function DashboardShell({
   const pageTitle =
     routeTitles[pathname] ??
     (pathname.startsWith('/dashboard') ? 'Dashboard' : 'RCSO CID')
+  const showAdminNav = hasRole(profile.role, [UserRole.admin])
 
   return (
     <div className="flex min-h-0 flex-1">
@@ -64,8 +66,9 @@ export function DashboardShell({
         </div>
         <ScrollArea className="flex-1 px-2 py-3">
           <nav className="flex flex-col gap-0.5" aria-label="Main">
-            {dashboardNav.map(
-              ({ label, href, icon: Icon, showRequestsBadge }) => {
+            {dashboardNav
+              .filter((item) => !item.adminOnly || showAdminNav)
+              .map(({ label, href, icon: Icon, showRequestsBadge }) => {
                 const active =
                   href === '/dashboard'
                     ? pathname === '/dashboard'
@@ -98,8 +101,7 @@ export function DashboardShell({
                     ) : null}
                   </Link>
                 )
-              }
-            )}
+              })}
           </nav>
         </ScrollArea>
         <div className="shrink-0 border-t border-border-subtle p-3">
