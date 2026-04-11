@@ -5,6 +5,13 @@ import { isUserRole } from '@/lib/auth/roles'
 
 const BOOTSTRAP_SIGNUP = process.env.ALLOW_BOOTSTRAP_SIGNUP === 'true'
 
+function supabaseEnvConfigured() {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
+  )
+}
+
 function mergeCookies(from: NextResponse, to: NextResponse) {
   from.cookies.getAll().forEach((cookie) => {
     to.cookies.set(cookie.name, cookie.value, cookie)
@@ -23,6 +30,18 @@ function isPublicPath(pathname: string) {
 }
 
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+
+  if (!supabaseEnvConfigured()) {
+    if (pathname === '/login' || pathname.startsWith('/login/')) {
+      return NextResponse.next()
+    }
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    url.searchParams.set('error', 'missing_supabase_env')
+    return NextResponse.redirect(url)
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -47,8 +66,6 @@ export async function proxy(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
-  const pathname = request.nextUrl.pathname
 
   if (pathname === '/') {
     const url = request.nextUrl.clone()
@@ -110,6 +127,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Skip all Next internals and static assets so RSC/chunk requests are never redirected.
+    '/((?!_next/|_vercel|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
