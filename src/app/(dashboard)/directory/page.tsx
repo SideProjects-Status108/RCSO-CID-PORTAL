@@ -1,10 +1,44 @@
-import { PlaceholderSection } from '@/components/ui/placeholder-section'
+import { redirect } from 'next/navigation'
 
-export default function DirectoryPage() {
+import { DirectoryView } from '@/components/directory/directory-view'
+import { getSessionUserWithProfile } from '@/lib/auth/get-session'
+import { hasRole, UserRole } from '@/lib/auth/roles'
+import {
+  fetchDistinctUnits,
+  fetchPersonnelDirectory,
+} from '@/lib/directory/queries'
+
+export const dynamic = 'force-dynamic'
+
+export default async function DirectoryPage() {
+  const session = await getSessionUserWithProfile()
+  if (!session) redirect('/login')
+
+  const adminScope = hasRole(session.profile.role, [
+    UserRole.admin,
+    UserRole.supervision_admin,
+  ])
+
+  const initialRows = await fetchPersonnelDirectory(
+    session.profile.role,
+    adminScope,
+    { status: 'active', systemRole: 'all' }
+  )
+  const units = await fetchDistinctUnits()
+
+  const canManageDirectory = hasRole(session.profile.role, [
+    UserRole.admin,
+    UserRole.supervision_admin,
+  ])
+  const canDeactivate = session.profile.role === UserRole.admin
+
   return (
-    <PlaceholderSection
-      title="Directory"
-      description="Personnel contact cards with search, filters, and admin-maintained roster data will replace this placeholder."
+    <DirectoryView
+      initialRows={initialRows}
+      units={units}
+      viewerRole={session.profile.role}
+      canManageDirectory={canManageDirectory}
+      canDeactivate={canDeactivate}
     />
   )
 }
