@@ -32,12 +32,27 @@ async function fetchRecentForms(userId: string) {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('form_submissions')
-    .select('id, status, created_at')
+    .select(
+      `
+      id,
+      status,
+      created_at,
+      form_templates ( name )
+    `
+    )
     .eq('submitted_by', userId)
     .order('created_at', { ascending: false })
     .limit(3)
   if (error || !data) return []
-  return data as { id: string; status: string; created_at: string }[]
+  return data.map((row) => {
+    const ft = row.form_templates as { name?: string } | null
+    return {
+      id: String(row.id),
+      status: String(row.status ?? ''),
+      created_at: String(row.created_at ?? ''),
+      template_name: ft?.name ?? null,
+    }
+  })
 }
 
 async function fetchUnitWeekEvents(): Promise<ScheduleEventRow[]> {

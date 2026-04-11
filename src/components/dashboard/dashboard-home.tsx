@@ -13,6 +13,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { EventTypeBadge } from '@/components/app/event-type-badge'
 import { StatusStamp } from '@/components/app/status-stamp'
+import { submissionStatusForStamp } from '@/lib/forms/submission-status-display'
 
 type DashboardHomeProps = {
   data: DashboardData
@@ -176,15 +177,25 @@ export function DashboardHome({ data }: DashboardHomeProps) {
             {data.recentForms.length === 0 ? (
               <li className="text-text-secondary">No submissions yet.</li>
             ) : (
-              data.recentForms.map((f) => (
-                <li key={f.id} className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-xs text-accent-gold">{f.id.slice(0, 8)}</span>
-                  <StatusStamp variant="teal">{f.status}</StatusStamp>
-                  <span className="text-xs text-text-secondary">
-                    {new Date(f.created_at).toLocaleDateString()}
-                  </span>
-                </li>
-              ))
+              data.recentForms.map((f) => {
+                const st = submissionStatusForStamp(
+                  f.status as 'draft' | 'submitted' | 'approved' | 'rejected'
+                )
+                return (
+                  <li
+                    key={f.id}
+                    className="flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle/60 py-1.5 last:border-0"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-text-primary">
+                      {f.template_name ?? 'Form'}
+                    </span>
+                    <StatusStamp variant={st.variant}>{st.label}</StatusStamp>
+                    <span className="font-mono text-xs text-text-secondary">
+                      {new Date(f.created_at).toLocaleDateString()}
+                    </span>
+                  </li>
+                )
+              })
             )}
           </ul>
         </section>
