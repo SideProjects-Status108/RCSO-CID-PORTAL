@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 
 import type { DashboardData } from '@/lib/dashboard/load-dashboard'
-import { UserRole } from '@/lib/auth/roles'
+import { hasRole, UserRole } from '@/lib/auth/roles'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { EventTypeBadge } from '@/components/app/event-type-badge'
@@ -159,6 +159,81 @@ export function DashboardHome({ data }: DashboardHomeProps) {
               )}
             >
               Open operations
+            </Link>
+          </section>
+        ) : null}
+
+        {hasRole(role, [
+          UserRole.admin,
+          UserRole.supervision_admin,
+          UserRole.supervision,
+          UserRole.fto_coordinator,
+        ]) ? (
+          <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
+            <div className="border-t-2 border-accent-gold pt-1">
+              <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
+                Active DITs
+              </h2>
+            </div>
+            <p className="mt-3 font-mono text-3xl text-accent-gold">{data.activeDitsCount}</p>
+            <Link
+              href="/training"
+              className={cn(
+                buttonVariants({ variant: 'outline', size: 'sm' }),
+                'mt-2 border-accent-teal/40 text-accent-teal'
+              )}
+            >
+              Training
+            </Link>
+          </section>
+        ) : null}
+
+        {role === UserRole.fto ? (
+          <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
+            <div className="border-t-2 border-accent-gold pt-1">
+              <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
+                My DIT
+              </h2>
+            </div>
+            {data.myDitForFto ? (
+              <>
+                <p className="mt-3 text-lg font-semibold text-text-primary">{data.myDitForFto.ditName}</p>
+                <p className="mt-1 text-sm text-text-secondary">Phase {data.myDitForFto.phase}</p>
+                <Link
+                  href="/training"
+                  className={cn(
+                    buttonVariants({ variant: 'outline', size: 'sm' }),
+                    'mt-2 border-accent-teal/40 text-accent-teal'
+                  )}
+                >
+                  Open training
+                </Link>
+              </>
+            ) : (
+              <p className="mt-3 text-sm text-text-secondary">No active DIT pairing.</p>
+            )}
+          </section>
+        ) : null}
+
+        {role === UserRole.dit ? (
+          <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
+            <div className="border-t-2 border-accent-gold pt-1">
+              <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
+                My progress
+              </h2>
+            </div>
+            <p className="mt-3 font-mono text-3xl text-accent-gold">
+              {data.ditMilestonePercent != null ? `${data.ditMilestonePercent}%` : '—'}
+            </p>
+            <p className="mt-1 text-xs text-text-secondary">Milestone completion</p>
+            <Link
+              href="/training"
+              className={cn(
+                buttonVariants({ variant: 'outline', size: 'sm' }),
+                'mt-2 border-accent-teal/40 text-accent-teal'
+              )}
+            >
+              View training
             </Link>
           </section>
         ) : null}

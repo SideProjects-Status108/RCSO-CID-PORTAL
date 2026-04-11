@@ -10,6 +10,11 @@ import {
   countActiveCasesSupervision,
 } from '@/lib/operations/queries'
 import { countMyAssignedOpenRequests } from '@/lib/requests/queries'
+import {
+  countActiveDitRecords,
+  fetchActivePairingForFto,
+  fetchDitProgressForUser,
+} from '@/lib/training/queries'
 import type { ScheduleEventRow } from '@/types/schedule'
 
 async function countOpenRequestsForSupervision(): Promise<number> {
@@ -160,6 +165,34 @@ export async function loadDashboardData() {
 
   const recentForms = await fetchRecentForms(uid)
 
+  const showActiveDitsWidget = hasRole(role, [
+    UserRole.admin,
+    UserRole.supervision_admin,
+    UserRole.supervision,
+    UserRole.fto_coordinator,
+  ])
+  const activeDitsCount = showActiveDitsWidget ? await countActiveDitRecords() : 0
+
+  let myDitForFto: { ditName: string; phase: number } | null = null
+  if (role === UserRole.fto) {
+    const pairing = await fetchActivePairingForFto(uid)
+    if (pairing) {
+      const [ditPerson] = await fetchPersonnelByUserIds([pairing.dit_id])
+      myDitForFto = {
+        ditName: ditPerson?.full_name ?? 'DIT',
+        phase: pairing.phase,
+      }
+    }
+  }
+
+  let ditMilestonePercent: number | null = null
+  if (role === UserRole.dit) {
+    const prog = await fetchDitProgressForUser(uid)
+    if (prog && prog.total > 0) {
+      ditMilestonePercent = Math.round((prog.completed / prog.total) * 100)
+    }
+  }
+
   return {
     session,
     role,
@@ -172,6 +205,9 @@ export async function loadDashboardData() {
     myOpenRequestsCount,
     activeCasesCount,
     recentForms,
+    activeDitsCount,
+    myDitForFto,
+    ditMilestonePercent,
   }
 }
 

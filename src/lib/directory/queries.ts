@@ -105,13 +105,14 @@ export async function fetchPersonnelByUserIds(
     full_name: string
     badge_number: string | null
     phone_cell: string | null
+    photo_url: string | null
   }[]
 > {
   if (userIds.length === 0) return []
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('personnel_directory')
-    .select('id, user_id, full_name, badge_number, phone_cell')
+    .select('id, user_id, full_name, badge_number, phone_cell, photo_url')
     .in('user_id', userIds)
   if (error || !data) return []
   return data as {
@@ -120,6 +121,7 @@ export async function fetchPersonnelByUserIds(
     full_name: string
     badge_number: string | null
     phone_cell: string | null
+    photo_url: string | null
   }[]
 }
 

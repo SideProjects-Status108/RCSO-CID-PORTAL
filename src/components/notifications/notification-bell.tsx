@@ -8,6 +8,7 @@ import {
   Calendar,
   ClipboardList,
   FileText,
+  GraduationCap,
   Loader2,
   Megaphone,
 } from 'lucide-react'
@@ -38,6 +39,8 @@ function iconFor(type: NotificationRow['type']) {
       return FileText
     case 'schedule_published':
       return Calendar
+    case 'evaluation_submitted':
+      return GraduationCap
     default:
       return Megaphone
   }
@@ -46,6 +49,7 @@ function iconFor(type: NotificationRow['type']) {
 function hrefFor(n: NotificationRow): string {
   if (n.reference_type === 'request') return `/requests?open=${n.reference_id}`
   if (n.reference_type === 'form_submission') return `/forms?openSubmission=${n.reference_id}`
+  if (n.reference_type === 'evaluation') return `/training?evaluation=${n.reference_id}`
   return `/schedule?open=${n.reference_id}`
 }
 

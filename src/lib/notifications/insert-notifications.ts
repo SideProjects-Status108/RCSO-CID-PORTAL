@@ -11,12 +11,13 @@ export type NotificationType =
   | 'form_approval_needed'
   | 'form_reviewed'
   | 'schedule_published'
+  | 'evaluation_submitted'
 
 export type NotificationRowInput = {
   user_id: string
   type: NotificationType
   reference_id: string
-  reference_type: 'request' | 'form_submission' | 'schedule_event'
+  reference_type: 'request' | 'form_submission' | 'schedule_event' | 'evaluation'
   message: string
 }
 
@@ -44,6 +45,7 @@ export async function insertNotifications(rows: NotificationRowInput[]): Promise
     console.error('[notifications] insert failed', error.message)
   } else {
     revalidatePath('/dashboard')
+    revalidatePath('/training')
   }
 }
 
