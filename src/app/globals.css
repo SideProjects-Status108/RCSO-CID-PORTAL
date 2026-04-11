@@ -46,6 +46,18 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* RCSO CID design system (Tailwind v4 theme colors → utilities: bg-bg-app, text-accent-gold, …) */
+  --color-bg-app: #0e0f11;
+  --color-bg-surface: #1a1c20;
+  --color-bg-elevated: #252830;
+  --color-border-subtle: #2e3038;
+  --color-accent-gold: #c8a84b;
+  --color-accent-teal: #4a7c7e;
+  --color-danger: #a84040;
+  --color-text-primary: #e8e6e0;
+  --color-text-secondary: #8a8880;
+  --color-text-disabled: #4a4845;
 }
 
 :root {
@@ -122,7 +134,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-bg-app text-text-primary;
   }
   html {
     @apply font-sans;
