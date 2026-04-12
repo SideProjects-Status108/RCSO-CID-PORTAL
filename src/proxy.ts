@@ -136,8 +136,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Skip Next internals, `public/data/*` (GeoJSON etc.), and common static extensions
-    // so those requests are not rewritten by auth (avoids 307/404 on map zone loads).
-    '/((?!_next/|_vercel|favicon.ico|data/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|geojson|json|txt|woff2?)$).*)',
+    // Skip Next internals, `public/data/*`, Mapbox worker (same-origin script; no session cookie),
+    // and common static extensions so those requests are not rewritten by auth.
+    '/((?!_next/|_vercel|favicon.ico|data/|mapbox-gl-csp-worker\\.js$|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|geojson|json|txt|woff2?)$).*)',
   ],
 }

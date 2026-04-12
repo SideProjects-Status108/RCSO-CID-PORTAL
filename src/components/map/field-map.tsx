@@ -29,8 +29,8 @@ import { hasRole, UserRole, type UserRoleValue } from '@/lib/auth/roles'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 
-/** Avoid 404 on bundled worker when Next/Turbopack does not emit the worker chunk. */
-const MAPBOX_GL_VERSION = '3.21.0'
+/** Same-origin worker required — cross-origin workers (e.g. unpkg) throw SecurityError under CSP. */
+const MAPBOX_WORKER_PATH = '/mapbox-gl-csp-worker.js'
 
 const ACCENT = '#1E6FD9'
 const MAP_FONTS: [string, string] = ['DIN Offc Pro Medium', 'Arial Unicode MS Regular']
@@ -226,7 +226,7 @@ export function FieldMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
     mapboxgl.accessToken = mapboxToken
-    mapboxgl.workerUrl = `https://unpkg.com/mapbox-gl@${MAPBOX_GL_VERSION}/dist/mapbox-gl-csp-worker.js`
+    mapboxgl.workerUrl = new URL(MAPBOX_WORKER_PATH, window.location.origin).href
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: 'mapbox://styles/mapbox/dark-v11',
