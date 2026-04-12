@@ -55,39 +55,26 @@ function normalizeChapterKey(titleNum: number, chapterPart: string): string {
   return `${titleNum}-${ch}`
 }
 
-function listHtmlFiles(): string[] {
+/** One HTML file per title: gov.tn.tca.title.39.html or gov.tn.tca.title.09.html */
+function resolveTitleHtmlPath(titleNum: number): string | null {
   if (!fs.existsSync(SOURCE_DIR)) {
     console.warn(`[tn-code] Source directory missing: ${SOURCE_DIR}`)
-    return []
+    return null
   }
-  return fs
-    .readdirSync(SOURCE_DIR)
-    .filter((f) => f.toLowerCase().endsWith('.html'))
-    .map((f) => path.join(SOURCE_DIR, f))
-}
 
-function matchTitleChapterFromFilename(
-  basename: string
-): { title: number; chapterPart: string } | null {
-  const base = basename.replace(/\.html$/i, '')
-  const m =
-    base.match(/^(\d{1,2})[-_](\d{1,4})$/i) ||
-    base.match(/^t(\d{1,2})[-_]?c?(\d{1,4})$/i) ||
-    base.match(/^title\s*(\d{1,2})[-_\s]+ch(?:apter)?\s*(\d{1,4})$/i)
-  if (!m) return null
-  return { title: parseInt(m[1]!, 10), chapterPart: m[2]! }
-}
+  const padded2 = `gov.tn.tca.title.${String(titleNum).padStart(2, '0')}.html`
+  const unpadded = `gov.tn.tca.title.${titleNum}.html`
 
-function inferTitleChapterFromHeading(
-  heading: string,
-  fallbackTitle: number | null
-): { title: number; chapterPart: string } | null {
-  const m = heading.match(/(?:title\s*)?(\d{1,2})\s*[-–—]\s*(\d{1,4})/i)
-  if (m) return { title: parseInt(m[1]!, 10), chapterPart: m[2]! }
-  const chOnly = heading.match(/chapter\s*(\d{1,4})/i)
-  if (chOnly && fallbackTitle != null) {
-    return { title: fallbackTitle, chapterPart: chOnly[1]! }
+  for (const name of [...new Set([padded2, unpadded])]) {
+    const p = path.join(SOURCE_DIR, name)
+    if (fs.existsSync(p)) return p
   }
+
+  const re = new RegExp(`^gov\\.tn\\.tca\\.title\\.0*${titleNum}\\.html$`, 'i')
+  for (const f of fs.readdirSync(SOURCE_DIR)) {
+    if (re.test(f)) return path.join(SOURCE_DIR, f)
+  }
+
   return null
 }
 
@@ -95,6 +82,7 @@ type ParsedSection = {
   sectionNumber: string
   sectionTitle: string
   sectionText: string
+  chapterNumber: string
 }
 
 function elementPlainText($: cheerio.CheerioAPI, el: Element): string {
@@ -109,18 +97,30 @@ function isLikelySectionHeadingText(t: string): boolean {
   return SECTION_HEAD_RE.test(t.replace(/\s+/g, ' ').trim())
 }
 
-function parseSectionsFromHtml(
+function isLikelyChapterHeadingLine(line: string, titleNum: number): boolean {
+  const compact = line.replace(/\s+/g, ' ').trim()
+  if (SECTION_HEAD_RE.test(compact)) return false
+  if (/^CHAPTER\s+\d/i.test(compact)) return true
+  const re = new RegExp(
+    `^${titleNum}\\s*[-–—.]\\s*\\d{1,4}(?:\\s+|$|[—–-]\\s|[A-Za-z(])`,
+    'i'
+  )
+  return re.test(compact)
+}
+
+function parseSectionsFromTitleDocument(
   $: cheerio.CheerioAPI,
   titleNum: number,
-  chapterNumber: string,
   onSkip: (msg: string) => void
-): ParsedSection[] {
+): { sections: ParsedSection[]; chapterNames: Map<string, string> } {
   const body = $('body').length ? $('body') : $.root()
   const candidates = body
     .find('h2, h3, h4, h5, h6, p, div, font, center, li')
     .toArray()
 
   const sections: ParsedSection[] = []
+  const chapterNames = new Map<string, string>()
+  let lastChapterHeading = ''
 
   const skipBlockFromIndex = (startIndex: number): number => {
     let j = startIndex + 1
@@ -142,6 +142,16 @@ function parseSectionsFromHtml(
     const rawText = elementPlainText($, el)
     if (!rawText) continue
     const line = rawText.replace(/\s+/g, ' ').trim()
+
+    if (isLikelyChapterHeadingLine(line, titleNum)) {
+      if (hasRepealedOrReservedLabel(line)) {
+        lastChapterHeading = ''
+      } else {
+        lastChapterHeading = line.slice(0, 300)
+      }
+      continue
+    }
+
     const m = line.match(SECTION_HEAD_RE)
     if (!m) continue
 
@@ -152,6 +162,12 @@ function parseSectionsFromHtml(
     if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) continue
     const [t0, c0, s0] = parts as [number, number, number]
     sectionNumber = `${t0}-${c0}-${s0}`
+
+    if (t0 !== titleNum) {
+      continue
+    }
+
+    const chapterNumber = normalizeChapterKey(t0, String(c0))
 
     if (hasRepealedOrReservedLabel(sectionTitle) || hasRepealedOrReservedLabel(line)) {
       onSkip(
@@ -184,15 +200,23 @@ function parseSectionsFromHtml(
       continue
     }
 
+    if (!chapterNames.has(chapterNumber) && lastChapterHeading) {
+      const nm = lastChapterHeading.replace(/\s+/g, ' ').trim().slice(0, 400)
+      if (!hasRepealedOrReservedLabel(nm)) {
+        chapterNames.set(chapterNumber, nm)
+      }
+    }
+
     sections.push({
       sectionNumber,
       sectionTitle: sectionTitle || '(untitled)',
       sectionText,
+      chapterNumber,
     })
     i = j - 1
   }
 
-  return sections
+  return { sections, chapterNames }
 }
 
 function chapterHeadingText($: cheerio.CheerioAPI): string {
@@ -240,11 +264,6 @@ async function main() {
     titleIdByNumber.set(r.title_number as number, r.id as string)
   }
 
-  const files = listHtmlFiles()
-  if (files.length === 0) {
-    console.warn('[tn-code] No HTML files found. Place corpus under scripts/tn-code-source/')
-  }
-
   for (const titleNum of titlesToRun) {
     let chaptersUpserted = 0
     let sectionsInserted = 0
@@ -256,42 +275,62 @@ async function main() {
       continue
     }
 
-    const titleFiles = files.filter((fp) => {
-      const base = path.basename(fp)
-      const fromName = matchTitleChapterFromFilename(base)
-      if (fromName && fromName.title === titleNum) return true
-      return base.startsWith(`${titleNum}-`) || base.toLowerCase().startsWith(`t${titleNum}`)
-    })
+    const filePath = resolveTitleHtmlPath(titleNum)
+    if (!filePath) {
+      console.error(
+        `[tn-code] No file for title ${titleNum}. Expected gov.tn.tca.title.${String(titleNum).padStart(2, '0')}.html or gov.tn.tca.title.${titleNum}.html under ${SOURCE_DIR}`
+      )
+      continue
+    }
 
-    const processFile = async (filePath: string) => {
-      const base = path.basename(filePath)
-      const html = fs.readFileSync(filePath, 'utf8')
-      const $ = cheerio.load(html)
+    const base = path.basename(filePath)
+    const html = fs.readFileSync(filePath, 'utf8')
 
-      let tc =
-        matchTitleChapterFromFilename(base) ??
-        inferTitleChapterFromHeading(chapterHeadingText($), titleNum)
+    console.log(`[tn-code] Using title file: ${base}`)
+    console.log(`[tn-code] --- First 1000 characters (debug) ---`)
+    console.log(html.slice(0, 1000))
+    console.log(`[tn-code] --- End first 1000 characters ---`)
 
-      if (!tc || tc.title !== titleNum) {
-        tc = matchTitleChapterFromFilename(
-          base.replace(/[^a-z0-9-_]+/gi, '-')
-        )
-      }
-      if (!tc || tc.title !== titleNum) {
-        console.error(`[tn-code] Could not resolve title/chapter for file ${base} — skipped`)
-        return
-      }
+    const $ = cheerio.load(html)
 
-      const chapterNumber = normalizeChapterKey(tc.title, tc.chapterPart)
-      const chHeading = chapterHeadingText($)
-      if (hasRepealedOrReservedLabel(chHeading)) {
-        console.log(`Title ${titleNum} | Chapter ${chapterNumber} SKIPPED (repealed chapter)`)
+    const docHeading = chapterHeadingText($)
+    if (hasRepealedOrReservedLabel(docHeading)) {
+      console.log(`Title ${titleNum} SKIPPED (repealed/reserved in document heading)`)
+      skipped += 1
+      continue
+    }
+
+    const { sections: parsed, chapterNames } = parseSectionsFromTitleDocument(
+      $,
+      titleNum,
+      (msg) => {
         skipped += 1
-        return
+        console.log(msg)
       }
+    )
+
+    const chapterKeys = [...new Set(parsed.map((s) => s.chapterNumber))]
+    console.log(
+      `[tn-code] Parse result: ${parsed.length} section(s) across ${chapterKeys.length} chapter key(s): ${chapterKeys.slice(0, 15).join(', ')}${chapterKeys.length > 15 ? ', …' : ''}`
+    )
+
+    const sectionsByChapter = new Map<string, ParsedSection[]>()
+    for (const s of parsed) {
+      if (!sectionsByChapter.has(s.chapterNumber)) {
+        sectionsByChapter.set(s.chapterNumber, [])
+      }
+      sectionsByChapter.get(s.chapterNumber)!.push(s)
+    }
+
+    const nowIso = new Date().toISOString()
+    const sourceUrl = `https://archive.org/local-corpus/${encodeURIComponent(base)}`
+
+    for (const chapterNumber of chapterKeys) {
+      const secs = sectionsByChapter.get(chapterNumber) ?? []
+      if (secs.length === 0) continue
 
       const chapterName =
-        chHeading.replace(/\s+/g, ' ').trim() || `Chapter ${chapterNumber}`
+        chapterNames.get(chapterNumber) ?? `Chapter ${chapterNumber}`
 
       const { data: chRows, error: chErr } = await admin
         .from('tn_chapters')
@@ -300,7 +339,7 @@ async function main() {
             title_id: titleId,
             chapter_number: chapterNumber,
             chapter_name: chapterName,
-            last_ingested_at: new Date().toISOString(),
+            last_ingested_at: nowIso,
           },
           { onConflict: 'title_id,chapter_number' }
         )
@@ -309,20 +348,13 @@ async function main() {
       const chRow = chRows?.[0]
       if (chErr || !chRow) {
         console.error(`[tn-code] Chapter upsert failed ${chapterNumber}:`, chErr?.message)
-        return
+        continue
       }
 
       chaptersUpserted += 1
       const chapterId = chRow.id as string
 
-      const parsed = parseSectionsFromHtml($, titleNum, chapterNumber, (msg) => {
-        skipped += 1
-        console.log(msg)
-      })
-      const nowIso = new Date().toISOString()
-      const sourceUrl = `https://archive.org/local-corpus/${encodeURIComponent(base)}`
-
-      for (const sec of parsed) {
+      for (const sec of secs) {
         const { error: secErr } = await admin.from('tn_sections').upsert(
           {
             chapter_id: chapterId,
@@ -348,14 +380,6 @@ async function main() {
         console.log(
           `Title ${titleNum} | Chapter ${chapterNumber} | Section ${sec.sectionNumber} ✓`
         )
-      }
-    }
-
-    for (const fp of titleFiles) {
-      try {
-        await processFile(fp)
-      } catch (e) {
-        console.error(`[tn-code] Error processing ${path.basename(fp)}:`, e)
       }
     }
 
