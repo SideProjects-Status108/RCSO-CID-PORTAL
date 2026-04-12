@@ -123,6 +123,14 @@ function polygonFc(rows: MapPolygonRow[]): FeatureCollection<Polygon> {
   }
 }
 
+/** Optional call-out context for address deep links (Requests / companion app). */
+export type FieldMapCalloutOverlay = {
+  title: string
+  description?: string | null
+  urgency?: string | null
+  status?: string | null
+}
+
 export type FieldMapProps = {
   mapboxToken: string
   /** Mapbox Studio style URL, e.g. `mapbox://styles/<user>/<style_id>`. */
@@ -134,6 +142,8 @@ export type FieldMapProps = {
   initialPolygons: MapPolygonRow[]
   caseTypes: CaseTypeRow[]
   addressQuery?: string | null
+  /** When set with `addressQuery`, shown in the geocoded location popup. */
+  calloutOverlay?: FieldMapCalloutOverlay | null
 }
 
 export function FieldMap({
@@ -146,6 +156,7 @@ export function FieldMap({
   initialPolygons,
   caseTypes,
   addressQuery,
+  calloutOverlay,
 }: FieldMapProps) {
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const drawRef = useRef<MapboxDraw | null>(null)
@@ -194,13 +205,22 @@ export function FieldMap({
   const toolRef = useRef(tool)
   toolRef.current = tool
 
+  const calloutOverlayRef = useRef(calloutOverlay ?? null)
+  calloutOverlayRef.current = calloutOverlay ?? null
+
   const removeSearchPopup = useCallback(() => {
     searchPopupRef.current?.remove()
     searchPopupRef.current = null
   }, [])
 
   const openGeocodeResultPopup = useCallback(
-    (map: mapboxgl.Map, lng: number, lat: number, placeName: string) => {
+    (
+      map: mapboxgl.Map,
+      lng: number,
+      lat: number,
+      placeName: string,
+      callout?: FieldMapCalloutOverlay | null
+    ) => {
       removeSearchPopup()
       const root = document.createElement('div')
       root.className = 'space-y-2 text-sm text-neutral-900'
@@ -209,6 +229,47 @@ export function FieldMap({
       title.className = 'm-0 font-medium leading-snug'
       title.textContent = placeName
       root.appendChild(title)
+
+      const co = callout
+      if (co && (co.title?.trim() || co.description?.trim())) {
+        const sep = document.createElement('hr')
+        sep.className = 'm-0 border-0 border-t border-neutral-200'
+        root.appendChild(sep)
+
+        const coLabel = document.createElement('p')
+        coLabel.className =
+          'm-0 text-[10px] font-semibold uppercase tracking-wide text-neutral-500'
+        coLabel.textContent = 'Call-out'
+        root.appendChild(coLabel)
+
+        const coTitle = document.createElement('p')
+        coTitle.className = 'm-0 font-semibold leading-snug text-neutral-900'
+        coTitle.textContent = co.title.trim() || 'Call-out'
+        root.appendChild(coTitle)
+
+        if (co.description?.trim()) {
+          const desc = document.createElement('p')
+          desc.className = 'm-0 max-h-40 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-neutral-800'
+          desc.textContent = co.description.trim()
+          root.appendChild(desc)
+        }
+
+        const chips = document.createElement('div')
+        chips.className = 'flex flex-wrap gap-1'
+        if (co.urgency?.trim()) {
+          const u = document.createElement('span')
+          u.className = 'rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-medium uppercase text-neutral-800'
+          u.textContent = co.urgency.trim()
+          chips.appendChild(u)
+        }
+        if (co.status?.trim()) {
+          const st = document.createElement('span')
+          st.className = 'rounded bg-neutral-200 px-1.5 py-0.5 text-[10px] font-medium text-neutral-800'
+          st.textContent = co.status.trim().replaceAll('_', ' ')
+          chips.appendChild(st)
+        }
+        if (chips.childNodes.length) root.appendChild(chips)
+      }
 
       const coords = document.createElement('p')
       coords.className = 'm-0 font-mono text-xs text-neutral-600'
@@ -228,7 +289,10 @@ export function FieldMap({
       const popup = new mapboxgl.Popup({
         closeButton: true,
         closeOnClick: true,
-        maxWidth: 'min(100vw - 32px, 280px)',
+        maxWidth:
+          co && (co.title?.trim() || co.description?.trim())
+            ? 'min(100vw - 32px, 380px)'
+            : 'min(100vw - 32px, 280px)',
         className: 'cid-geocode-popup',
       })
         .setLngLat([lng, lat])
@@ -612,7 +676,13 @@ export function FieldMap({
         if (ft?.center && map) {
           const [lng, lat] = ft.center as [number, number]
           map.flyTo({ center: [lng, lat], zoom: 14 })
-          openGeocodeResultPopup(map, lng, lat, String(ft.place_name ?? 'Location'))
+          openGeocodeResultPopup(
+            map,
+            lng,
+            lat,
+            String(ft.place_name ?? 'Location'),
+            calloutOverlayRef.current
+          )
         }
       })
   }, [addressQuery, mapboxToken, openGeocodeResultPopup])
@@ -631,7 +701,7 @@ export function FieldMap({
         if (ft?.center && mapNow) {
           const [lng, lat] = ft.center as [number, number]
           mapNow.flyTo({ center: [lng, lat], zoom: 15 })
-          openGeocodeResultPopup(mapNow, lng, lat, String(ft.place_name ?? ''))
+          openGeocodeResultPopup(mapNow, lng, lat, String(ft.place_name ?? ''), null)
         }
       })
   }

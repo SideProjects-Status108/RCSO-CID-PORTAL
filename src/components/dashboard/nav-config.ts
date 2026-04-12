@@ -110,6 +110,7 @@ export const routeTitles: Record<string, string> = {
   '/training/dit-evaluations': 'DIT Evaluations',
   '/training': 'Training',
   '/tools/map': 'GeoMap',
+  '/app/map': 'Field map',
   '/tools/tca': 'TCA Reference',
   '/tools/field-notes': 'Field Notes',
   '/map': 'Field Map',
@@ -149,6 +150,7 @@ export function groupContainsPathname(group: NavRailGroup, pathname: string): bo
   if (group.id === 'investigative') {
     return (
       pathname.startsWith('/map') ||
+      pathname.startsWith('/app/map') ||
       pathname.startsWith('/tn-code') ||
       pathname.startsWith('/tools/')
     )

@@ -552,7 +552,11 @@ function RequestDetailDrawer({
 
   const isAssignee = r.assigned_to === viewerId
   const mapUrl = r.address
-    ? `/map?address=${encodeURIComponent(r.address)}`
+    ? `/tools/map?address=${encodeURIComponent(r.address)}${
+        r.request_type === 'call_out'
+          ? `&calloutTitle=${encodeURIComponent(r.title)}&calloutDescription=${encodeURIComponent(r.description ?? '')}&calloutUrgency=${encodeURIComponent(r.urgency)}&calloutStatus=${encodeURIComponent(r.status)}`
+          : ''
+      }`
     : null
 
   async function saveAssigneeStatus() {

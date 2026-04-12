@@ -1,5 +1,11 @@
 import { redirect } from 'next/navigation'
 
-export default function MapLegacyRedirect() {
-  redirect('/tools/map')
+import { toolsMapPathFromSearchParams } from '@/lib/map/tools-map-redirect'
+
+export default async function MapLegacyRedirect({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  redirect(await toolsMapPathFromSearchParams(searchParams))
 }
