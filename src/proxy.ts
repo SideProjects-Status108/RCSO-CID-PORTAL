@@ -136,7 +136,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Skip all Next internals and static assets so RSC/chunk requests are never redirected.
-    '/((?!_next/|_vercel|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Skip Next internals, `public/data/*` (GeoJSON etc.), and common static extensions
+    // so those requests are not rewritten by auth (avoids 307/404 on map zone loads).
+    '/((?!_next/|_vercel|favicon.ico|data/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|geojson|json|txt|woff2?)$).*)',
   ],
 }

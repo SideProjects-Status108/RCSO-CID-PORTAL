@@ -389,11 +389,16 @@ export function FieldMap({
         paint: { 'line-color': '#fff', 'line-opacity': 0.4 },
       })
 
-      void fetch('/data/zones.geojson')
-        .then((r) => (r.ok ? r.json() : null))
+      void fetch('/api/map/zones', { credentials: 'same-origin' })
+        .then(async (r) => {
+          if (!r.ok) return null
+          const ct = r.headers.get('content-type') ?? ''
+          if (!ct.includes('json')) return null
+          return r.json() as Promise<unknown>
+        })
         .then((gj) => {
-          if (gj?.type === 'FeatureCollection') {
-            ;(map.getSource('zones-src') as mapboxgl.GeoJSONSource).setData(gj)
+          if (gj && typeof gj === 'object' && (gj as { type?: string }).type === 'FeatureCollection') {
+            ;(map.getSource('zones-src') as mapboxgl.GeoJSONSource).setData(gj as never)
           } else {
             setZonesMissing(true)
           }
