@@ -1,15 +1,21 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
 
+import { createServiceRoleClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import type { TnCodeSearchRpcRow } from '@/types/tn-code'
 
 const LOOKUP_MODEL = 'claude-sonnet-4-6'
+const CACHE_MS = 7 * 24 * 60 * 60 * 1000
 
 function normalizeCode(raw: string): string | null {
   const t = raw.trim().replace(/\s+/g, '')
   if (/^\d{1,2}-\d{1,4}-\d{1,4}$/.test(t)) return t
   return null
+}
+
+function ndjsonLine(obj: unknown): Uint8Array {
+  return new TextEncoder().encode(`${JSON.stringify(obj)}\n`)
 }
 
 export async function GET(request: Request) {
@@ -72,12 +78,53 @@ export async function POST(request: Request) {
   }
 
   const hits = (rows ?? []) as TnCodeSearchRpcRow[]
+  const cited = hits.map((r) => r.section_number)
+
   const context = hits
     .map(
       (r) =>
         `## ${r.section_number} — ${r.section_title}\n${(r.section_text ?? '').slice(0, 600)}`
     )
     .join('\n\n')
+
+  const admin = createServiceRoleClient()
+  const now = Date.now()
+
+  if (admin) {
+    const { data: cached } = await admin
+      .from('tn_ai_lookup_cache')
+      .select('answer, cited_sections, updated_at')
+      .eq('query_text', question)
+      .maybeSingle()
+
+    if (cached?.answer) {
+      const ts = new Date(cached.updated_at as string).getTime()
+      if (now - ts < CACHE_MS) {
+        const cachedCited = Array.isArray(cached.cited_sections)
+          ? (cached.cited_sections as string[])
+          : cited
+        return new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(
+                ndjsonLine({ type: 'meta', cited_sections: cachedCited })
+              )
+              controller.enqueue(ndjsonLine({ type: 'token', text: cached.answer }))
+              controller.enqueue(ndjsonLine({ type: 'end', cached: true }))
+              controller.close()
+            },
+          }),
+          {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/x-ndjson; charset=utf-8',
+              'Cache-Control': 'no-store',
+            },
+          }
+        )
+      }
+    }
+  }
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
@@ -88,22 +135,63 @@ export async function POST(request: Request) {
   const sys =
     'You are a legal reference assistant for Tennessee law enforcement. You have been given a question and relevant Tennessee statute sections. Identify which sections are most relevant to the question and explain what they say in plain language suitable for a law enforcement officer. Always cite the specific section numbers. Do not provide legal advice. Note that the user should verify current statute text.'
 
-  const msg = await client.messages.create({
-    model: LOOKUP_MODEL,
-    max_tokens: 2000,
-    system: sys,
-    messages: [
-      {
-        role: 'user',
-        content: `Question: ${question}\n\nRelevant statute sections:\n${context}`,
-      },
-    ],
+  const stream = new ReadableStream({
+    async start(controller) {
+      let full = ''
+      try {
+        controller.enqueue(ndjsonLine({ type: 'meta', cited_sections: cited }))
+
+        const ms = client.messages.stream({
+          model: LOOKUP_MODEL,
+          max_tokens: 2000,
+          system: sys,
+          messages: [
+            {
+              role: 'user',
+              content: `Question: ${question}\n\nRelevant statute sections:\n${context}`,
+            },
+          ],
+        })
+
+        ms.on('text', (delta) => {
+          full += delta
+          controller.enqueue(ndjsonLine({ type: 'token', text: delta }))
+        })
+
+        await ms.finalText()
+
+        controller.enqueue(ndjsonLine({ type: 'end', cached: false }))
+
+        if (admin && full.trim()) {
+          const { error: upErr } = await admin.from('tn_ai_lookup_cache').upsert(
+            {
+              query_text: question,
+              answer: full,
+              cited_sections: cited,
+              model_used: LOOKUP_MODEL,
+            },
+            { onConflict: 'query_text' }
+          )
+          if (upErr) console.error('[tn-code lookup] cache upsert', upErr.message)
+        }
+      } catch (e) {
+        controller.enqueue(
+          ndjsonLine({
+            type: 'error',
+            message: e instanceof Error ? e.message : 'Stream failed',
+          })
+        )
+      } finally {
+        controller.close()
+      }
+    },
   })
 
-  const block = msg.content.find((b) => b.type === 'text')
-  const answer = block && block.type === 'text' ? block.text : ''
-
-  const cited = hits.map((r) => r.section_number)
-
-  return NextResponse.json({ answer, cited_sections: cited })
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/x-ndjson; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
+  })
 }

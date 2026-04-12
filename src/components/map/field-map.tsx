@@ -29,7 +29,10 @@ import { hasRole, UserRole, type UserRoleValue } from '@/lib/auth/roles'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 
-const ACCENT = '#C8A84B'
+/** Avoid 404 on bundled worker when Next/Turbopack does not emit the worker chunk. */
+const MAPBOX_GL_VERSION = '3.21.0'
+
+const ACCENT = '#1E6FD9'
 const MAP_FONTS: [string, string] = ['DIN Offc Pro Medium', 'Arial Unicode MS Regular']
 
 function caseColor(caseTypeId: string): string {
@@ -223,6 +226,7 @@ export function FieldMap({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
     mapboxgl.accessToken = mapboxToken
+    mapboxgl.workerUrl = `https://unpkg.com/mapbox-gl@${MAPBOX_GL_VERSION}/dist/mapbox-gl-csp-worker.js`
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: 'mapbox://styles/mapbox/dark-v11',
@@ -252,7 +256,7 @@ export function FieldMap({
         filter: ['has', 'point_count'],
         layout: { visibility: 'none' },
         paint: {
-          'circle-color': '#C8A84B',
+          'circle-color': '#1E6FD9',
           'circle-radius': ['step', ['get', 'point_count'], 18, 10, 22, 50, 28],
         },
       })

@@ -83,6 +83,17 @@ function truncateTitle(s: string, max = 42) {
   return `${s.slice(0, max - 1)}…`
 }
 
+function chapterNumericSuffix(chapterNumber: string): string {
+  const parts = chapterNumber.split('-')
+  return parts.length >= 2 ? parts[parts.length - 1]! : chapterNumber
+}
+
+/** Browse tree: "Ch. 1 — General Provisions" */
+function formatChapterBrowseLabel(chapterNumber: string, chapterName: string): string {
+  const num = chapterNumericSuffix(chapterNumber).replace(/^0+/, '') || chapterNumber
+  return `Ch. ${num} — ${truncateTitle(chapterName, 44)}`
+}
+
 type TnCodeViewProps = {
   tree: TnCodeTreeTitle[]
   initialBookmarkIds: string[]
@@ -132,6 +143,7 @@ export function TnCodeView({
   const [aiAnswer, setAiAnswer] = useState<string | null>(null)
   const [aiCited, setAiCited] = useState<string[]>([])
   const [aiLoading, setAiLoading] = useState(false)
+  const [aiThinking, setAiThinking] = useState(false)
   const [aiHistory, setAiHistory] = useState<string[]>([])
 
   const treeRef = useRef<HTMLDivElement>(null)
@@ -356,24 +368,66 @@ export function TnCodeView({
   const submitAiLookup = async (q?: string) => {
     const text = (q ?? aiQuestion).trim()
     if (!text) return
+    setAiThinking(true)
     setAiLoading(true)
     setAiAnswer(null)
     setAiCited([])
+    let streamed = ''
     try {
       const res = await fetch('/api/tn-code/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: text }),
       })
-      const j = (await res.json()) as { answer?: string; cited_sections?: string[]; error?: string }
-      if (j.answer) {
-        setAiAnswer(j.answer)
-        setAiCited(j.cited_sections ?? [])
+      if (!res.ok || !res.body) {
+        setAiAnswer('Request failed. Try again.')
+        return
+      }
+      const reader = res.body.getReader()
+      const dec = new TextDecoder()
+      let buffer = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += dec.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) {
+          if (!line.trim()) continue
+          let msg: {
+            type: string
+            text?: string
+            cited_sections?: string[]
+            message?: string
+          }
+          try {
+            msg = JSON.parse(line) as typeof msg
+          } catch {
+            continue
+          }
+          if (msg.type === 'meta' && Array.isArray(msg.cited_sections)) {
+            setAiCited(msg.cited_sections)
+          }
+          if (msg.type === 'token' && msg.text) {
+            setAiThinking(false)
+            streamed += msg.text
+            setAiAnswer(streamed)
+          }
+          if (msg.type === 'error' && msg.message) {
+            setAiThinking(false)
+            setAiAnswer(msg.message)
+          }
+        }
+      }
+      if (streamed.trim()) {
         setAiHistory((h) => [text, ...h.filter((x) => x !== text)].slice(0, 5))
         setAiQuestion('')
       }
+    } catch {
+      setAiAnswer('Could not load AI response.')
     } finally {
       setAiLoading(false)
+      setAiThinking(false)
     }
   }
 
@@ -426,7 +480,7 @@ export function TnCodeView({
                         className="flex w-full items-center justify-between px-4 py-1.5 text-left text-xs font-medium text-text-secondary transition-colors duration-150 hover:bg-bg-elevated/30"
                       >
                         <span className="truncate">
-                          {ch.chapter_number} — {truncateTitle(ch.chapter_name, 36)}
+                          {formatChapterBrowseLabel(ch.chapter_number, ch.chapter_name)}
                         </span>
                         <span>{chOpen ? '−' : '+'}</span>
                       </button>
@@ -714,14 +768,29 @@ export function TnCodeView({
           value={aiQuestion}
           onChange={(e) => setAiQuestion(e.target.value)}
           className="flex-1"
+          disabled={aiLoading}
         />
-        <Button type="submit" variant="outline" className="shrink-0 gap-1 border-border-subtle">
+        <Button
+          type="submit"
+          variant="outline"
+          className="shrink-0 gap-1 border-border-subtle"
+          disabled={aiLoading}
+        >
           <SendHorizontal className="size-4" aria-hidden />
           Ask
         </Button>
       </form>
-      {aiLoading ? (
-        <p className="text-sm text-text-secondary">Searching statutes and generating response…</p>
+      {aiThinking ? (
+        <div
+          className="flex items-center gap-2 text-sm text-text-secondary"
+          aria-live="polite"
+        >
+          <span className="relative flex size-4">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-accent-primary/40" />
+            <span className="relative inline-flex size-4 rounded-full bg-accent-primary/80" />
+          </span>
+          <span className="animate-pulse">Searching statutes and drafting an answer…</span>
+        </div>
       ) : null}
       {aiAnswer ? (
         <div className="space-y-3 rounded-lg border border-border-subtle bg-bg-surface p-4">

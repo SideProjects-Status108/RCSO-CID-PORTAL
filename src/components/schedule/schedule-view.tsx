@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState, useTransition } from 'react'
+import { useLayoutEffect, useMemo, useState, useTransition } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
@@ -102,9 +102,16 @@ type ScheduleViewProps = {
 export function ScheduleView({ data }: ScheduleViewProps) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
-  const [calView, setCalView] = useState<'dayGridMonth' | 'timeGridWeek'>(
-    'dayGridMonth'
-  )
+  const [calView, setCalView] = useState<
+    'dayGridMonth' | 'timeGridWeek' | 'listWeek'
+  >('dayGridMonth')
+
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') return
+    if (window.matchMedia('(max-width: 639px)').matches) {
+      setCalView('listWeek')
+    }
+  }, [])
   const [typeFilters, setTypeFilters] = useState<Record<ScheduleEventType, boolean>>(
     () =>
       Object.fromEntries(eventTypes.map((t) => [t, true])) as Record<
@@ -305,6 +312,17 @@ export function ScheduleView({ data }: ScheduleViewProps) {
                 onClick={() => setCalView('timeGridWeek')}
               >
                 Week
+              </Button>
+              <Button
+                type="button"
+                variant={calView === 'listWeek' ? 'default' : 'outline'}
+                className={cn(
+                  calView === 'listWeek' &&
+                    'border-accent-primary/30 bg-accent-primary text-bg-app'
+                )}
+                onClick={() => setCalView('listWeek')}
+              >
+                Agenda
               </Button>
             </div>
             {canAdd ? (

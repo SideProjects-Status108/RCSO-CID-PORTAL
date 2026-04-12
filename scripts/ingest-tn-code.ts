@@ -3,8 +3,11 @@
  * Reads scripts/tn-code-source/*.html — never fetches remote URLs.
  *
  * Usage:
- *   npx tsx scripts/ingest-tn-code.ts
+ *   npm run ingest:tn-code
  *   npx tsx scripts/ingest-tn-code.ts --title 39
+ *
+ * After changing chapter-title parsing, re-run the command above to refresh
+ * `tn_chapters.chapter_name` (upserts overwrite existing rows per title/chapter).
  *
  * Requires .env.local with NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.
  */
@@ -93,19 +96,115 @@ function elementPlainText($: cheerio.CheerioAPI, el: Element): string {
     .trim()
 }
 
+function stripTagsHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, ' ')
+}
+
+/** Split on <br> so "CHAPTER 1<br>GENERAL PROVISIONS" becomes separate lines. */
+function elementLinesFromBr($: cheerio.CheerioAPI, el: Element): string[] {
+  const rawHtml = $(el).html() ?? ''
+  return rawHtml
+    .split(/<br\s*\/?>/gi)
+    .map((part) =>
+      stripTagsHtml(part)
+        .replace(/\u00a0/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+    )
+    .filter((line) => line.length > 0)
+}
+
+/** Title-case words (handles ALL CAPS Archive.org headings). */
+function titleCaseWords(s: string): string {
+  const t = s.replace(/\s+/g, ' ').trim().toLowerCase()
+  if (!t) return ''
+  return t.replace(/\b[a-z]/g, (c) => c.toUpperCase())
+}
+
+function extractChapterDescriptorFromLines(lines: string[]): {
+  chapterNum: number
+  descriptor: string
+} | null {
+  if (lines.length === 0) return null
+  const first = lines[0]!.replace(/\s+/g, ' ').trim()
+  const m = first.match(/^CHAPTER\s+(\d+)\b\.?\s*(.*)$/i)
+  if (!m) return null
+  const chapterNum = parseInt(m[1]!, 10)
+  if (!Number.isFinite(chapterNum)) return null
+  const restFirst = (m[2] ?? '').replace(/^[\u2014\u2013\-–—.:]\s*/, '').trim()
+  const other = lines
+    .slice(1)
+    .map((l) => l.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+  const rawDesc = [restFirst, ...other].join(' ').replace(/\s+/g, ' ').trim()
+  const descriptor = rawDesc ? titleCaseWords(rawDesc) : ''
+  return { chapterNum, descriptor }
+}
+
+/** Scan chapterheading blocks and inline CHAPTER lines (short blocks only). */
+function collectChapterNamesFromHeadings(
+  $: cheerio.CheerioAPI,
+  titleNum: number
+): Map<string, string> {
+  const out = new Map<string, string>()
+  const seen = new Set<Element>()
+
+  const record = (el: Element) => {
+    if (seen.has(el)) return
+    seen.add(el)
+    const lines = elementLinesFromBr($, el)
+    const parsed = extractChapterDescriptorFromLines(lines)
+    if (!parsed) return
+    const key = normalizeChapterKey(titleNum, String(parsed.chapterNum))
+    if (parsed.descriptor) out.set(key, parsed.descriptor)
+  }
+
+  const body = $('body').length ? $('body') : $.root()
+  body.find('p.chapterheading, .chapterheading, [class*="chapterheading"]').each((_, el) => {
+    record(el as Element)
+  })
+
+  body.find('p, h2, h3, h4, h5, h6, center').each((_, el) => {
+    const $el = $(el)
+    const cls = ($el.attr('class') ?? '').toLowerCase()
+    if (cls.includes('chapterheading')) {
+      record(el as Element)
+      return
+    }
+    const lines = elementLinesFromBr($, el as Element)
+    if (lines.length === 0 || !/^CHAPTER\s+\d/i.test(lines[0] ?? '')) return
+    const plainOneLine = elementPlainText($, el as Element)
+    if (plainOneLine.length > 400) return
+    record(el as Element)
+  })
+
+  return out
+}
+
+function descriptorFromCollapsedChapterLine(line: string): string {
+  const t = line.replace(/\s+/g, ' ').trim()
+  const m = t.match(/^CHAPTER\s+\d+\b\.?\s*(.+)$/i)
+  const raw = m ? m[1]!.replace(/^[\u2014\u2013\-–—.:]\s*/, '').trim() : ''
+  return raw ? titleCaseWords(raw) : ''
+}
+
+function chapterFallbackLabel(chapterKey: string): string {
+  const parts = chapterKey.split('-')
+  const last = parts[parts.length - 1] ?? chapterKey
+  const n = parseInt(last.replace(/^0+/, '') || '0', 10)
+  return Number.isFinite(n) && n > 0 ? `Chapter ${n}` : `Chapter ${chapterKey}`
+}
+
 function isLikelySectionHeadingText(t: string): boolean {
   return SECTION_HEAD_RE.test(t.replace(/\s+/g, ' ').trim())
 }
 
-function isLikelyChapterHeadingLine(line: string, titleNum: number): boolean {
+function isLikelyChapterHeadingLine(line: string): boolean {
   const compact = line.replace(/\s+/g, ' ').trim()
   if (SECTION_HEAD_RE.test(compact)) return false
-  if (/^CHAPTER\s+\d/i.test(compact)) return true
-  const re = new RegExp(
-    `^${titleNum}\\s*[-–—.]\\s*\\d{1,4}(?:\\s+|$|[—–-]\\s|[A-Za-z(])`,
-    'i'
-  )
-  return re.test(compact)
+  // Only treat explicit "CHAPTER n" lines as running headings. Patterns like
+  // "39-1 Miscellaneous…" are TOC rows and must not override real chapter titles.
+  return /^CHAPTER\s+\d/i.test(compact)
 }
 
 function parseSectionsFromTitleDocument(
@@ -113,13 +212,14 @@ function parseSectionsFromTitleDocument(
   titleNum: number,
   onSkip: (msg: string) => void
 ): { sections: ParsedSection[]; chapterNames: Map<string, string> } {
+  const headingChapterNames = collectChapterNamesFromHeadings($, titleNum)
   const body = $('body').length ? $('body') : $.root()
   const candidates = body
     .find('h2, h3, h4, h5, h6, p, div, font, center, li')
     .toArray()
 
   const sections: ParsedSection[] = []
-  const chapterNames = new Map<string, string>()
+  const chapterNames = new Map<string, string>(headingChapterNames)
   let lastChapterHeading = ''
 
   const skipBlockFromIndex = (startIndex: number): number => {
@@ -143,7 +243,7 @@ function parseSectionsFromTitleDocument(
     if (!rawText) continue
     const line = rawText.replace(/\s+/g, ' ').trim()
 
-    if (isLikelyChapterHeadingLine(line, titleNum)) {
+    if (isLikelyChapterHeadingLine(line)) {
       if (hasRepealedOrReservedLabel(line)) {
         lastChapterHeading = ''
       } else {
@@ -200,8 +300,11 @@ function parseSectionsFromTitleDocument(
       continue
     }
 
-    if (!chapterNames.has(chapterNumber) && lastChapterHeading) {
-      const nm = lastChapterHeading.replace(/\s+/g, ' ').trim().slice(0, 400)
+    if (!chapterNames.has(chapterNumber)) {
+      const fromLast = lastChapterHeading
+        ? descriptorFromCollapsedChapterLine(lastChapterHeading)
+        : ''
+      const nm = (fromLast || chapterFallbackLabel(chapterNumber)).slice(0, 400)
       if (!hasRepealedOrReservedLabel(nm)) {
         chapterNames.set(chapterNumber, nm)
       }
@@ -287,9 +390,11 @@ async function main() {
     const html = fs.readFileSync(filePath, 'utf8')
 
     console.log(`[tn-code] Using title file: ${base}`)
-    console.log(`[tn-code] --- First 1000 characters (debug) ---`)
-    console.log(html.slice(0, 1000))
-    console.log(`[tn-code] --- End first 1000 characters ---`)
+    if (process.env.TN_CODE_DEBUG_HTML === '1') {
+      console.log(`[tn-code] --- First 1000 characters (debug) ---`)
+      console.log(html.slice(0, 1000))
+      console.log(`[tn-code] --- End first 1000 characters ---`)
+    }
 
     const $ = cheerio.load(html)
 
@@ -330,7 +435,7 @@ async function main() {
       if (secs.length === 0) continue
 
       const chapterName =
-        chapterNames.get(chapterNumber) ?? `Chapter ${chapterNumber}`
+        chapterNames.get(chapterNumber) ?? chapterFallbackLabel(chapterNumber)
 
       const { data: chRows, error: chErr } = await admin
         .from('tn_chapters')
