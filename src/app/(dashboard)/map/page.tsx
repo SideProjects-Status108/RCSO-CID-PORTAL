@@ -31,6 +31,8 @@ export default async function MapPage({
   ])
 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
+  const mapStyle =
+    process.env.NEXT_PUBLIC_MAPBOX_STYLE?.trim() || 'mapbox://styles/mapbox/streets-v12'
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -47,6 +49,7 @@ export default async function MapPage({
       ) : (
         <FieldMapDynamic
           mapboxToken={token}
+          mapboxStyleUrl={mapStyle}
           viewerRole={session.profile.role}
           viewerId={session.user.id}
           initialCases={cases}

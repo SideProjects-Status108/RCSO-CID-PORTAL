@@ -125,6 +125,8 @@ function polygonFc(rows: MapPolygonRow[]): FeatureCollection<Polygon> {
 
 export type FieldMapProps = {
   mapboxToken: string
+  /** Mapbox Studio style URL, e.g. `mapbox://styles/<user>/<style_id>`. */
+  mapboxStyleUrl: string
   viewerRole: UserRoleValue
   viewerId: string
   initialCases: CaseMapMarker[]
@@ -136,6 +138,7 @@ export type FieldMapProps = {
 
 export function FieldMap({
   mapboxToken,
+  mapboxStyleUrl,
   viewerRole,
   viewerId,
   initialCases,
@@ -146,6 +149,7 @@ export function FieldMap({
 }: FieldMapProps) {
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const drawRef = useRef<MapboxDraw | null>(null)
+  const searchPopupRef = useRef<mapboxgl.Popup | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [tool, setTool] = useState<'none' | 'draw' | 'radius' | 'locate'>('none')
   const [layersOpen, setLayersOpen] = useState(true)
@@ -189,6 +193,55 @@ export function FieldMap({
   const [mapRenderError, setMapRenderError] = useState<string | null>(null)
   const toolRef = useRef(tool)
   toolRef.current = tool
+
+  const removeSearchPopup = useCallback(() => {
+    searchPopupRef.current?.remove()
+    searchPopupRef.current = null
+  }, [])
+
+  const openGeocodeResultPopup = useCallback(
+    (map: mapboxgl.Map, lng: number, lat: number, placeName: string) => {
+      removeSearchPopup()
+      const root = document.createElement('div')
+      root.className = 'space-y-2 text-sm text-neutral-900'
+
+      const title = document.createElement('p')
+      title.className = 'm-0 font-medium leading-snug'
+      title.textContent = placeName
+      root.appendChild(title)
+
+      const coords = document.createElement('p')
+      coords.className = 'm-0 font-mono text-xs text-neutral-600'
+      coords.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`
+      root.appendChild(coords)
+
+      const copyBtn = document.createElement('button')
+      copyBtn.type = 'button'
+      copyBtn.className =
+        'mt-1 w-full cursor-pointer rounded border border-neutral-300 bg-neutral-100 px-2 py-1.5 text-xs font-medium text-neutral-900 hover:bg-neutral-200'
+      copyBtn.textContent = 'Copy coordinates'
+      copyBtn.addEventListener('click', () => {
+        void navigator.clipboard.writeText(`${lat.toFixed(6)}, ${lng.toFixed(6)}`)
+      })
+      root.appendChild(copyBtn)
+
+      const popup = new mapboxgl.Popup({
+        closeButton: true,
+        closeOnClick: true,
+        maxWidth: 'min(100vw - 32px, 280px)',
+        className: 'cid-geocode-popup',
+      })
+        .setLngLat([lng, lat])
+        .setDOMContent(root)
+        .addTo(map)
+
+      popup.on('close', () => {
+        if (searchPopupRef.current === popup) searchPopupRef.current = null
+      })
+      searchPopupRef.current = popup
+    },
+    [removeSearchPopup]
+  )
 
   const filters = useMemo(
     () => ({
@@ -266,7 +319,7 @@ export function FieldMap({
 
       map = new mapboxgl.Map({
         container,
-        style: 'mapbox://styles/mapbox/dark-v11',
+        style: mapboxStyleUrl,
         center: [-86.5, 35.85],
         zoom: 8,
       })
@@ -485,13 +538,15 @@ export function FieldMap({
     return () => {
       disposed = true
       ro.disconnect()
+      searchPopupRef.current?.remove()
+      searchPopupRef.current = null
       drawRef.current = null
       if (map) {
         map.remove()
       }
       mapRef.current = null
     }
-  }, [mapboxToken])
+  }, [mapboxToken, mapboxStyleUrl])
 
   useEffect(() => {
     const map = mapRef.current
@@ -553,15 +608,14 @@ export function FieldMap({
       .then((r) => r.json())
       .then((j) => {
         const ft = j?.features?.[0]
-        if (ft?.center && mapRef.current) {
-          mapRef.current.flyTo({ center: ft.center, zoom: 14 })
-          new mapboxgl.Popup()
-            .setLngLat(ft.center)
-            .setHTML(`<div class="text-sm">${ft.place_name ?? 'Location'}</div>`)
-            .addTo(mapRef.current)
+        const map = mapRef.current
+        if (ft?.center && map) {
+          const [lng, lat] = ft.center as [number, number]
+          map.flyTo({ center: [lng, lat], zoom: 14 })
+          openGeocodeResultPopup(map, lng, lat, String(ft.place_name ?? 'Location'))
         }
       })
-  }, [addressQuery, mapboxToken])
+  }, [addressQuery, mapboxToken, openGeocodeResultPopup])
 
   const runSearch = () => {
     const q = search.trim()
@@ -573,27 +627,11 @@ export function FieldMap({
       .then((r) => r.json())
       .then((j) => {
         const ft = j?.features?.[0]
-        if (ft?.center && mapRef.current) {
+        const mapNow = mapRef.current
+        if (ft?.center && mapNow) {
           const [lng, lat] = ft.center as [number, number]
-          mapRef.current.flyTo({ center: [lng, lat], zoom: 15 })
-          const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`
-          new mapboxgl.Popup({ closeButton: true })
-            .setLngLat([lng, lat])
-            .setHTML(
-              `<div class="max-w-xs space-y-2 text-sm">
-                <div>${ft.place_name ?? ''}</div>
-                <div style="font-family: ui-monospace, monospace; font-size: 12px">${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
-                <a class="text-accent-primary underline" href="${mapsUrl}" target="_blank" rel="noreferrer">Open in Google Maps</a>
-                <button type="button" id="copy-coords" class="block w-full rounded border px-2 py-1 text-xs">Copy coordinates</button>
-              </div>`
-            )
-            .addTo(mapRef.current)
-          setTimeout(() => {
-            const b = document.getElementById('copy-coords')
-            b?.addEventListener('click', () => {
-              void navigator.clipboard.writeText(`${lat}, ${lng}`)
-            })
-          }, 0)
+          mapNow.flyTo({ center: [lng, lat], zoom: 15 })
+          openGeocodeResultPopup(mapNow, lng, lat, String(ft.place_name ?? ''))
         }
       })
   }
