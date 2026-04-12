@@ -20,7 +20,7 @@ import { createClient } from '@supabase/supabase-js'
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') })
 
 const SOURCE_DIR = path.join(process.cwd(), 'scripts', 'tn-code-source')
-const IN_SCOPE_TITLES = [8, 10, 38, 39, 40, 47, 49] as const
+const IN_SCOPE_TITLES = [36, 37, 38, 39, 40, 55, 57] as const
 
 const SECTION_HEAD_RE =
   /^(\d{1,2}-\d{1,4}-\d{1,4})(?:[\s.:]+)(.*)$/i

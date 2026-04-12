@@ -181,13 +181,13 @@ GRANT EXECUTE ON FUNCTION public.tn_code_search_sections(text, integer) TO authe
 -- ---------------------------------------------------------------------------
 INSERT INTO public.tn_titles (title_number, title_name, description)
 VALUES
-  (8, 'Title 8 — Public Officers and Employees', 'TN Code Title 8'),
-  (10, 'Title 10 — Public Property, Purchasing and Printing', 'TN Code Title 10'),
+  (36, 'Title 36 — Domestic Relations', 'TN Code Title 36'),
+  (37, 'Title 37 — Juveniles', 'TN Code Title 37'),
   (38, 'Title 38 — Prevention and Detection of Crime', 'TN Code Title 38'),
   (39, 'Title 39 — Criminal Offenses', 'TN Code Title 39'),
   (40, 'Title 40 — Criminal Procedure', 'TN Code Title 40'),
-  (47, 'Title 47 — Commercial Instruments and Transactions', 'TN Code Title 47'),
-  (49, 'Title 49 — Education', 'TN Code Title 49')
+  (55, 'Title 55 — Motor and Other Vehicles', 'TN Code Title 55'),
+  (57, 'Title 57 — Intoxicating Liquors', 'TN Code Title 57')
 ON CONFLICT (title_number) DO NOTHING;
 
 -- ---------------------------------------------------------------------------
