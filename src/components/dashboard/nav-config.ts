@@ -147,7 +147,11 @@ export function groupContainsPathname(group: NavRailGroup, pathname: string): bo
     )
   }
   if (group.id === 'investigative') {
-    return pathname.startsWith('/map') || pathname.startsWith('/tn-code')
+    return (
+      pathname.startsWith('/map') ||
+      pathname.startsWith('/tn-code') ||
+      pathname.startsWith('/tools/')
+    )
   }
   if (group.id === 'training') {
     return pathname === '/training' || pathname.startsWith('/training?')

@@ -27,6 +27,7 @@
     "@types/mapbox-gl": "^3.4.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "docx": "^9.6.1",
     "googleapis": "^171.4.0",
     "lucide-react": "^1.8.0",
     "mapbox-gl": "^3.21.0",
