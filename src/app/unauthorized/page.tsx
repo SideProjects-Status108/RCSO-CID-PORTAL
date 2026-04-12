@@ -18,7 +18,7 @@ export default function UnauthorizedPage() {
           href="/dashboard"
           className={cn(
             buttonVariants({ size: 'default' }),
-            'border border-accent-gold/30 bg-accent-gold text-bg-app hover:bg-accent-gold/90'
+            'border border-accent-primary/30 bg-accent-primary text-bg-app hover:bg-accent-primary-hover'
           )}
         >
           Back to dashboard

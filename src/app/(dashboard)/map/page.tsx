@@ -1,4 +1,3 @@
-import { Barlow_Condensed } from 'next/font/google'
 import { redirect } from 'next/navigation'
 
 import { FieldMapDynamic } from '@/components/map/field-map-dynamic'
@@ -8,13 +7,6 @@ import { fetchCaseTypes } from '@/lib/operations/queries'
 import { fetchCaseMapMarkers, fetchCallOutMapMarkers, fetchMapPolygons } from '@/lib/map/queries'
 
 export const dynamic = 'force-dynamic'
-
-const barlowCondensed = Barlow_Condensed({
-  weight: '600',
-  subsets: ['latin'],
-  variable: '--font-barlow-map',
-  display: 'swap',
-})
 
 export default async function MapPage({
   searchParams,
@@ -41,9 +33,9 @@ export default async function MapPage({
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
 
   return (
-    <div className={`flex min-h-0 flex-1 flex-col ${barlowCondensed.variable}`}>
+    <div className="flex min-h-0 flex-1 flex-col">
       <div className="border-b border-border-subtle px-4 py-3 md:px-6">
-        <h1 className={`text-2xl font-semibold tracking-tight text-text-primary uppercase ${barlowCondensed.className}`}>
+        <h1 className="text-2xl font-semibold tracking-tight text-text-primary uppercase">
           Field map
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-text-secondary">

@@ -108,7 +108,7 @@ export function OperationsView({
           {canCreate ? (
             <Button
               type="button"
-              className="border border-accent-gold/30 bg-accent-gold text-bg-app"
+              className="border border-accent-primary/30 bg-accent-primary text-bg-app"
               onClick={() => setModalOpen(true)}
             >
               <Plus className="mr-2 size-4" />
@@ -201,7 +201,7 @@ export function OperationsView({
                 )}
                 onClick={() => void openCase(c)}
               >
-                <td className="px-3 py-2 font-mono text-accent-gold">{c.case_number}</td>
+                <td className="px-3 py-2 font-mono text-accent-primary">{c.case_number}</td>
                 <td className="px-3 py-2 text-text-secondary">{c.case_type_name ?? '—'}</td>
                 <td className="px-3 py-2 text-text-secondary">
                   {c.assigned_detective ? (
@@ -224,7 +224,7 @@ export function OperationsView({
                 <td className="px-3 py-2 font-mono text-xs text-text-secondary">
                   {c.date_opened ?? '—'}
                 </td>
-                <td className="px-3 py-2 font-mono text-accent-gold">{c.linked_forms_count}</td>
+                <td className="px-3 py-2 font-mono text-accent-primary">{c.linked_forms_count}</td>
               </tr>
             ))}
           </tbody>
@@ -388,7 +388,7 @@ function CaseDetailBody({
       ) : null}
 
       <div>
-        <h3 className="mb-2 text-xs font-semibold uppercase text-accent-gold">Linked forms</h3>
+        <h3 className="mb-2 text-xs font-semibold uppercase text-accent-primary">Linked forms</h3>
         <ul className="space-y-2">
           {forms.length === 0 ? (
             <li className="text-text-secondary">No linked submissions.</li>
@@ -504,7 +504,7 @@ function NewCaseModal({
           <Button
             type="button"
             disabled={pending || !typeId}
-            className="border border-accent-gold/30 bg-accent-gold text-bg-app"
+            className="border border-accent-primary/30 bg-accent-primary text-bg-app"
             onClick={() => void submit()}
           >
             Create

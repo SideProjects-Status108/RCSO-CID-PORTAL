@@ -81,7 +81,7 @@ export function TrainingPairingDrawer({
                 >
                   {nameMap[pairing.fto_id] ?? '—'}
                 </Link>
-                <p className="font-mono text-xs text-accent-gold">{badgeMap[pairing.fto_id] ?? '—'}</p>
+                <p className="font-mono text-xs text-accent-primary">{badgeMap[pairing.fto_id] ?? '—'}</p>
               </div>
             </div>
           </div>
@@ -100,7 +100,7 @@ export function TrainingPairingDrawer({
                 >
                   {nameMap[pairing.dit_id] ?? '—'}
                 </Link>
-                <p className="font-mono text-xs text-accent-gold">{badgeMap[pairing.dit_id] ?? '—'}</p>
+                <p className="font-mono text-xs text-accent-primary">{badgeMap[pairing.dit_id] ?? '—'}</p>
               </div>
             </div>
           </div>
@@ -118,7 +118,7 @@ export function TrainingPairingDrawer({
         </p>
         {pairing.notes ? (
           <div>
-            <p className="text-xs font-semibold uppercase text-accent-gold">Pairing notes</p>
+            <p className="text-xs font-semibold uppercase text-accent-primary">Pairing notes</p>
             <p className="mt-1 whitespace-pre-wrap text-text-primary">{pairing.notes}</p>
           </div>
         ) : null}
@@ -222,7 +222,7 @@ export function TrainingPairingDrawer({
             ) : (
               <ul className="space-y-2 text-xs">
                 {phaseEvents.map((ev) => (
-                  <li key={ev.id} className="border-l-2 border-accent-gold/40 pl-2">
+                  <li key={ev.id} className="border-l-2 border-accent-primary/40 pl-2">
                     <span className="font-mono text-text-secondary">
                       {formatRelativeTime(ev.created_at)}
                     </span>{' '}

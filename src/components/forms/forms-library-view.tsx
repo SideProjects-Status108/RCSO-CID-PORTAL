@@ -142,7 +142,7 @@ export function FormsLibraryView({
                       >
                         <div className="mb-2 flex flex-wrap items-center gap-2">
                           <CategoryBadge category={t.category} />
-                          <span className="font-mono text-[11px] text-accent-gold">
+                          <span className="font-mono text-[11px] text-accent-primary">
                             v{t.version}
                           </span>
                           {t.requires_approval ? (
@@ -157,7 +157,7 @@ export function FormsLibraryView({
                             href={`/forms/${t.id}/new`}
                             className={buttonVariants({
                               className:
-                                'border border-accent-gold/30 bg-accent-gold text-bg-app inline-flex items-center',
+                                'border border-accent-primary/30 bg-accent-primary text-bg-app inline-flex items-center',
                             })}
                           >
                             <FilePlus2 className="mr-2 size-4" />
@@ -232,7 +232,7 @@ export function FormsLibraryView({
                   return (
                     <tr
                       key={row.id}
-                      className="border-b border-border-subtle transition-colors hover:border-l-2 hover:border-l-accent-gold"
+                      className="border-b border-border-subtle transition-colors hover:border-l-2 hover:border-l-accent-primary"
                     >
                       <td className="px-3 py-2 font-medium text-text-primary">
                         {row.template_name ?? '—'}
@@ -314,7 +314,7 @@ export function FormsLibraryView({
                     <tr
                       key={row.id}
                       className={cn(
-                        'border-b border-border-subtle transition-colors hover:border-l-2 hover:border-l-accent-gold'
+                        'border-b border-border-subtle transition-colors hover:border-l-2 hover:border-l-accent-primary'
                       )}
                     >
                       <td className="px-3 py-2 font-medium text-text-primary">
@@ -329,7 +329,7 @@ export function FormsLibraryView({
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="border-accent-gold/40"
+                          className="border-accent-primary/40"
                           onClick={() => openSubmission(row.id, true)}
                         >
                           Review

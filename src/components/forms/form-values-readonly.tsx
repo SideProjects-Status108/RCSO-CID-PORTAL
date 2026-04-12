@@ -31,7 +31,7 @@ export function FormValuesReadonly({
     <div className="space-y-8 text-sm">
       {sections.map(([sectionName, sectionFields]) => (
         <section key={sectionName} className="space-y-3">
-          <h3 className="border-b border-border-subtle pb-1 text-xs font-semibold uppercase tracking-wide text-accent-gold">
+          <h3 className="border-b border-border-subtle pb-1 text-xs font-semibold uppercase tracking-wide text-accent-primary">
             {sectionName}
           </h3>
           <dl className="grid gap-3 sm:grid-cols-2">

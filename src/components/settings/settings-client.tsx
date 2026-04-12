@@ -55,12 +55,15 @@ export function SettingsClient({
   const [adminRows, setAdminRows] = useState<AdminProfileRow[]>([])
   const [inviteEmail, setInviteEmail] = useState('')
 
-  useEffect(() => {
+  const gcalNotice = (() => {
     const g = sp.get('gcal')
-    if (g === 'connected') setMsg('Google Calendar connected.')
-    else if (g === 'disconnected') setMsg('Google Calendar disconnected.')
-    else if (g === 'error') setMsg('Google Calendar connection failed.')
-  }, [sp])
+    if (g === 'connected') return 'Google Calendar connected.'
+    if (g === 'disconnected') return 'Google Calendar disconnected.'
+    if (g === 'error') return 'Google Calendar connection failed.'
+    return null
+  })()
+
+  const banner = msg ?? gcalNotice
 
   useEffect(() => {
     if (!isAdmin) return
@@ -131,9 +134,9 @@ export function SettingsClient({
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 p-4 md:p-6">
-      {msg ? (
+      {banner ? (
         <p className="rounded-md border border-border-subtle bg-bg-elevated px-3 py-2 text-sm text-text-secondary">
-          {msg}
+          {banner}
         </p>
       ) : null}
 
@@ -312,7 +315,7 @@ export function SettingsClient({
             <h2 className="text-lg font-medium text-text-primary">TN Code ingestion</h2>
             <p className="max-w-3xl text-sm text-text-secondary">
               Ingestion runs locally with the service role key. Place HTML corpus files in{' '}
-              <code className="rounded bg-bg-surface px-1 font-mono text-xs">scripts/tn-code-source/</code>.
+              <code className="rounded bg-bg-surface px-1 font-code text-xs">scripts/tn-code-source/</code>.
             </p>
             <div className="overflow-x-auto rounded-lg border border-border-subtle">
               <table className="w-full min-w-[640px] text-left text-sm">
@@ -329,7 +332,7 @@ export function SettingsClient({
                 <tbody>
                   {tnRows.map((r) => (
                     <tr key={r.id} className="border-b border-border-subtle/70">
-                      <td className="px-2 py-2 font-mono text-accent-gold">{r.title_number}</td>
+                      <td className="px-2 py-2 font-mono text-accent-primary">{r.title_number}</td>
                       <td className="max-w-[200px] truncate px-2 py-2 text-text-primary">{r.title_name}</td>
                       <td className="px-2 py-2 text-text-secondary">
                         {r.last_ingested_at
@@ -342,7 +345,7 @@ export function SettingsClient({
                       <td className="px-2 py-2 text-right tabular-nums">{r.chapter_count}</td>
                       <td className="px-2 py-2 text-right tabular-nums">{r.section_count}</td>
                       <td className="px-2 py-2 align-top">
-                        <pre className="max-w-[240px] overflow-x-auto rounded border border-border-subtle bg-bg-surface p-1.5 font-mono text-[10px] leading-snug">
+                        <pre className="max-w-[240px] overflow-x-auto rounded border border-border-subtle bg-bg-surface p-1.5 font-code text-[10px] leading-snug">
                           npm run ingest:tn-code -- --title {r.title_number}
                         </pre>
                       </td>

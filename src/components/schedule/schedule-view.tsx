@@ -289,7 +289,7 @@ export function ScheduleView({ data }: ScheduleViewProps) {
                 variant={calView === 'dayGridMonth' ? 'default' : 'outline'}
                 className={cn(
                   calView === 'dayGridMonth' &&
-                    'border-accent-gold/30 bg-accent-gold text-bg-app'
+                    'border-accent-primary/30 bg-accent-primary text-bg-app'
                 )}
                 onClick={() => setCalView('dayGridMonth')}
               >
@@ -300,7 +300,7 @@ export function ScheduleView({ data }: ScheduleViewProps) {
                 variant={calView === 'timeGridWeek' ? 'default' : 'outline'}
                 className={cn(
                   calView === 'timeGridWeek' &&
-                    'border-accent-gold/30 bg-accent-gold text-bg-app'
+                    'border-accent-primary/30 bg-accent-primary text-bg-app'
                 )}
                 onClick={() => setCalView('timeGridWeek')}
               >
@@ -311,7 +311,7 @@ export function ScheduleView({ data }: ScheduleViewProps) {
               <Button
                 type="button"
                 onClick={openCreate}
-                className="border border-accent-gold/30 bg-accent-gold text-bg-app hover:bg-accent-gold/90"
+                className="border border-accent-primary/30 bg-accent-primary text-bg-app hover:bg-accent-primary-hover"
               >
                 <Plus className="size-4" />
                 Add event
@@ -506,7 +506,7 @@ export function ScheduleView({ data }: ScheduleViewProps) {
               <Button
                 type="submit"
                 disabled={pending}
-                className="border border-accent-gold/30 bg-accent-gold text-bg-app"
+                className="border border-accent-primary/30 bg-accent-primary text-bg-app"
               >
                 Save
               </Button>
@@ -535,8 +535,8 @@ function OnCallBoard({
   const currentPerson = current ? personnelByUserId[current.assigned_to] : null
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <div className="rounded-lg border-2 border-accent-gold/50 bg-bg-surface p-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-accent-gold">
+      <div className="rounded-lg border-2 border-accent-primary/50 bg-bg-surface p-4">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-accent-primary">
           Currently on-call
         </h2>
         {current && currentPerson ? (
@@ -544,7 +544,7 @@ function OnCallBoard({
             <p className="text-2xl font-semibold text-text-primary">
               {currentPerson.full_name}
             </p>
-            <p className="font-mono text-lg text-accent-gold">
+            <p className="font-mono text-lg text-accent-primary">
               {currentPerson.badge_number ?? '—'}
             </p>
             <a
@@ -627,7 +627,7 @@ function MyScheduleList({ events }: { events: ScheduleEventRow[] }) {
             <h3
               className={cn(
                 'mb-2 text-sm font-semibold',
-                day === today ? 'text-accent-gold' : 'text-text-secondary'
+                day === today ? 'text-accent-primary' : 'text-text-secondary'
               )}
             >
               {day === today ? 'Today · ' : ''}
@@ -703,7 +703,7 @@ function EventDrawerBody({
       {canEdit ? (
         <Button
           type="button"
-          className="w-full border border-accent-gold/30 bg-accent-gold text-bg-app"
+          className="w-full border border-accent-primary/30 bg-accent-primary text-bg-app"
           onClick={onEdit}
         >
           Edit

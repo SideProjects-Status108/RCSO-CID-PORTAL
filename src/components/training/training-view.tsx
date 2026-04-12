@@ -183,7 +183,7 @@ export function TrainingView({
           {canEnroll ? (
             <Button
               type="button"
-              className="border border-accent-gold/30 bg-accent-gold text-bg-app"
+              className="border border-accent-primary/30 bg-accent-primary text-bg-app"
               onClick={() => setEnrollOpen(true)}
             >
               Enroll DIT
@@ -273,7 +273,7 @@ export function TrainingView({
                               style={{ width: `${pct}%` }}
                             />
                           </div>
-                          <span className="font-mono text-xs text-accent-gold">{pct}%</span>
+                          <span className="font-mono text-xs text-accent-primary">{pct}%</span>
                         </div>
                       </td>
                     </tr>

@@ -34,9 +34,9 @@ export function DashboardHome({ data }: DashboardHomeProps) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <section className="rounded-lg border-2 border-accent-gold/50 bg-bg-surface p-4 lg:col-span-2">
-          <div className="border-t-2 border-accent-gold pt-1">
-            <h2 className="text-xs font-semibold tracking-wide text-accent-gold uppercase">
+        <section className="rounded-lg border-2 border-accent-primary/50 bg-bg-surface p-4 lg:col-span-2">
+          <div className="border-t-2 border-accent-primary pt-1">
+            <h2 className="text-xs font-semibold tracking-wide text-accent-primary uppercase">
               On call right now
             </h2>
           </div>
@@ -45,7 +45,7 @@ export function DashboardHome({ data }: DashboardHomeProps) {
               <p className="text-2xl font-semibold text-text-primary">
                 {onCallPerson.full_name}
               </p>
-              <p className="font-mono text-lg text-accent-gold">
+              <p className="font-mono text-lg text-accent-primary">
                 {onCallPerson.badge_number ?? '—'}
               </p>
               <p className="text-xl text-accent-teal">
@@ -61,7 +61,7 @@ export function DashboardHome({ data }: DashboardHomeProps) {
 
         {role === UserRole.dit ? (
           <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
-            <div className="border-t-2 border-accent-gold pt-1">
+            <div className="border-t-2 border-accent-primary pt-1">
               <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
                 My training progress
               </h2>
@@ -74,7 +74,7 @@ export function DashboardHome({ data }: DashboardHomeProps) {
         ) : null}
 
         <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
-          <div className="border-t-2 border-accent-gold pt-1">
+          <div className="border-t-2 border-accent-primary pt-1">
             <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
               My schedule today
             </h2>
@@ -87,7 +87,7 @@ export function DashboardHome({ data }: DashboardHomeProps) {
                 <li key={e.id} className="flex flex-wrap items-center gap-2">
                   <EventTypeBadge type={e.event_type} />
                   <span className="text-text-primary">{e.title}</span>
-                  <span className="font-mono text-xs text-accent-gold">
+                  <span className="font-mono text-xs text-accent-primary">
                     {new Date(e.start_datetime).toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
@@ -101,12 +101,12 @@ export function DashboardHome({ data }: DashboardHomeProps) {
 
         {supervisionPlus ? (
           <section className="rounded-lg border border-border-subtle bg-bg-surface p-4 lg:col-span-2">
-            <div className="border-t-2 border-accent-gold pt-1">
+            <div className="border-t-2 border-accent-primary pt-1">
               <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
                 Open requests
               </h2>
             </div>
-            <p className="mt-3 font-mono text-3xl text-accent-gold">
+            <p className="mt-3 font-mono text-3xl text-accent-primary">
               {data.openRequestsCount}
             </p>
             <Link
@@ -121,12 +121,12 @@ export function DashboardHome({ data }: DashboardHomeProps) {
           </section>
         ) : role !== UserRole.dit ? (
           <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
-            <div className="border-t-2 border-accent-gold pt-1">
+            <div className="border-t-2 border-accent-primary pt-1">
               <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
                 My open requests
               </h2>
             </div>
-            <p className="mt-3 font-mono text-3xl text-accent-gold">
+            <p className="mt-3 font-mono text-3xl text-accent-primary">
               {data.myOpenRequestsCount}
             </p>
             <Link
@@ -143,12 +143,12 @@ export function DashboardHome({ data }: DashboardHomeProps) {
 
         {role !== UserRole.dit ? (
           <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
-            <div className="border-t-2 border-accent-gold pt-1">
+            <div className="border-t-2 border-accent-primary pt-1">
               <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
                 Active cases
               </h2>
             </div>
-            <p className="mt-3 font-mono text-3xl text-accent-gold">
+            <p className="mt-3 font-mono text-3xl text-accent-primary">
               {data.activeCasesCount}
             </p>
             <Link
@@ -170,12 +170,12 @@ export function DashboardHome({ data }: DashboardHomeProps) {
           UserRole.fto_coordinator,
         ]) ? (
           <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
-            <div className="border-t-2 border-accent-gold pt-1">
+            <div className="border-t-2 border-accent-primary pt-1">
               <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
                 Active DITs
               </h2>
             </div>
-            <p className="mt-3 font-mono text-3xl text-accent-gold">{data.activeDitsCount}</p>
+            <p className="mt-3 font-mono text-3xl text-accent-primary">{data.activeDitsCount}</p>
             <Link
               href="/training"
               className={cn(
@@ -190,7 +190,7 @@ export function DashboardHome({ data }: DashboardHomeProps) {
 
         {role === UserRole.fto ? (
           <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
-            <div className="border-t-2 border-accent-gold pt-1">
+            <div className="border-t-2 border-accent-primary pt-1">
               <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
                 My DIT
               </h2>
@@ -217,12 +217,12 @@ export function DashboardHome({ data }: DashboardHomeProps) {
 
         {role === UserRole.dit ? (
           <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
-            <div className="border-t-2 border-accent-gold pt-1">
+            <div className="border-t-2 border-accent-primary pt-1">
               <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
                 My progress
               </h2>
             </div>
-            <p className="mt-3 font-mono text-3xl text-accent-gold">
+            <p className="mt-3 font-mono text-3xl text-accent-primary">
               {data.ditMilestonePercent != null ? `${data.ditMilestonePercent}%` : '—'}
             </p>
             <p className="mt-1 text-xs text-text-secondary">Milestone completion</p>
@@ -240,7 +240,7 @@ export function DashboardHome({ data }: DashboardHomeProps) {
 
         {supervisionPlus ? (
           <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
-            <div className="border-t-2 border-accent-gold pt-1">
+            <div className="border-t-2 border-accent-primary pt-1">
               <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
                 Upcoming this week (unit)
               </h2>
@@ -266,7 +266,7 @@ export function DashboardHome({ data }: DashboardHomeProps) {
         ) : null}
 
         <section className="rounded-lg border border-border-subtle bg-bg-surface p-4">
-          <div className="border-t-2 border-accent-gold pt-1">
+          <div className="border-t-2 border-accent-primary pt-1">
             <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
               Recent forms
             </h2>
@@ -299,7 +299,7 @@ export function DashboardHome({ data }: DashboardHomeProps) {
         </section>
 
         <section className="rounded-lg border border-border-subtle bg-bg-surface p-4 lg:col-span-3">
-          <div className="border-t-2 border-accent-gold pt-1">
+          <div className="border-t-2 border-accent-primary pt-1">
             <h2 className="text-xs font-semibold tracking-wide text-text-primary uppercase">
               Quick links
             </h2>

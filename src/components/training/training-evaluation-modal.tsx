@@ -138,7 +138,7 @@ export function TrainingEvaluationModal({
           />
         </div>
         <div className="space-y-3 border-t border-border-subtle pt-3">
-          <p className="text-xs font-semibold uppercase text-accent-gold">Criteria (1–5)</p>
+          <p className="text-xs font-semibold uppercase text-accent-primary">Criteria (1–5)</p>
           {EVALUATION_SCORE_KEYS.map((key) => (
             <div key={key} className="space-y-1">
               <Label className="text-xs text-text-secondary">{EVALUATION_SCORE_LABELS[key]}</Label>
@@ -215,7 +215,7 @@ export function TrainingEvaluationModal({
           </Button>
           <Button
             type="button"
-            className="border border-accent-gold/30 bg-accent-gold text-bg-app"
+            className="border border-accent-primary/30 bg-accent-primary text-bg-app"
             disabled={pending}
             onClick={() => void save(true)}
           >

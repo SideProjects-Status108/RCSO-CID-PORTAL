@@ -149,7 +149,7 @@ export function RequestsView({
         {viewerRole !== UserRole.dit ? (
           <Button
             type="button"
-            className="border border-accent-gold/30 bg-accent-gold text-bg-app"
+            className="border border-accent-primary/30 bg-accent-primary text-bg-app"
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="mr-2 size-4" />
@@ -513,7 +513,7 @@ function CreateRequestModal({
           <Button
             type="button"
             disabled={pending}
-            className="border border-accent-gold/30 bg-accent-gold text-bg-app"
+            className="border border-accent-primary/30 bg-accent-primary text-bg-app"
             onClick={() => void submit()}
           >
             Create
@@ -722,10 +722,10 @@ function RequestDetailDrawer({
         ) : null}
 
         <div className="border-t border-border-subtle pt-3">
-          <h3 className="mb-2 text-xs font-semibold uppercase text-accent-gold">Audit trail</h3>
+          <h3 className="mb-2 text-xs font-semibold uppercase text-accent-primary">Audit trail</h3>
           <ul className="space-y-3">
             {updates.map((u) => (
-              <li key={u.id} className="border-l-2 border-accent-gold/40 pl-3 text-xs">
+              <li key={u.id} className="border-l-2 border-accent-primary/40 pl-3 text-xs">
                 <p className="font-mono text-text-secondary">
                   {new Date(u.created_at).toLocaleString()} — {nameMap[u.updated_by] ?? 'User'}
                 </p>

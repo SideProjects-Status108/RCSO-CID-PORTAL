@@ -1,11 +1,18 @@
 import type { Metadata } from 'next'
-import { Inter, JetBrains_Mono } from 'next/font/google'
+import { Orbitron, Poppins, JetBrains_Mono } from 'next/font/google'
 
 import './globals.css'
 
-const inter = Inter({
+const orbitron = Orbitron({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-orbitron',
+  display: 'swap',
+})
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-poppins',
   display: 'swap',
 })
 
@@ -16,8 +23,9 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'RCSO CID Portal',
-  description: 'Rutherford County Sheriff’s Office Criminal Investigation Division internal operations portal.',
+  title: 'CID PORTAL',
+  description:
+    'Criminal Investigation Division internal operations portal for case management, forms, scheduling, and training.',
 }
 
 export default function RootLayout({
@@ -28,7 +36,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} dark h-full antialiased`}
+      className={`${orbitron.variable} ${poppins.variable} ${jetbrainsMono.variable} dark h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-bg-app text-text-primary">
         {children}

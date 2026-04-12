@@ -124,7 +124,7 @@ export function EnrollDitModal({ open, onOpenChange, ditOptions, ftoOptions, onD
           </Button>
           <Button
             type="button"
-            className="border border-accent-gold/30 bg-accent-gold text-bg-app"
+            className="border border-accent-primary/30 bg-accent-primary text-bg-app"
             disabled={pending || !ditId || !ftoId}
             onClick={() => {
               startTr(async () => {
@@ -260,7 +260,7 @@ export function NewPairingModal({ open, onOpenChange, ditOptions, ftoOptions, on
           </Button>
           <Button
             type="button"
-            className="border border-accent-gold/30 bg-accent-gold text-bg-app"
+            className="border border-accent-primary/30 bg-accent-primary text-bg-app"
             disabled={pending || !ditId || !ftoId}
             onClick={() => {
               startTr(async () => {

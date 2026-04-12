@@ -42,7 +42,7 @@ export function FormFieldsEditor({
       {sections.map(([sectionName, sectionFields]) => (
         <section key={sectionName} className="space-y-4">
           <div className="border-b border-border-subtle pb-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-accent-gold">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-accent-primary">
               {sectionName}
             </h2>
           </div>

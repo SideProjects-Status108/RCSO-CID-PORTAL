@@ -61,9 +61,9 @@ export function SignupForm() {
           <CardTitle className="text-text-primary">Check next steps</CardTitle>
           <CardDescription className="text-left text-text-secondary">
             If sign-up succeeded, create the matching{' '}
-            <span className="font-mono text-accent-gold">profiles</span> row in
+            <span className="font-mono text-accent-primary">profiles</span> row in
             Supabase (see migration file SQL comment), set your role to{' '}
-            <span className="font-mono text-accent-gold">admin</span>, then turn
+            <span className="font-mono text-accent-primary">admin</span>, then turn
             off bootstrap sign-up and disable public sign-ups in Supabase Auth
             settings before production.
           </CardDescription>
@@ -73,7 +73,7 @@ export function SignupForm() {
             href="/login"
             className={cn(
               buttonVariants({ size: 'default' }),
-              'inline-flex w-full border border-accent-gold/30 bg-accent-gold text-bg-app hover:bg-accent-gold/90'
+              'inline-flex w-full border border-accent-primary/30 bg-accent-primary text-bg-app hover:bg-accent-primary-hover'
             )}
           >
             Continue to sign in
@@ -87,7 +87,7 @@ export function SignupForm() {
     <Card className="w-full max-w-md border-border-subtle bg-bg-surface shadow-none">
       <CardHeader className="space-y-3 text-center">
         <div className="mx-auto flex size-12 items-center justify-center rounded-lg border border-border-subtle bg-bg-elevated">
-          <Shield className="size-7 text-accent-gold" strokeWidth={1.5} aria-hidden />
+          <Shield className="size-7 text-accent-primary" strokeWidth={1.5} aria-hidden />
         </div>
         <CardTitle className="text-xl text-text-primary">Bootstrap sign-up</CardTitle>
         <CardDescription className="text-text-secondary">
@@ -96,8 +96,8 @@ export function SignupForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="rounded-md border border-accent-gold/40 bg-bg-elevated px-3 py-2 text-xs text-text-secondary">
-          <p className="font-medium text-accent-gold">Before production</p>
+        <div className="rounded-md border border-accent-primary/40 bg-bg-elevated px-3 py-2 text-xs text-text-secondary">
+          <p className="font-medium text-accent-primary">Before production</p>
           <ul className="mt-1 list-inside list-disc space-y-1">
             <li>
               In Supabase: Authentication → Providers → Email → disable{' '}
@@ -172,7 +172,7 @@ export function SignupForm() {
           <Button
             type="submit"
             disabled={form.formState.isSubmitting}
-            className="w-full border border-accent-gold/30 bg-accent-gold text-bg-app hover:bg-accent-gold/90"
+            className="w-full border border-accent-primary/30 bg-accent-primary text-bg-app hover:bg-accent-primary-hover"
           >
             {form.formState.isSubmitting ? 'Creating account…' : 'Create account'}
           </Button>

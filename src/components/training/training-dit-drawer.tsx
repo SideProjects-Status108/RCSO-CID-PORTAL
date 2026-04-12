@@ -123,7 +123,7 @@ export function TrainingDitDrawer({
             >
               {nameMap[uid] ?? '—'}
             </Link>
-            <p className="font-mono text-accent-gold">{badgeMap[uid] ?? '—'}</p>
+            <p className="font-mono text-accent-primary">{badgeMap[uid] ?? '—'}</p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {phaseBadge(rec.current_phase)}
               {ditStatusStamp(rec.status)}
@@ -135,7 +135,7 @@ export function TrainingDitDrawer({
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-2">
             <Label>Milestone progress</Label>
-            <span className="font-mono text-xs text-accent-gold">{pct}%</span>
+            <span className="font-mono text-xs text-accent-primary">{pct}%</span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-bg-elevated">
             <div
@@ -201,7 +201,7 @@ export function TrainingDitDrawer({
           <TabsContent value="milestones" className="mt-3 space-y-4">
             {byPhase.map(({ phase: p, items }) => (
               <div key={p}>
-                <p className="mb-2 text-xs font-semibold uppercase text-accent-gold">Phase {p}</p>
+                <p className="mb-2 text-xs font-semibold uppercase text-accent-primary">Phase {p}</p>
                 <ul className="space-y-2">
                   {items.map((m) => (
                     <li

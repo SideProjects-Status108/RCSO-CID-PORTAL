@@ -31,7 +31,7 @@ export function CaseTypesManager({ initialTypes }: { initialTypes: CaseTypeRow[]
         </div>
         <Button
           type="button"
-          className="border border-accent-gold/30 bg-accent-gold text-bg-app"
+          className="border border-accent-primary/30 bg-accent-primary text-bg-app"
           onClick={() => setModal('new')}
         >
           Add type
@@ -52,7 +52,7 @@ export function CaseTypesManager({ initialTypes }: { initialTypes: CaseTypeRow[]
             {initialTypes.map((r) => (
               <tr key={r.id} className="border-b border-border-subtle">
                 <td className="px-3 py-2 font-medium text-text-primary">{r.name}</td>
-                <td className="px-3 py-2 font-mono text-accent-gold">{r.prefix}</td>
+                <td className="px-3 py-2 font-mono text-accent-primary">{r.prefix}</td>
                 <td className="px-3 py-2">{r.is_active ? 'Yes' : 'No'}</td>
                 <td className="px-3 py-2 text-right">
                   <Button type="button" variant="ghost" size="sm" onClick={() => setModal(r)}>
@@ -140,7 +140,7 @@ function CaseTypeModal({
           <Button
             type="button"
             disabled={pending}
-            className="border border-accent-gold/30 bg-accent-gold text-bg-app"
+            className="border border-accent-primary/30 bg-accent-primary text-bg-app"
             onClick={() => {
               start(async () => {
                 await upsertCaseTypeAction({

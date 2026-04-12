@@ -17,5 +17,15 @@ const FieldMapLazy = dynamic(
 )
 
 export function FieldMapDynamic(props: FieldMapProps) {
-  return <FieldMapLazy {...props} />
+  return (
+    <div
+      className="flex min-h-0 flex-1 flex-col"
+      style={{
+        fontFamily:
+          'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      }}
+    >
+      <FieldMapLazy {...props} />
+    </div>
+  )
 }

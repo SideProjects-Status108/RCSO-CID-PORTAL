@@ -50,7 +50,7 @@ export function ScheduleCalendar({
   }
 
   return (
-    <div className="schedule-fc text-text-primary [&_.fc]:text-text-primary [&_.fc-button]:border-border-subtle [&_.fc-button]:bg-bg-elevated [&_.fc-button]:text-text-primary [&_.fc-button-primary]:border-accent-gold/40 [&_.fc-button-primary]:bg-accent-gold [&_.fc-button-primary]:text-bg-app [&_.fc-col-header-cell]:border-border-subtle [&_.fc-daygrid-day]:border-border-subtle [&_.fc-scrollgrid]:border-border-subtle [&_.fc-theme-standard_td]:border-border-subtle [&_.fc-timegrid-slot]:border-border-subtle [&_.fc-toolbar-title]:text-text-primary">
+    <div className="schedule-fc text-text-primary [&_.fc]:text-text-primary [&_.fc-button]:border-border-subtle [&_.fc-button]:bg-bg-elevated [&_.fc-button]:text-text-primary [&_.fc-button-primary]:border-accent-primary/40 [&_.fc-button-primary]:bg-accent-primary [&_.fc-button-primary]:text-bg-app [&_.fc-col-header-cell]:border-border-subtle [&_.fc-daygrid-day]:border-border-subtle [&_.fc-scrollgrid]:border-border-subtle [&_.fc-theme-standard_td]:border-border-subtle [&_.fc-timegrid-slot]:border-border-subtle [&_.fc-toolbar-title]:text-text-primary">
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView={initialView}

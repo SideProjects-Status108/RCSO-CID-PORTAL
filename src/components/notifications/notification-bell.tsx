@@ -97,13 +97,13 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
       <PopoverTrigger
         className={cn(
           buttonVariants({ variant: 'ghost', size: 'icon' }),
-          'relative text-text-secondary hover:text-accent-gold'
+          'relative text-text-secondary hover:text-accent-primary'
         )}
         aria-label="Notifications"
       >
         <Bell className="size-5" strokeWidth={1.75} />
         {unread > 0 ? (
-          <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-gold px-1 font-mono text-[10px] font-semibold text-bg-app">
+          <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-primary px-1 font-mono text-[10px] font-semibold text-bg-app">
             {unread > 99 ? '99+' : unread}
           </span>
         ) : null}
@@ -146,13 +146,13 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
                       type="button"
                       className={cn(
                         'flex w-full gap-2 px-3 py-2.5 text-left text-sm transition-colors hover:bg-bg-surface',
-                        !n.is_read && 'bg-accent-gold/5'
+                        !n.is_read && 'bg-accent-primary/5'
                       )}
                       onClick={() => void onClickItem(n)}
                     >
                       {!n.is_read ? (
                         <span
-                          className="mt-1.5 size-2 shrink-0 rounded-full bg-accent-gold"
+                          className="mt-1.5 size-2 shrink-0 rounded-full bg-accent-primary"
                           aria-hidden
                         />
                       ) : (

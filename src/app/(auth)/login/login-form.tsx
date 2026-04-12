@@ -57,9 +57,11 @@ export function LoginForm({ bootstrapSignupEnabled }: LoginFormProps) {
     <Card className="w-full max-w-md border-border-subtle bg-bg-surface shadow-none">
       <CardHeader className="space-y-3 text-center">
         <div className="mx-auto flex size-12 items-center justify-center rounded-lg border border-border-subtle bg-bg-elevated">
-          <Shield className="size-7 text-accent-gold" strokeWidth={1.5} aria-hidden />
+          <Shield className="size-7 text-accent-primary" strokeWidth={1.5} aria-hidden />
         </div>
-        <CardTitle className="text-xl text-text-primary">RCSO CID Portal</CardTitle>
+        <CardTitle className="font-heading text-xl tracking-wide text-text-primary">
+          CID PORTAL
+        </CardTitle>
         <CardDescription className="text-text-secondary">
           Sign in with your department email and password.
         </CardDescription>
@@ -72,9 +74,9 @@ export function LoginForm({ bootstrapSignupEnabled }: LoginFormProps) {
           </p>
         ) : null}
         {urlError === 'no_profile' ? (
-          <p className="mb-4 rounded-md border border-accent-gold/30 bg-bg-elevated px-3 py-2 text-xs text-text-secondary">
+          <p className="mb-4 rounded-md border border-accent-primary/30 bg-bg-elevated px-3 py-2 text-xs text-text-secondary">
             Your account exists but no profile row was found. An administrator must
-            insert your <span className="font-mono text-accent-gold">profiles</span>{' '}
+            insert your <span className="font-mono text-accent-primary">profiles</span>{' '}
             record (see migration SQL comments), then try again.
           </p>
         ) : null}
@@ -128,7 +130,7 @@ export function LoginForm({ bootstrapSignupEnabled }: LoginFormProps) {
           <Button
             type="submit"
             disabled={form.formState.isSubmitting}
-            className="w-full border border-accent-gold/30 bg-accent-gold text-bg-app hover:bg-accent-gold/90"
+            className="w-full border border-accent-primary/30 bg-accent-primary text-bg-app hover:bg-accent-primary-hover"
           >
             {form.formState.isSubmitting ? 'Signing in…' : 'Sign in'}
           </Button>

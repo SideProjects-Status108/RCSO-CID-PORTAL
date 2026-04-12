@@ -508,8 +508,8 @@ export function FieldMap({
             .setHTML(
               `<div class="max-w-xs space-y-2 text-sm">
                 <div>${ft.place_name ?? ''}</div>
-                <div class="font-mono text-xs">${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
-                <a class="text-accent-gold underline" href="${mapsUrl}" target="_blank" rel="noreferrer">Open in Google Maps</a>
+                <div style="font-family: ui-monospace, monospace; font-size: 12px">${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+                <a class="text-accent-primary underline" href="${mapsUrl}" target="_blank" rel="noreferrer">Open in Google Maps</a>
                 <button type="button" id="copy-coords" class="block w-full rounded border px-2 py-1 text-xs">Copy coordinates</button>
               </div>`
             )
@@ -530,7 +530,7 @@ export function FieldMap({
     const url = map.getCanvas().toDataURL('image/png')
     const a = document.createElement('a')
     a.href = url
-    a.download = `rcso-map-snapshot-${new Date().toISOString().slice(0, 10)}.png`
+    a.download = `cid-map-snapshot-${new Date().toISOString().slice(0, 10)}.png`
     a.click()
   }
 
@@ -567,7 +567,7 @@ export function FieldMap({
     }
   }
 
-  const swatches = ['#C8A84B', '#2dd4bf', '#ef4444', '#94a3b8', '#64748b', '#e2e8f0']
+  const swatches = ['#1E6FD9', '#2dd4bf', '#ef4444', '#94a3b8', '#64748b', '#e2e8f0']
 
   return (
     <div className="relative flex min-h-[calc(100vh-8rem)] w-full flex-1 overflow-hidden rounded-lg border border-border-subtle bg-bg-app">
@@ -639,7 +639,7 @@ export function FieldMap({
                           type="button"
                           className={cn(
                             'rounded px-1.5 py-0.5',
-                            typeFilter.has(ct.id) ? 'bg-accent-gold/30 text-text-primary' : 'bg-bg-elevated'
+                            typeFilter.has(ct.id) ? 'bg-accent-primary/30 text-text-primary' : 'bg-bg-elevated'
                           )}
                           onClick={() =>
                             setTypeFilter((prev) => {
@@ -825,7 +825,7 @@ function ToolBtn({
       onClick={onClick}
       className={cn(
         'flex size-9 items-center justify-center rounded-md border border-transparent text-text-secondary hover:bg-bg-elevated hover:text-text-primary',
-        active && 'border-accent-gold/50 bg-accent-gold/15 text-accent-gold'
+        active && 'border-accent-primary/50 bg-accent-primary/15 text-accent-primary'
       )}
     >
       {children}

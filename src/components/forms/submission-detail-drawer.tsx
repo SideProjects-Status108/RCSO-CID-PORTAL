@@ -198,7 +198,7 @@ export function SubmissionDetailDrawer({
                 <Button
                   type="button"
                   disabled={pending}
-                  className="border border-accent-gold/30 bg-accent-gold text-bg-app"
+                  className="border border-accent-primary/30 bg-accent-primary text-bg-app"
                   onClick={() => void runApprove()}
                 >
                   Approve

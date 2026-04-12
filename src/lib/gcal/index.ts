@@ -89,14 +89,14 @@ function eventBody(ev: ScheduleEventRow) {
     const sd = startIso.slice(0, 10)
     const ed = endIso.slice(0, 10)
     return {
-      summary: ev.title || 'RCSO schedule',
+      summary: ev.title || 'CID PORTAL schedule',
       description: ev.notes ?? '',
       start: { date: sd },
       end: { date: ed },
     }
   }
   return {
-    summary: ev.title || 'RCSO schedule',
+    summary: ev.title || 'CID PORTAL schedule',
     description: ev.notes ?? '',
     start: { dateTime: startIso },
     end: { dateTime: endIso },

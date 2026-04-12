@@ -84,14 +84,14 @@ export function CaseCombobox({
               type="button"
               className={cn(
                 'flex w-full items-center gap-2 rounded px-2 py-1.5 text-left hover:bg-bg-app',
-                c.id === valueId && 'bg-accent-gold/15'
+                c.id === valueId && 'bg-accent-primary/15'
               )}
               onClick={() => {
                 onSelect(c.id, c.case_number)
                 setOpen(false)
               }}
             >
-              {c.id === valueId ? <Check className="size-4 text-accent-gold" /> : (
+              {c.id === valueId ? <Check className="size-4 text-accent-primary" /> : (
                 <span className="size-4 shrink-0" />
               )}
               <span className="font-mono text-text-primary">{c.case_number}</span>

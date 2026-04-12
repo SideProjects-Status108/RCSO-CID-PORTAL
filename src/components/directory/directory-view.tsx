@@ -272,7 +272,7 @@ export function DirectoryView({
           <Button
             type="button"
             onClick={openCreate}
-            className="border border-accent-gold/30 bg-accent-gold text-bg-app hover:bg-accent-gold/90"
+            className="border border-accent-primary/30 bg-accent-primary text-bg-app hover:bg-accent-primary-hover"
           >
             <Plus className="size-4" />
             Add Personnel
@@ -308,7 +308,7 @@ export function DirectoryView({
               rows.map((row) => (
                 <tr
                   key={row.id}
-                  className="cursor-pointer border-b border-border-subtle transition-colors hover:border-l-2 hover:border-l-accent-gold hover:bg-bg-elevated/30"
+                  className="cursor-pointer border-b border-border-subtle transition-colors hover:border-l-2 hover:border-l-accent-primary hover:bg-bg-elevated/30"
                   onClick={() => openDrawer(row)}
                 >
                   <td className="px-3 py-2">
@@ -335,7 +335,7 @@ export function DirectoryView({
                       </div>
                     </div>
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs text-accent-gold">
+                  <td className="px-3 py-2 font-mono text-xs text-accent-primary">
                     {row.badge_number ?? '—'}
                   </td>
                   <td className="px-3 py-2 text-text-secondary">
@@ -368,7 +368,7 @@ export function DirectoryView({
                     <StatusStamp variant="muted">Inactive</StatusStamp>
                   ) : null}
                 </div>
-                <p className="font-mono text-sm text-accent-gold">
+                <p className="font-mono text-sm text-accent-primary">
                   {selected.badge_number ?? '—'}
                 </p>
                 <p className="text-sm text-text-secondary">{selected.role_label ?? '—'}</p>
@@ -421,7 +421,7 @@ export function DirectoryView({
               <Button
                 type="button"
                 variant="outline"
-                className="w-full border-accent-gold/40 text-accent-gold"
+                className="w-full border-accent-primary/40 text-accent-primary"
                 onClick={() => openEdit(selected)}
               >
                 Edit
@@ -577,7 +577,7 @@ export function DirectoryView({
             </Button>
             <Button
               type="submit"
-              className="border border-accent-gold/30 bg-accent-gold text-bg-app hover:bg-accent-gold/90"
+              className="border border-accent-primary/30 bg-accent-primary text-bg-app hover:bg-accent-primary-hover"
             >
               Save
             </Button>

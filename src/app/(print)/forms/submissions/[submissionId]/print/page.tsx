@@ -69,7 +69,7 @@ export default async function FormSubmissionPrintPage({
 
         <header className="border-b-2 border-neutral-800 pb-4 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-600">
-            Rutherford County Sheriff&apos;s Office
+            CID PORTAL
           </p>
           <p className="text-lg font-bold uppercase tracking-wide text-neutral-900">
             Criminal Investigation Division

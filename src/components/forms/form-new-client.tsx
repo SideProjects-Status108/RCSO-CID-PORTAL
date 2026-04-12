@@ -115,8 +115,8 @@ export function FormNewClient({
 
       <div className="rounded-lg border border-border-subtle bg-bg-surface p-6 shadow-sm">
         <header className="mb-6 border-b border-border-subtle pb-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-accent-gold">
-            RCSO Criminal Investigation Division
+          <p className="font-heading text-xs font-semibold uppercase tracking-widest text-accent-primary">
+            CID PORTAL
           </p>
           <p className="mt-1 text-sm text-text-secondary">Internal use — official record</p>
         </header>
@@ -159,7 +159,7 @@ export function FormNewClient({
           <Button
             type="button"
             disabled={pending}
-            className="border border-accent-gold/30 bg-accent-gold text-bg-app"
+            className="border border-accent-primary/30 bg-accent-primary text-bg-app"
             onClick={() => void persist('submit')}
           >
             Submit
