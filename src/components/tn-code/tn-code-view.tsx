@@ -154,7 +154,7 @@ export function TnCodeView({
       if (tab !== 'browse') p.set('tab', tab)
       if (sectionId) p.set('section', sectionId)
       const qs = p.toString()
-      router.replace(qs ? `/tn-code?${qs}` : '/tn-code', { scroll: false })
+      router.replace(qs ? `/tools/tca?${qs}` : '/tools/tca', { scroll: false })
     },
     [router]
   )

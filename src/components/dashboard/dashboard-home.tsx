@@ -110,7 +110,7 @@ export function DashboardHome({ data }: DashboardHomeProps) {
               {data.openRequestsCount}
             </p>
             <Link
-              href="/requests"
+              href="/operations/requests"
               className={cn(
                 buttonVariants({ variant: 'outline', size: 'sm' }),
                 'mt-2 border-accent-teal/40 text-accent-teal'
@@ -130,7 +130,7 @@ export function DashboardHome({ data }: DashboardHomeProps) {
               {data.myOpenRequestsCount}
             </p>
             <Link
-              href="/requests"
+              href="/operations/requests"
               className={cn(
                 buttonVariants({ variant: 'outline', size: 'sm' }),
                 'mt-2 border-accent-teal/40 text-accent-teal'
@@ -152,7 +152,7 @@ export function DashboardHome({ data }: DashboardHomeProps) {
               {data.activeCasesCount}
             </p>
             <Link
-              href="/operations"
+              href="/operations/cases"
               className={cn(
                 buttonVariants({ variant: 'outline', size: 'sm' }),
                 'mt-2 border-accent-teal/40 text-accent-teal'
@@ -305,11 +305,11 @@ export function DashboardHome({ data }: DashboardHomeProps) {
             </h2>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            <QuickLink href="/schedule" label="Schedule" icon={Calendar} />
-            <QuickLink href="/operations" label="Operations" icon={Folder} />
-            <QuickLink href="/directory" label="Directory" icon={Users} />
-            <QuickLink href="/requests" label="Requests" icon={Bell} />
-            <QuickLink href="/tn-code" label="TN Code" icon={BookOpen} />
+            <QuickLink href="/operations/schedules" label="Schedule" icon={Calendar} />
+            <QuickLink href="/operations/cases" label="Operations" icon={Folder} />
+            <QuickLink href="/personnel" label="Directory" icon={Users} />
+            <QuickLink href="/operations/requests" label="Requests" icon={Bell} />
+            <QuickLink href="/tools/tca" label="TN Code" icon={BookOpen} />
             <QuickLink href="/training" label="Training" icon={GraduationCap} />
           </div>
         </section>

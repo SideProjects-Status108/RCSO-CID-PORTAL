@@ -56,6 +56,7 @@ export async function updateOwnProfileAction(input: {
   }
 
   revalidatePath('/settings')
+  revalidatePath('/personnel')
   revalidatePath('/directory')
   revalidatePath('/dashboard')
 }
@@ -114,6 +115,7 @@ export async function uploadOwnProfilePhotoAction(formData: FormData) {
   if (error) throw new Error(error.message)
 
   revalidatePath('/settings')
+  revalidatePath('/personnel')
   revalidatePath('/directory')
   return { publicUrl }
 }
@@ -176,6 +178,7 @@ export async function updateUserRoleAction(targetUserId: string, role: UserRoleV
   }
 
   revalidatePath('/settings')
+  revalidatePath('/personnel')
   revalidatePath('/directory')
 }
 

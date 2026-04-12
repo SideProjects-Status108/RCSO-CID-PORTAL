@@ -178,6 +178,7 @@ export async function saveScheduleEventAction(input: ScheduleEventInput) {
     })
   }
 
+  revalidatePath('/operations/schedules')
   revalidatePath('/schedule')
   revalidatePath('/dashboard')
 }
@@ -203,6 +204,7 @@ export async function deleteScheduleEventAction(id: string) {
   }
   const { error } = await supabase.from('schedule_events').delete().eq('id', id)
   if (error) throw new Error(error.message)
+  revalidatePath('/operations/schedules')
   revalidatePath('/schedule')
   revalidatePath('/dashboard')
 }

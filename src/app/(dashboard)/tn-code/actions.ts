@@ -29,5 +29,6 @@ export async function setTnBookmarkAction(sectionId: string, bookmarked: boolean
     if (error) throw new Error(error.message)
   }
 
+  revalidatePath('/tools/tca')
   revalidatePath('/tn-code')
 }

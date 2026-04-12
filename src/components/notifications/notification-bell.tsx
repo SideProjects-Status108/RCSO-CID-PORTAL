@@ -47,13 +47,22 @@ function iconFor(type: NotificationRow['type']) {
 }
 
 function hrefFor(n: NotificationRow): string {
-  if (n.reference_type === 'request') return `/requests?open=${n.reference_id}`
-  if (n.reference_type === 'form_submission') return `/forms?openSubmission=${n.reference_id}`
-  if (n.reference_type === 'evaluation') return `/training?evaluation=${n.reference_id}`
-  return `/schedule?open=${n.reference_id}`
+  if (n.reference_type === 'request')
+    return `/operations/requests?open=${n.reference_id}`
+  if (n.reference_type === 'form_submission')
+    return `/operations/forms?openSubmission=${n.reference_id}`
+  if (n.reference_type === 'evaluation')
+    return `/training/dit-evaluations?evaluation=${n.reference_id}`
+  return `/operations/schedules?open=${n.reference_id}`
 }
 
-export function NotificationBell({ initialUnread }: { initialUnread: number }) {
+export function NotificationBell({
+  initialUnread,
+  triggerClassName,
+}: {
+  initialUnread: number
+  triggerClassName?: string
+}) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [unread, setUnread] = useState(initialUnread)
@@ -97,7 +106,8 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
       <PopoverTrigger
         className={cn(
           buttonVariants({ variant: 'ghost', size: 'icon' }),
-          'relative text-text-secondary hover:text-accent-primary'
+          'relative text-text-secondary hover:text-accent-primary',
+          triggerClassName
         )}
         aria-label="Notifications"
       >
@@ -174,7 +184,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
         </div>
         <div className="border-t border-border-subtle px-3 py-2">
           <Link
-            href="/requests"
+            href="/operations/requests"
             className={buttonVariants({
               variant: 'ghost',
               size: 'sm',

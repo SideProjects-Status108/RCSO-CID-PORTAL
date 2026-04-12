@@ -112,6 +112,7 @@ export async function createRequestAction(input: {
   }
 
   await insertNotifications(notifs)
+  revalidatePath('/operations/requests')
   revalidatePath('/requests')
   revalidatePath('/dashboard')
   return { id: requestId }
@@ -179,6 +180,7 @@ export async function updateRequestStatusAction(input: {
     ])
   }
 
+  revalidatePath('/operations/requests')
   revalidatePath('/requests')
   revalidatePath('/dashboard')
 }
@@ -254,6 +256,7 @@ export async function supervisionUpdateRequestAction(input: {
   }
 
   await insertNotifications(notifs)
+  revalidatePath('/operations/requests')
   revalidatePath('/requests')
   revalidatePath('/dashboard')
 }

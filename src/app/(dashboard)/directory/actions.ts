@@ -72,6 +72,7 @@ export async function savePersonnelAction(input: unknown) {
     if (error) throw new Error(error.message)
   }
 
+  revalidatePath('/personnel')
   revalidatePath('/directory')
   revalidatePath('/schedule')
   revalidatePath('/dashboard')
@@ -88,6 +89,7 @@ export async function deactivatePersonnelAction(id: string) {
     .update({ is_active: false })
     .eq('id', id)
   if (error) throw new Error(error.message)
+  revalidatePath('/personnel')
   revalidatePath('/directory')
   revalidatePath('/dashboard')
 }
@@ -132,6 +134,7 @@ export async function uploadPersonnelPhotoAction(formData: FormData) {
     .eq('id', personnelId)
   if (error) throw new Error(error.message)
 
+  revalidatePath('/personnel')
   revalidatePath('/directory')
   return { publicUrl }
 }

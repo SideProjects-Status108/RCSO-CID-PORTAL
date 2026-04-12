@@ -1,4 +1,4 @@
-import TrainingHubPage from './training-hub-page'
+import TrainingHubPage from '../training-hub-page'
 
 export const dynamic = 'force-dynamic'
 

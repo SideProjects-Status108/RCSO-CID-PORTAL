@@ -51,6 +51,7 @@ export async function createCaseAction(input: {
   })
 
   if (error) throw new Error(error.message)
+  revalidatePath('/operations/cases')
   revalidatePath('/operations')
   revalidatePath('/dashboard')
 }
@@ -92,6 +93,7 @@ export async function updateCaseAction(input: {
 
   const { error } = await supabase.from('cases').update(patch).eq('id', input.caseId)
   if (error) throw new Error(error.message)
+  revalidatePath('/operations/cases')
   revalidatePath('/operations')
   revalidatePath('/dashboard')
 }
@@ -128,6 +130,7 @@ export async function upsertCaseTypeAction(input: {
     })
     if (error) throw new Error(error.message)
   }
+  revalidatePath('/operations/cases')
   revalidatePath('/operations')
   revalidatePath('/operations/case-types')
 }

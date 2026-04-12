@@ -41,6 +41,7 @@ export async function saveMapPolygonAction(input: {
     created_by: session.user.id,
   })
   if (error) throw new Error(error.message)
+  revalidatePath('/tools/map')
   revalidatePath('/map')
 }
 
@@ -67,5 +68,6 @@ export async function deleteMapPolygonAction(polygonId: string) {
 
   const { error } = await supabase.from('map_polygons').delete().eq('id', polygonId)
   if (error) throw new Error(error.message)
+  revalidatePath('/tools/map')
   revalidatePath('/map')
 }

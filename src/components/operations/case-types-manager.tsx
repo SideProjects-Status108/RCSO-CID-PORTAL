@@ -21,7 +21,7 @@ export function CaseTypesManager({ initialTypes }: { initialTypes: CaseTypeRow[]
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/operations" className="text-sm text-accent-teal hover:underline">
+          <Link href="/operations/cases" className="text-sm text-accent-teal hover:underline">
             ← Operations
           </Link>
           <h1 className="mt-2 text-2xl font-semibold text-text-primary">Case types</h1>

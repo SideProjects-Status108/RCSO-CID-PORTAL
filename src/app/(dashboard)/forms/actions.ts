@@ -96,7 +96,8 @@ export async function saveFormDraftAction(input: {
       .eq('id', input.submissionId)
 
     if (error) throw new Error(error.message)
-    revalidatePath('/forms')
+    revalidatePath('/operations/forms')
+  revalidatePath('/forms')
     return { id: input.submissionId }
   }
 
@@ -114,6 +115,7 @@ export async function saveFormDraftAction(input: {
     .single()
 
   if (error || !data) throw new Error(error?.message ?? 'Save failed')
+  revalidatePath('/operations/forms')
   revalidatePath('/forms')
   return { id: data.id as string }
 }
@@ -168,7 +170,8 @@ export async function submitFormAction(input: {
           session.profile.full_name?.trim() || session.user.email || 'A user',
       })
     }
-    revalidatePath('/forms')
+    revalidatePath('/operations/forms')
+  revalidatePath('/forms')
     return { id: input.submissionId }
   }
 
@@ -196,6 +199,7 @@ export async function submitFormAction(input: {
         session.profile.full_name?.trim() || session.user.email || 'A user',
     })
   }
+  revalidatePath('/operations/forms')
   revalidatePath('/forms')
   return { id: newId }
 }
@@ -238,6 +242,7 @@ export async function approveSubmissionAction(input: {
       approved: true,
     })
   }
+  revalidatePath('/operations/forms')
   revalidatePath('/forms')
 }
 
@@ -282,5 +287,6 @@ export async function rejectSubmissionAction(input: {
       approved: false,
     })
   }
+  revalidatePath('/operations/forms')
   revalidatePath('/forms')
 }
