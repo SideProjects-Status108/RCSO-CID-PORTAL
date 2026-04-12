@@ -18,6 +18,8 @@ export type CaseListRow = {
   status: 'active' | 'inactive' | 'closed'
   date_opened: string | null
   notes: string | null
+  latitude: number | null
+  longitude: number | null
   created_by: string
   updated_by: string | null
   created_at: string

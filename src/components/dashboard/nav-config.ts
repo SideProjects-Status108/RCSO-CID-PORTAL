@@ -37,7 +37,7 @@ export const dashboardNav: NavItem[] = [
   { label: 'Training', href: '/training', icon: GraduationCap },
   { label: 'Directory', href: '/directory', icon: Users },
   { label: 'TN Code', href: '/tn-code', icon: BookOpen },
-  { label: 'Settings', href: '/settings', icon: Settings, adminOnly: true },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ]
 
 export const routeTitles: Record<string, string> = {

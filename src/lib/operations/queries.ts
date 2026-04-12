@@ -68,6 +68,14 @@ function mapCaseRow(
     notes: r.notes != null ? String(r.notes) : null,
     created_by: String(r.created_by),
     updated_by: r.updated_by != null ? String(r.updated_by) : null,
+    latitude:
+      r.latitude != null && r.latitude !== ''
+        ? Number(r.latitude as number | string)
+        : null,
+    longitude:
+      r.longitude != null && r.longitude !== ''
+        ? Number(r.longitude as number | string)
+        : null,
     created_at: String(r.created_at ?? ''),
     updated_at: String(r.updated_at ?? ''),
     linked_forms_count: linked,

@@ -1,0 +1,21 @@
+'use client'
+
+import dynamic from 'next/dynamic'
+
+import type { FieldMapProps } from '@/components/map/field-map'
+
+const FieldMapLazy = dynamic(
+  () => import('@/components/map/field-map').then((m) => m.FieldMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center rounded-lg border border-border-subtle bg-bg-surface text-sm text-text-secondary">
+        Loading map…
+      </div>
+    ),
+  }
+)
+
+export function FieldMapDynamic(props: FieldMapProps) {
+  return <FieldMapLazy {...props} />
+}

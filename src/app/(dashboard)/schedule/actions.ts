@@ -7,6 +7,13 @@ import { getSessionUserWithProfile } from '@/lib/auth/get-session'
 import { hasRole, UserRole, type UserRoleValue } from '@/lib/auth/roles'
 import type { ScheduleEventType, ScheduleEventStatus } from '@/types/schedule'
 import { notifySchedulePublished } from '@/lib/notifications/insert-notifications'
+import {
+  createGCalEvent,
+  deleteGCalEvent,
+  shouldSyncScheduleEvent,
+  updateGCalEvent,
+} from '@/lib/gcal'
+import { fetchEventById } from '@/lib/schedule/queries'
 
 function assertCanEditSchedule(
   viewerRole: UserRoleValue,
@@ -32,6 +39,43 @@ function recurrenceToRrule(
   if (mode === 'weekly') return 'FREQ=WEEKLY'
   if (mode === 'custom' && custom?.trim()) return custom.trim()
   return null
+}
+
+async function syncScheduleEventToGoogle(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  eventId: string,
+  prior?: { gcal_event_id: string | null; assigned_to: string } | null
+) {
+  const full = await fetchEventById(eventId)
+  if (!full) return
+
+  if (
+    prior &&
+    prior.assigned_to !== full.assigned_to &&
+    prior.gcal_event_id
+  ) {
+    await deleteGCalEvent(prior.assigned_to, prior.gcal_event_id)
+  }
+
+  if (!shouldSyncScheduleEvent(full)) {
+    if (full.gcal_event_id) {
+      await deleteGCalEvent(full.assigned_to, full.gcal_event_id)
+      await supabase.from('schedule_events').update({ gcal_event_id: null }).eq('id', eventId)
+    }
+    return
+  }
+
+  if (full.gcal_event_id) {
+    const gid = await updateGCalEvent(full.assigned_to, full, full.gcal_event_id)
+    if (gid && gid !== full.gcal_event_id) {
+      await supabase.from('schedule_events').update({ gcal_event_id: gid }).eq('id', eventId)
+    }
+  } else {
+    const gid = await createGCalEvent(full.assigned_to, full)
+    if (gid) {
+      await supabase.from('schedule_events').update({ gcal_event_id: gid }).eq('id', eventId)
+    }
+  }
 }
 
 export type ScheduleEventInput = {
@@ -76,18 +120,26 @@ export async function saveScheduleEventAction(input: ScheduleEventInput) {
   }
 
   let priorStatus: string | null | undefined
+  let priorGcal: { gcal_event_id: string | null; assigned_to: string } | null = null
   if (input.id) {
     const { data: existing } = await supabase
       .from('schedule_events')
-      .select('status')
+      .select('status, gcal_event_id, assigned_to')
       .eq('id', input.id)
       .maybeSingle()
     priorStatus = existing?.status as string | undefined
+    priorGcal = existing
+      ? {
+          gcal_event_id: (existing.gcal_event_id as string | null) ?? null,
+          assigned_to: String(existing.assigned_to),
+        }
+      : null
     const { error } = await supabase
       .from('schedule_events')
       .update(row)
       .eq('id', input.id)
     if (error) throw new Error(error.message)
+    await syncScheduleEventToGoogle(supabase, input.id, priorGcal)
   } else {
     priorStatus = undefined
     const { data: inserted, error } = await supabase
@@ -107,6 +159,9 @@ export async function saveScheduleEventAction(input: ScheduleEventInput) {
         title: input.title,
         startIso: input.start_datetime,
       })
+    }
+    if (inserted?.id) {
+      await syncScheduleEventToGoogle(supabase, String(inserted.id), null)
     }
   }
 
@@ -133,7 +188,7 @@ export async function deleteScheduleEventAction(id: string) {
   const supabase = await createClient()
   const { data: existing, error: fe } = await supabase
     .from('schedule_events')
-    .select('event_type')
+    .select('event_type, gcal_event_id, assigned_to')
     .eq('id', id)
     .maybeSingle()
   if (fe || !existing?.event_type) throw new Error('Not found')
@@ -141,6 +196,11 @@ export async function deleteScheduleEventAction(id: string) {
     session.profile.role,
     existing.event_type as ScheduleEventType
   )
+  const gid = (existing.gcal_event_id as string | null) ?? null
+  const assignee = String(existing.assigned_to)
+  if (gid) {
+    await deleteGCalEvent(assignee, gid)
+  }
   const { error } = await supabase.from('schedule_events').delete().eq('id', id)
   if (error) throw new Error(error.message)
   revalidatePath('/schedule')

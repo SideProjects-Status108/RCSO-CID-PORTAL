@@ -7,6 +7,7 @@ import {
   ClipboardIcon,
   Loader2Icon,
   MenuIcon,
+  SendHorizontal,
   SparklesIcon,
   XIcon,
 } from 'lucide-react'
@@ -33,7 +34,7 @@ import {
 } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-type MainTab = 'browse' | 'search' | 'bookmarks' | 'recents'
+type MainTab = 'browse' | 'search' | 'ai-lookup' | 'bookmarks' | 'recents'
 
 function escapeHtml(s: string) {
   return s
@@ -101,7 +102,7 @@ export function TnCodeView({
 
   const [mainTab, setMainTab] = useState<MainTab>(() => {
     const t = searchParams.get('tab')
-    if (t === 'search' || t === 'bookmarks' || t === 'recents') return t
+    if (t === 'search' || t === 'bookmarks' || t === 'recents' || t === 'ai-lookup') return t
     return 'browse'
   })
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(
@@ -125,6 +126,14 @@ export function TnCodeView({
   const [lookupInput, setLookupInput] = useState('')
   const [lookupMessage, setLookupMessage] = useState<string | null>(null)
 
+  const [aiSummary, setAiSummary] = useState<string | null>(null)
+  const [aiSummaryLoading, setAiSummaryLoading] = useState(false)
+  const [aiQuestion, setAiQuestion] = useState('')
+  const [aiAnswer, setAiAnswer] = useState<string | null>(null)
+  const [aiCited, setAiCited] = useState<string[]>([])
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiHistory, setAiHistory] = useState<string[]>([])
+
   const treeRef = useRef<HTMLDivElement>(null)
 
   const syncUrl = useCallback(
@@ -137,6 +146,10 @@ export function TnCodeView({
     },
     [router]
   )
+
+  useEffect(() => {
+    setAiSummary(null)
+  }, [selectedSectionId])
 
   useEffect(() => {
     if (!selectedSectionId) {
@@ -315,6 +328,61 @@ export function TnCodeView({
     }
   }
 
+  const runAiSummary = async (regenerate: boolean) => {
+    if (!sectionDetail) return
+    setAiSummaryLoading(true)
+    try {
+      const res = await fetch('/api/tn-code/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sectionId: sectionDetail.id, regenerate }),
+      })
+      const j = (await res.json()) as { summary?: string; error?: string }
+      if (j.summary) setAiSummary(j.summary)
+    } finally {
+      setAiSummaryLoading(false)
+    }
+  }
+
+  const copyAiSummary = async () => {
+    if (!aiSummary) return
+    try {
+      await navigator.clipboard.writeText(aiSummary)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const submitAiLookup = async (q?: string) => {
+    const text = (q ?? aiQuestion).trim()
+    if (!text) return
+    setAiLoading(true)
+    setAiAnswer(null)
+    setAiCited([])
+    try {
+      const res = await fetch('/api/tn-code/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: text }),
+      })
+      const j = (await res.json()) as { answer?: string; cited_sections?: string[]; error?: string }
+      if (j.answer) {
+        setAiAnswer(j.answer)
+        setAiCited(j.cited_sections ?? [])
+        setAiHistory((h) => [text, ...h.filter((x) => x !== text)].slice(0, 5))
+        setAiQuestion('')
+      }
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const openCitedSection = async (sectionNumber: string) => {
+    const res = await fetch(`/api/tn-code/lookup?code=${encodeURIComponent(sectionNumber)}`)
+    const j = (await res.json()) as { section?: { id: string } | null }
+    if (j.section?.id) selectSection(j.section.id, 'browse')
+  }
+
   const treePanel = (
     <div
       ref={treeRef}
@@ -467,11 +535,14 @@ export function TnCodeView({
                 size="sm"
                 variant="outline"
                 className="border-border-subtle"
-                disabled
-                title="Coming in Phase 6"
+                disabled={aiSummaryLoading}
+                title="AI Summary"
+                onClick={() => void runAiSummary(false)}
               >
                 <SparklesIcon aria-hidden />
-                <span className="ml-1 hidden sm:inline">AI Summary</span>
+                <span className="ml-1 hidden sm:inline">
+                  {aiSummaryLoading ? 'Generating…' : 'AI Summary'}
+                </span>
               </Button>
             </div>
           </div>
@@ -483,6 +554,29 @@ export function TnCodeView({
               </p>
             ))}
           </div>
+          {aiSummary ? (
+            <div className="mx-auto mt-8 w-full max-w-[65ch] rounded-lg border border-border-subtle bg-bg-elevated p-4">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-accent-gold">
+                  <SparklesIcon className="size-4" aria-hidden />
+                  AI Summary
+                </h3>
+                <div className="flex gap-1">
+                  <Button type="button" size="xs" variant="outline" onClick={() => void runAiSummary(true)}>
+                    Regenerate
+                  </Button>
+                  <Button type="button" size="xs" variant="outline" onClick={() => void copyAiSummary()}>
+                    Copy summary
+                  </Button>
+                </div>
+              </div>
+              <div className="whitespace-pre-wrap text-sm leading-relaxed text-text-primary">{aiSummary}</div>
+              <p className="mt-3 text-xs text-text-disabled">
+                ⚠ This summary is generated by AI for reference only and does not constitute legal advice.
+                Always verify the current statute text and consult qualified legal counsel for legal matters.
+              </p>
+            </div>
+          ) : null}
           <p className="mx-auto mt-8 w-full max-w-[65ch] text-xs text-text-secondary">
             Source: Tennessee Code Annotated via Archive.org
           </p>
@@ -589,6 +683,72 @@ export function TnCodeView({
           Enter keywords and press Search to run full-text search across ingested sections.
         </p>
       )}
+    </div>
+  )
+
+  const aiLookupTab = (
+    <div className="space-y-4 p-4 md:p-6">
+      {aiHistory.length > 0 ? (
+        <div className="flex flex-wrap gap-1">
+          {aiHistory.map((h) => (
+            <button
+              key={h}
+              type="button"
+              className="rounded-full border border-border-subtle bg-bg-surface px-2 py-0.5 text-xs text-text-secondary hover:bg-bg-elevated/40"
+              onClick={() => void submitAiLookup(h)}
+            >
+              {h.length > 48 ? `${h.slice(0, 48)}…` : h}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      <form
+        className="flex flex-col gap-2 sm:flex-row"
+        onSubmit={(e) => {
+          e.preventDefault()
+          void submitAiLookup()
+        }}
+      >
+        <Input
+          placeholder="Ask a question about Tennessee law…"
+          value={aiQuestion}
+          onChange={(e) => setAiQuestion(e.target.value)}
+          className="flex-1"
+        />
+        <Button type="submit" variant="outline" className="shrink-0 gap-1 border-border-subtle">
+          <SendHorizontal className="size-4" aria-hidden />
+          Ask
+        </Button>
+      </form>
+      {aiLoading ? (
+        <p className="text-sm text-text-secondary">Searching statutes and generating response…</p>
+      ) : null}
+      {aiAnswer ? (
+        <div className="space-y-3 rounded-lg border border-border-subtle bg-bg-surface p-4">
+          <p className="text-sm font-semibold text-text-primary">This is not legal advice</p>
+          <div className="whitespace-pre-wrap text-sm leading-relaxed text-text-primary">{aiAnswer}</div>
+          <div>
+            <p className="mb-1 text-xs font-medium text-text-secondary">Cited sections</p>
+            <ul className="flex flex-wrap gap-2">
+              {aiCited.map((num) => (
+                <li key={num}>
+                  <button
+                    type="button"
+                    className="font-mono text-sm text-accent-gold underline"
+                    onClick={() => void openCitedSection(num)}
+                  >
+                    {num}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="text-xs text-text-disabled">
+            ⚠ This response is generated by AI for reference only and does not constitute legal advice.
+            Always verify the current statute text and consult qualified legal counsel for legal matters.
+          </p>
+        </div>
+      ) : null}
     </div>
   )
 
@@ -755,6 +915,7 @@ export function TnCodeView({
           <TabsList className="border border-border-subtle bg-bg-surface">
             <TabsTrigger value="browse">Browse</TabsTrigger>
             <TabsTrigger value="search">Search</TabsTrigger>
+            <TabsTrigger value="ai-lookup">AI Lookup</TabsTrigger>
             <TabsTrigger value="bookmarks">Bookmarks</TabsTrigger>
             <TabsTrigger value="recents">Recents</TabsTrigger>
           </TabsList>
@@ -765,6 +926,9 @@ export function TnCodeView({
         </TabsContent>
         <TabsContent value="search" className="mt-0 flex-1">
           {searchTab}
+        </TabsContent>
+        <TabsContent value="ai-lookup" className="mt-0 flex-1">
+          {aiLookupTab}
         </TabsContent>
         <TabsContent value="bookmarks" className="mt-0 flex-1">
           {bookmarksTab}
