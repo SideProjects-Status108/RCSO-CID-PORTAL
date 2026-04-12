@@ -225,13 +225,27 @@ export function FieldMap({
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
+    const container = containerRef.current
     mapboxgl.accessToken = mapboxToken
     mapboxgl.workerUrl = new URL(MAPBOX_WORKER_PATH, window.location.origin).href
     const map = new mapboxgl.Map({
-      container: containerRef.current,
+      container,
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [-86.5, 35.85],
       zoom: 8,
+    })
+    const safeResize = () => {
+      try {
+        map.resize()
+      } catch {
+        /* map torn down */
+      }
+    }
+    const ro = new ResizeObserver(() => safeResize())
+    ro.observe(container)
+    requestAnimationFrame(() => {
+      safeResize()
+      requestAnimationFrame(safeResize)
     })
     map.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
     const draw = new MapboxDraw({
@@ -242,6 +256,7 @@ export function FieldMap({
     drawRef.current = draw
 
     map.on('load', () => {
+      safeResize()
       map.addSource('cases-src', {
         type: 'geojson',
         data: caseData,
@@ -423,6 +438,7 @@ export function FieldMap({
 
     mapRef.current = map
     return () => {
+      ro.disconnect()
       map.remove()
       mapRef.current = null
     }
@@ -579,8 +595,8 @@ export function FieldMap({
   const swatches = ['#1E6FD9', '#2dd4bf', '#ef4444', '#94a3b8', '#64748b', '#e2e8f0']
 
   return (
-    <div className="relative flex min-h-[calc(100vh-8rem)] w-full flex-1 overflow-hidden rounded-lg border border-border-subtle bg-bg-app">
-      <div ref={containerRef} className="absolute inset-0" />
+    <div className="relative flex h-[calc(100dvh-12rem)] min-h-[22rem] w-full flex-col overflow-hidden rounded-lg border border-border-subtle bg-bg-app md:h-[calc(100dvh-13rem)]">
+      <div ref={containerRef} className="absolute inset-0 min-h-0 w-full" />
 
       <div className="pointer-events-none absolute left-2 top-14 z-10 flex flex-col gap-1 md:left-3">
         <div className="pointer-events-auto flex flex-col gap-1 rounded-lg border border-border-subtle bg-bg-surface/95 p-1 shadow-md backdrop-blur-sm">
