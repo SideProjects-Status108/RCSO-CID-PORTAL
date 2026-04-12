@@ -148,3 +148,14 @@
     @apply font-heading;
   }
 }
+
+/* Mapbox GL: root must fill the shell; universal `*` borders/outlines must not fight the map layer. */
+.mapboxgl-map,
+.mapboxgl-canvas-container {
+  width: 100%;
+  height: 100%;
+}
+
+.mapboxgl-canvas {
+  outline: none;
+}

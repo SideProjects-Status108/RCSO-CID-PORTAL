@@ -35,6 +35,11 @@ const MAPBOX_WORKER_PATH = '/mapbox-gl-csp-worker.js'
 const ACCENT = '#1E6FD9'
 const MAP_FONTS: [string, string] = ['DIN Offc Pro Medium', 'Arial Unicode MS Regular']
 
+function webgl2Available() {
+  const canvas = document.createElement('canvas')
+  return Boolean(canvas.getContext('webgl2'))
+}
+
 function caseColor(caseTypeId: string): string {
   let h = 0
   for (let i = 0; i < caseTypeId.length; i++) h = (h + caseTypeId.charCodeAt(i) * 13) % 360
@@ -181,6 +186,9 @@ export function FieldMap({
   const [polyOp, setPolyOp] = useState('')
   const [polyCaseId, setPolyCaseId] = useState('')
   const [savingPoly, setSavingPoly] = useState(false)
+  const [mapRenderError, setMapRenderError] = useState<string | null>(null)
+  const toolRef = useRef(tool)
+  toolRef.current = tool
 
   const filters = useMemo(
     () => ({
@@ -224,47 +232,77 @@ export function FieldMap({
   }, [applySources])
 
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return
     const container = containerRef.current
-    mapboxgl.accessToken = mapboxToken
-    mapboxgl.workerUrl = new URL(MAPBOX_WORKER_PATH, window.location.origin).href
-    const map = new mapboxgl.Map({
-      container,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [-86.5, 35.85],
-      zoom: 8,
-    })
+    if (!container) return
+
+    let disposed = false
+    let gaveUpWebgl = false
+    let map: mapboxgl.Map | null = null
+    let draw: MapboxDraw | null = null
+
     const safeResize = () => {
       try {
-        map.resize()
+        map?.resize()
       } catch {
         /* map torn down */
       }
     }
-    const ro = new ResizeObserver(() => safeResize())
-    ro.observe(container)
-    requestAnimationFrame(() => {
-      safeResize()
-      requestAnimationFrame(safeResize)
-    })
-    map.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
-    const draw = new MapboxDraw({
-      displayControlsDefault: false,
-      controls: { polygon: false, trash: false },
-    })
-    map.addControl(draw)
-    drawRef.current = draw
 
-    map.on('load', () => {
-      safeResize()
-      map.addSource('cases-src', {
+    const tryCreateMap = () => {
+      if (disposed || gaveUpWebgl || mapRef.current || map) return
+      if (container.clientWidth < 32 || container.clientHeight < 32) return
+
+      if (!webgl2Available()) {
+        gaveUpWebgl = true
+        setMapRenderError(
+          'Your browser cannot run WebGL 2, which Mapbox GL JS v3 requires. Try another browser or turn off strict privacy / GPU-saving modes.',
+        )
+        return
+      }
+
+      setMapRenderError(null)
+      mapboxgl.accessToken = mapboxToken
+      mapboxgl.workerUrl = new URL(MAPBOX_WORKER_PATH, window.location.origin).href
+
+      map = new mapboxgl.Map({
+        container,
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [-86.5, 35.85],
+        zoom: 8,
+      })
+      mapRef.current = map
+
+      map.on('error', (ev) => {
+        console.error('[field-map] map error', ev)
+        const err = (ev as { error?: { message?: string } }).error
+        setMapRenderError((prev) => prev ?? err?.message ?? 'Map failed to load.')
+      })
+
+      map.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
+      draw = new MapboxDraw({
+        displayControlsDefault: false,
+        controls: { polygon: false, trash: false },
+      })
+      map.addControl(draw)
+      drawRef.current = draw
+
+      requestAnimationFrame(() => {
+        safeResize()
+        requestAnimationFrame(safeResize)
+      })
+
+      map.on('load', () => {
+        if (!map) return
+        const m = map
+        safeResize()
+        m.addSource('cases-src', {
         type: 'geojson',
         data: caseData,
         cluster: true,
         clusterMaxZoom: 11,
         clusterRadius: 50,
       })
-      map.addLayer({
+      m.addLayer({
         id: 'cases-cluster',
         type: 'circle',
         source: 'cases-src',
@@ -275,7 +313,7 @@ export function FieldMap({
           'circle-radius': ['step', ['get', 'point_count'], 18, 10, 22, 50, 28],
         },
       })
-      map.addLayer({
+      m.addLayer({
         id: 'cases-cluster-count',
         type: 'symbol',
         source: 'cases-src',
@@ -288,7 +326,7 @@ export function FieldMap({
         },
         paint: { 'text-color': '#111' },
       })
-      map.addLayer({
+      m.addLayer({
         id: 'cases-pin',
         type: 'circle',
         source: 'cases-src',
@@ -302,11 +340,11 @@ export function FieldMap({
         },
       })
 
-      map.addSource('callouts-src', {
+      m.addSource('callouts-src', {
         type: 'geojson',
         data: callOutGeoJSON(callOuts),
       })
-      map.addLayer({
+      m.addLayer({
         id: 'callouts-pin',
         type: 'circle',
         source: 'callouts-src',
@@ -319,11 +357,11 @@ export function FieldMap({
         },
       })
 
-      map.addSource('polys-src', {
+      m.addSource('polys-src', {
         type: 'geojson',
         data: polygonFc(polygons),
       })
-      map.addLayer({
+      m.addLayer({
         id: 'polys-fill',
         type: 'fill',
         source: 'polys-src',
@@ -333,7 +371,7 @@ export function FieldMap({
           'fill-opacity': 0.15,
         },
       })
-      map.addLayer({
+      m.addLayer({
         id: 'polys-line',
         type: 'line',
         source: 'polys-src',
@@ -344,11 +382,11 @@ export function FieldMap({
         },
       })
 
-      map.addSource('zones-src', {
+      m.addSource('zones-src', {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] },
       })
-      map.addLayer({
+      m.addLayer({
         id: 'zones-fill',
         type: 'fill',
         source: 'zones-src',
@@ -358,7 +396,7 @@ export function FieldMap({
           'fill-opacity': 0.08,
         },
       })
-      map.addLayer({
+      m.addLayer({
         id: 'zones-line',
         type: 'line',
         source: 'zones-src',
@@ -369,7 +407,7 @@ export function FieldMap({
           'line-width': 1.5,
         },
       })
-      map.addLayer({
+      m.addLayer({
         id: 'zones-label',
         type: 'symbol',
         source: 'zones-src',
@@ -385,18 +423,18 @@ export function FieldMap({
         minzoom: 11,
       })
 
-      map.addSource('radius-src', {
+      m.addSource('radius-src', {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] },
       })
-      map.addLayer({
+      m.addLayer({
         id: 'radius-fill',
         type: 'fill',
         source: 'radius-src',
         layout: { visibility: 'visible' },
         paint: { 'fill-color': '#fff', 'fill-opacity': 0.06 },
       })
-      map.addLayer({
+      m.addLayer({
         id: 'radius-line',
         type: 'line',
         source: 'radius-src',
@@ -413,33 +451,44 @@ export function FieldMap({
         })
         .then((gj) => {
           if (gj && typeof gj === 'object' && (gj as { type?: string }).type === 'FeatureCollection') {
-            ;(map.getSource('zones-src') as mapboxgl.GeoJSONSource).setData(gj as never)
+            ;(m.getSource('zones-src') as mapboxgl.GeoJSONSource).setData(gj as never)
           } else {
             setZonesMissing(true)
           }
         })
         .catch(() => setZonesMissing(true))
-    })
+      })
 
-    map.on('draw.create', (e: mapboxgl.MapboxEvent & { features?: Feature[] }) => {
-      const f = e.features?.[0]
-      if (f?.geometry?.type === 'Polygon') {
-        setDrawModal(f as Feature<Polygon>)
-        draw.deleteAll()
-        setTool('none')
-      }
-    })
+      map.on('draw.create', (e: mapboxgl.MapboxEvent & { features?: Feature[] }) => {
+        const f = e.features?.[0]
+        if (f?.geometry?.type === 'Polygon') {
+          setDrawModal(f as Feature<Polygon>)
+          draw?.deleteAll()
+          setTool('none')
+        }
+      })
 
-    map.on('click', (e) => {
-      if (tool === 'radius') {
-        setRadiusCenter([e.lngLat.lng, e.lngLat.lat])
-      }
-    })
+      map.on('click', (e) => {
+        if (toolRef.current === 'radius') {
+          setRadiusCenter([e.lngLat.lng, e.lngLat.lat])
+        }
+      })
+    }
 
-    mapRef.current = map
+    const ro = new ResizeObserver(() => {
+      tryCreateMap()
+      safeResize()
+    })
+    ro.observe(container)
+    tryCreateMap()
+
     return () => {
+      disposed = true
       ro.disconnect()
-      map.remove()
+      drawRef.current = null
+      if (map) {
+        map.remove()
+      }
       mapRef.current = null
     }
   }, [mapboxToken])
@@ -595,8 +644,18 @@ export function FieldMap({
   const swatches = ['#1E6FD9', '#2dd4bf', '#ef4444', '#94a3b8', '#64748b', '#e2e8f0']
 
   return (
-    <div className="relative flex h-[calc(100dvh-12rem)] min-h-[22rem] w-full flex-col overflow-hidden rounded-lg border border-border-subtle bg-bg-app md:h-[calc(100dvh-13rem)]">
-      <div ref={containerRef} className="absolute inset-0 min-h-0 w-full" />
+    <div
+      className="relative isolate flex h-[calc(100dvh-12rem)] min-h-[22rem] w-full flex-col rounded-lg border border-border-subtle bg-bg-app md:h-[calc(100dvh-13rem)]"
+      style={{ transform: 'translateZ(0)' }}
+    >
+      <div ref={containerRef} className="absolute inset-0 z-0 min-h-0 w-full" />
+      {mapRenderError ? (
+        <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center p-6 text-center">
+          <p className="pointer-events-auto max-w-md rounded-lg border border-danger/40 bg-bg-surface/95 px-4 py-3 text-sm text-danger shadow-lg">
+            {mapRenderError}
+          </p>
+        </div>
+      ) : null}
 
       <div className="pointer-events-none absolute left-2 top-14 z-10 flex flex-col gap-1 md:left-3">
         <div className="pointer-events-auto flex flex-col gap-1 rounded-lg border border-border-subtle bg-bg-surface/95 p-1 shadow-md backdrop-blur-sm">
