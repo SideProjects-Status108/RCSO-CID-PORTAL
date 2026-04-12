@@ -97,7 +97,8 @@ export async function saveFormDraftAction(input: {
 
     if (error) throw new Error(error.message)
     revalidatePath('/operations/forms')
-  revalidatePath('/forms')
+    revalidatePath('/forms')
+    revalidatePath('/app/forms')
     return { id: input.submissionId }
   }
 
@@ -117,6 +118,7 @@ export async function saveFormDraftAction(input: {
   if (error || !data) throw new Error(error?.message ?? 'Save failed')
   revalidatePath('/operations/forms')
   revalidatePath('/forms')
+  revalidatePath('/app/forms')
   return { id: data.id as string }
 }
 
@@ -171,7 +173,8 @@ export async function submitFormAction(input: {
       })
     }
     revalidatePath('/operations/forms')
-  revalidatePath('/forms')
+    revalidatePath('/forms')
+    revalidatePath('/app/forms')
     return { id: input.submissionId }
   }
 
@@ -201,6 +204,7 @@ export async function submitFormAction(input: {
   }
   revalidatePath('/operations/forms')
   revalidatePath('/forms')
+  revalidatePath('/app/forms')
   return { id: newId }
 }
 

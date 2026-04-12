@@ -110,6 +110,23 @@ export async function fetchTemplateById(
   return t
 }
 
+/** Published template by exact display name (seed / admin-managed). */
+export async function fetchPublishedTemplateByName(
+  name: string
+): Promise<FormTemplateRow | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('form_templates')
+    .select('*')
+    .eq('name', name)
+    .eq('is_published', true)
+    .eq('is_archived', false)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return mapTemplate(data as Record<string, unknown>)
+}
+
 export type SubmissionListItem = FormSubmissionRow & {
   template_name: string | null
   case_number: string | null

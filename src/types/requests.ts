@@ -26,6 +26,8 @@ export type RequestRow = {
   address: string | null
   latitude: string | null
   longitude: string | null
+  /** Optional companion / integration payload (e.g. case number). */
+  metadata: Record<string, unknown> | null
   created_at: string
   acknowledged_at: string | null
   completed_at: string | null

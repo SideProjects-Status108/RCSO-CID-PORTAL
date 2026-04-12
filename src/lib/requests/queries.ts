@@ -3,7 +3,12 @@ import 'server-only'
 import { createClient } from '@/lib/supabase/server'
 import type { RequestRow, RequestStatus, RequestType, RequestUrgency } from '@/types/requests'
 
-function mapRequest(r: Record<string, unknown>): RequestRow {
+export function mapRequest(r: Record<string, unknown>): RequestRow {
+  const metaRaw = r.metadata
+  let metadata: Record<string, unknown> | null = null
+  if (metaRaw != null && typeof metaRaw === 'object' && !Array.isArray(metaRaw)) {
+    metadata = metaRaw as Record<string, unknown>
+  }
   return {
     id: String(r.id),
     request_type: r.request_type as RequestRow['request_type'],
@@ -16,6 +21,7 @@ function mapRequest(r: Record<string, unknown>): RequestRow {
     address: r.address != null ? String(r.address) : null,
     latitude: r.latitude != null ? String(r.latitude) : null,
     longitude: r.longitude != null ? String(r.longitude) : null,
+    metadata,
     created_at: String(r.created_at ?? ''),
     acknowledged_at: r.acknowledged_at != null ? String(r.acknowledged_at) : null,
     completed_at: r.completed_at != null ? String(r.completed_at) : null,

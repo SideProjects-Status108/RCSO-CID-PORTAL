@@ -9,6 +9,8 @@ export type BottomSheetProps = {
   onClose: () => void
   title?: string
   children: React.ReactNode
+  /** Sticky footer (e.g. primary action) */
+  footer?: React.ReactNode
   /** Extra class on the sliding panel */
   panelClassName?: string
 }
@@ -18,6 +20,7 @@ export function BottomSheet({
   onClose,
   title,
   children,
+  footer,
   panelClassName,
 }: BottomSheetProps) {
   useEffect(() => {
@@ -59,7 +62,12 @@ export function BottomSheet({
             </p>
           ) : null}
         </div>
-        <div className="p-4 pb-8">{children}</div>
+        <div className={cn('p-4', footer ? 'pb-2' : 'pb-8')}>{children}</div>
+        {footer ? (
+          <div className="sticky bottom-0 border-t border-border-subtle bg-bg-surface p-4 pt-2">
+            {footer}
+          </div>
+        ) : null}
       </div>
     </div>
   )
