@@ -126,7 +126,10 @@ export async function fetchTnBookmarksForUser(
   return data as unknown as TnBookmarkListItem[]
 }
 
-export async function fetchTnRecentsForUser(userId: string): Promise<TnRecentListItem[]> {
+export async function fetchTnRecentsForUser(
+  userId: string,
+  limit = 20
+): Promise<TnRecentListItem[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('tn_recents')
@@ -154,7 +157,7 @@ export async function fetchTnRecentsForUser(userId: string): Promise<TnRecentLis
     )
     .eq('user_id', userId)
     .order('viewed_at', { ascending: false })
-    .limit(20)
+    .limit(limit)
 
   if (error || !data) return []
   return data as unknown as TnRecentListItem[]

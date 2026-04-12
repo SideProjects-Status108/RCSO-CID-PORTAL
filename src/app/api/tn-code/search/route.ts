@@ -18,9 +18,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ results: [] as TnCodeSearchRpcRow[] })
   }
 
+  const rawLimit = Number.parseInt(url.searchParams.get('limit') ?? '20', 10)
+  const resultLimit = Number.isFinite(rawLimit)
+    ? Math.min(100, Math.max(1, rawLimit))
+    : 20
+
   const { data, error } = await supabase.rpc('tn_code_search_sections', {
     search_query: q,
-    result_limit: 50,
+    result_limit: resultLimit,
   })
 
   if (error) {

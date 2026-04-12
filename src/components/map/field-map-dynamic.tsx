@@ -9,7 +9,7 @@ const FieldMapLazy = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[calc(100dvh-12rem)] min-h-[22rem] items-center justify-center rounded-lg border border-border-subtle bg-bg-surface text-sm text-text-secondary md:h-[calc(100dvh-13rem)]">
+      <div className="flex min-h-[18rem] flex-1 items-center justify-center bg-bg-surface text-sm text-text-secondary md:min-h-[22rem]">
         Loading map…
       </div>
     ),

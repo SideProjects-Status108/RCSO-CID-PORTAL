@@ -31,4 +31,5 @@ export async function setTnBookmarkAction(sectionId: string, bookmarked: boolean
 
   revalidatePath('/tools/tca')
   revalidatePath('/tn-code')
+  revalidatePath('/app/tn-code')
 }

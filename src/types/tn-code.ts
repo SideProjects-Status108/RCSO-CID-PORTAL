@@ -68,6 +68,8 @@ export type TnCodeSearchRpcRow = {
   section_title: string
   section_text: string
   title_number: number
+  /** Present when DB function returns title display name (companion search breadcrumbs). */
+  title_name?: string
   chapter_number: string
   chapter_name: string
   rank: number

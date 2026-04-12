@@ -13,10 +13,14 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
+  Minus,
+  Plus,
+  Search,
   X,
 } from 'lucide-react'
 
 import { saveMapPolygonAction, deleteMapPolygonAction } from '@/app/(dashboard)/map/actions'
+import { geocodeAddress } from '@/lib/mapbox/geocode'
 import { cn } from '@/lib/utils'
 import type { CallOutMapMarker, CaseMapMarker, MapPolygonRow } from '@/types/map'
 import type { CaseTypeRow } from '@/types/operations'
@@ -144,6 +148,8 @@ export type FieldMapProps = {
   addressQuery?: string | null
   /** When set with `addressQuery`, shown in the geocoded location popup. */
   calloutOverlay?: FieldMapCalloutOverlay | null
+  /** Companion `/app/map`: minimal chrome, no draw/layers panel. */
+  companionMode?: boolean
 }
 
 export function FieldMap({
@@ -157,6 +163,7 @@ export function FieldMap({
   caseTypes,
   addressQuery,
   calloutOverlay,
+  companionMode = false,
 }: FieldMapProps) {
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const drawRef = useRef<MapboxDraw | null>(null)
@@ -170,6 +177,8 @@ export function FieldMap({
   const [layerZones, setLayerZones] = useState(false)
   const [zonesMissing, setZonesMissing] = useState(false)
   const [search, setSearch] = useState('')
+  const [companionSearchOpen, setCompanionSearchOpen] = useState(false)
+  const locateClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [polygons, setPolygons] = useState(initialPolygons)
   useEffect(() => {
     setPolygons(initialPolygons)
@@ -349,6 +358,45 @@ export function FieldMap({
   }, [applySources])
 
   useEffect(() => {
+    if (!companionMode) return
+    setLayerCases(false)
+    setLayerCallouts(false)
+    setLayerPolys(false)
+    setLayerZones(false)
+    setLayersOpen(false)
+    setTool('none')
+  }, [companionMode])
+
+  const locateUserCompanion = useCallback(() => {
+    if (!navigator.geolocation || !mapRef.current) return
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const map = mapRef.current
+        if (!map?.isStyleLoaded()) return
+        const { longitude, latitude, accuracy } = pos.coords
+        map.flyTo({ center: [longitude, latitude], zoom: 14 })
+        const src = map.getSource('user-locate-src') as mapboxgl.GeoJSONSource | undefined
+        if (src) {
+          const accKm = Math.max(accuracy ?? 40, 25) / 1000
+          const poly = circle([longitude, latitude], accKm, { steps: 64, units: 'kilometers' })
+          src.setData(poly as never)
+        }
+        if (locateClearTimerRef.current) clearTimeout(locateClearTimerRef.current)
+        locateClearTimerRef.current = setTimeout(() => {
+          const m = mapRef.current
+          const s = m?.getSource('user-locate-src') as mapboxgl.GeoJSONSource | undefined
+          if (s) {
+            s.setData({ type: 'FeatureCollection', features: [] } as never)
+          }
+          locateClearTimerRef.current = null
+        }, 90_000)
+      },
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 15_000, timeout: 20_000 }
+    )
+  }, [])
+
+  useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
@@ -395,13 +443,17 @@ export function FieldMap({
         setMapRenderError((prev) => prev ?? err?.message ?? 'Map failed to load.')
       })
 
-      map.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
-      draw = new MapboxDraw({
-        displayControlsDefault: false,
-        controls: { polygon: false, trash: false },
-      })
-      map.addControl(draw)
-      drawRef.current = draw
+      if (!companionMode) {
+        map.addControl(new mapboxgl.NavigationControl(), 'bottom-right')
+        draw = new MapboxDraw({
+          displayControlsDefault: false,
+          controls: { polygon: false, trash: false },
+        })
+        map.addControl(draw)
+        drawRef.current = draw
+      } else {
+        drawRef.current = null
+      }
 
       requestAnimationFrame(() => {
         safeResize()
@@ -559,6 +611,25 @@ export function FieldMap({
         paint: { 'line-color': '#fff', 'line-opacity': 0.4 },
       })
 
+      if (companionMode) {
+        m.addSource('user-locate-src', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] },
+        })
+        m.addLayer({
+          id: 'user-locate-fill',
+          type: 'fill',
+          source: 'user-locate-src',
+          paint: { 'fill-color': ACCENT, 'fill-opacity': 0.14 },
+        })
+        m.addLayer({
+          id: 'user-locate-line',
+          type: 'line',
+          source: 'user-locate-src',
+          paint: { 'line-color': ACCENT, 'line-width': 2, 'line-opacity': 0.85 },
+        })
+      }
+
       void fetch('/api/map/zones', { credentials: 'same-origin' })
         .then(async (r) => {
           if (!r.ok) return null
@@ -576,14 +647,16 @@ export function FieldMap({
         .catch(() => setZonesMissing(true))
       })
 
-      map.on('draw.create', (e: mapboxgl.MapboxEvent & { features?: Feature[] }) => {
-        const f = e.features?.[0]
-        if (f?.geometry?.type === 'Polygon') {
-          setDrawModal(f as Feature<Polygon>)
-          draw?.deleteAll()
-          setTool('none')
-        }
-      })
+      if (!companionMode) {
+        map.on('draw.create', (e: mapboxgl.MapboxEvent & { features?: Feature[] }) => {
+          const f = e.features?.[0]
+          if (f?.geometry?.type === 'Polygon') {
+            setDrawModal(f as Feature<Polygon>)
+            draw?.deleteAll()
+            setTool('none')
+          }
+        })
+      }
 
       map.on('click', (e) => {
         if (toolRef.current === 'radius') {
@@ -601,6 +674,10 @@ export function FieldMap({
 
     return () => {
       disposed = true
+      if (locateClearTimerRef.current) {
+        clearTimeout(locateClearTimerRef.current)
+        locateClearTimerRef.current = null
+      }
       ro.disconnect()
       searchPopupRef.current?.remove()
       searchPopupRef.current = null
@@ -610,7 +687,7 @@ export function FieldMap({
       }
       mapRef.current = null
     }
-  }, [mapboxToken, mapboxStyleUrl])
+  }, [mapboxToken, mapboxStyleUrl, companionMode])
 
   useEffect(() => {
     const map = mapRef.current
@@ -665,45 +742,23 @@ export function FieldMap({
 
   useEffect(() => {
     if (!addressQuery?.trim() || !mapRef.current) return
-    const q = encodeURIComponent(addressQuery)
-    void fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${q}.json?access_token=${mapboxToken}&limit=1`
-    )
-      .then((r) => r.json())
-      .then((j) => {
-        const ft = j?.features?.[0]
-        const map = mapRef.current
-        if (ft?.center && map) {
-          const [lng, lat] = ft.center as [number, number]
-          map.flyTo({ center: [lng, lat], zoom: 14 })
-          openGeocodeResultPopup(
-            map,
-            lng,
-            lat,
-            String(ft.place_name ?? 'Location'),
-            calloutOverlayRef.current
-          )
-        }
-      })
+    void geocodeAddress(addressQuery, mapboxToken).then((hit) => {
+      const map = mapRef.current
+      if (!hit || !map) return
+      map.flyTo({ center: [hit.lng, hit.lat], zoom: 14 })
+      openGeocodeResultPopup(map, hit.lng, hit.lat, hit.placeName, calloutOverlayRef.current)
+    })
   }, [addressQuery, mapboxToken, openGeocodeResultPopup])
 
   const runSearch = () => {
     const q = search.trim()
     if (!q || !mapRef.current) return
-    const enc = encodeURIComponent(q)
-    void fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${enc}.json?access_token=${mapboxToken}&limit=1`
-    )
-      .then((r) => r.json())
-      .then((j) => {
-        const ft = j?.features?.[0]
-        const mapNow = mapRef.current
-        if (ft?.center && mapNow) {
-          const [lng, lat] = ft.center as [number, number]
-          mapNow.flyTo({ center: [lng, lat], zoom: 15 })
-          openGeocodeResultPopup(mapNow, lng, lat, String(ft.place_name ?? ''), null)
-        }
-      })
+    void geocodeAddress(q, mapboxToken).then((hit) => {
+      const mapNow = mapRef.current
+      if (!hit || !mapNow) return
+      mapNow.flyTo({ center: [hit.lng, hit.lat], zoom: 15 })
+      openGeocodeResultPopup(mapNow, hit.lng, hit.lat, hit.placeName, null)
+    })
   }
 
   const snapshot = () => {
@@ -753,7 +808,12 @@ export function FieldMap({
 
   return (
     <div
-      className="relative isolate flex h-[calc(100dvh-12rem)] min-h-[22rem] w-full flex-col rounded-lg border border-border-subtle bg-bg-app md:h-[calc(100dvh-13rem)]"
+      className={cn(
+        'relative isolate flex w-full flex-col bg-bg-app',
+        companionMode
+          ? 'h-[calc(100dvh-7.5rem)] min-h-[18rem] rounded-none border-0 md:h-[calc(100dvh-7.5rem)]'
+          : 'h-[calc(100dvh-12rem)] min-h-[22rem] rounded-lg border border-border-subtle md:h-[calc(100dvh-13rem)]'
+      )}
       style={{ transform: 'translateZ(0)' }}
     >
       <div ref={containerRef} className="absolute inset-0 z-0 min-h-0 w-full" />
@@ -765,6 +825,7 @@ export function FieldMap({
         </div>
       ) : null}
 
+      {!companionMode ? (
       <div className="pointer-events-none absolute left-2 top-14 z-10 flex flex-col gap-1 md:left-3">
         <div className="pointer-events-auto flex flex-col gap-1 rounded-lg border border-border-subtle bg-bg-surface/95 p-1 shadow-md backdrop-blur-sm">
           <ToolBtn
@@ -797,7 +858,9 @@ export function FieldMap({
           ) : null}
         </div>
       </div>
+      ) : null}
 
+      {!companionMode ? (
       <div className="pointer-events-none absolute right-2 top-14 z-10 md:right-3">
         <div className="pointer-events-auto w-[min(100%,280px)] rounded-lg border border-border-subtle bg-bg-surface/95 p-3 shadow-md backdrop-blur-sm">
           <div className="mb-2 flex items-center justify-between gap-2">
@@ -930,7 +993,9 @@ export function FieldMap({
           ) : null}
         </div>
       </div>
+      ) : null}
 
+      {!companionMode ? (
       <form
         className="pointer-events-none absolute left-1/2 top-3 z-10 flex w-[min(96%,420px)] -translate-x-1/2 gap-2"
         onSubmit={(e) => {
@@ -948,8 +1013,85 @@ export function FieldMap({
           Go
         </Button>
       </form>
+      ) : null}
 
-      {drawModal ? (
+      {companionMode ? (
+        <>
+          <div className="pointer-events-none absolute left-2 top-2 z-10 flex max-w-[min(100%,calc(100%-5rem))] items-start gap-1">
+            {!companionSearchOpen ? (
+              <button
+                type="button"
+                title="Search address"
+                aria-label="Open address search"
+                onClick={() => setCompanionSearchOpen(true)}
+                className="pointer-events-auto flex size-12 items-center justify-center rounded-lg border border-border-subtle bg-bg-surface/95 text-text-primary shadow-md backdrop-blur-sm"
+              >
+                <Search className="size-5" />
+              </button>
+            ) : (
+              <form
+                className="pointer-events-auto flex w-[min(100%,280px)] gap-1 rounded-lg border border-border-subtle bg-bg-surface/95 p-1 shadow-md backdrop-blur-sm"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  runSearch()
+                  setCompanionSearchOpen(false)
+                }}
+              >
+                <Input
+                  className="h-12 min-h-12 flex-1 border-0 bg-transparent text-base shadow-none"
+                  placeholder="Address…"
+                  value={search}
+                  autoFocus
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                <Button type="submit" className="h-12 shrink-0 px-3">
+                  Go
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-12 shrink-0 px-2"
+                  onClick={() => setCompanionSearchOpen(false)}
+                  aria-label="Close search"
+                >
+                  <X className="size-4" />
+                </Button>
+              </form>
+            )}
+          </div>
+          <div className="pointer-events-none absolute right-2 top-2 z-10">
+            <button
+              type="button"
+              title="My location"
+              aria-label="My location"
+              onClick={() => locateUserCompanion()}
+              className="pointer-events-auto flex size-12 items-center justify-center rounded-lg border border-border-subtle bg-bg-surface/95 text-text-primary shadow-md backdrop-blur-sm"
+            >
+              <Locate className="size-6" />
+            </button>
+          </div>
+          <div className="pointer-events-none absolute bottom-20 right-2 z-10 flex flex-col gap-2">
+            <button
+              type="button"
+              className="pointer-events-auto flex size-12 items-center justify-center rounded-lg border border-border-subtle bg-bg-surface/95 text-text-primary shadow-md backdrop-blur-sm"
+              aria-label="Zoom in"
+              onClick={() => mapRef.current?.zoomIn({ duration: 200 })}
+            >
+              <Plus className="size-6" />
+            </button>
+            <button
+              type="button"
+              className="pointer-events-auto flex size-12 items-center justify-center rounded-lg border border-border-subtle bg-bg-surface/95 text-text-primary shadow-md backdrop-blur-sm"
+              aria-label="Zoom out"
+              onClick={() => mapRef.current?.zoomOut({ duration: 200 })}
+            >
+              <Minus className="size-6" />
+            </button>
+          </div>
+        </>
+      ) : null}
+
+      {!companionMode && drawModal ? (
         <Modal
           open
           title="Save drawn area"
