@@ -103,15 +103,24 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user) {
+    const rcsoRoleCookie = request.cookies.get('rcso-role')?.value ?? null
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .maybeSingle()
 
-    const role = profile?.role
-    if (role && isUserRole(role)) {
-      supabaseResponse.cookies.set('rcso-role', role, {
+    const dbRole = profile?.role
+    if (dbRole && isUserRole(dbRole)) {
+      const rcsoRoleOutOfSync =
+        rcsoRoleCookie == null ||
+        !isUserRole(rcsoRoleCookie) ||
+        rcsoRoleCookie !== dbRole
+      if (rcsoRoleOutOfSync && process.env.NODE_ENV === 'development') {
+        console.debug('[proxy] rcso-role out of sync with profiles.role; rewriting cookie')
+      }
+      // profiles.role wins: Set-Cookie always uses DB (fixes staleness + slides maxAge).
+      supabaseResponse.cookies.set('rcso-role', dbRole, {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
