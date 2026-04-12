@@ -88,7 +88,8 @@ export async function proxy(request: NextRequest) {
   if (!user && !isPublicPath(pathname)) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    url.searchParams.set('next', pathname)
+    const nextTarget = `${pathname}${request.nextUrl.search}`
+    url.searchParams.set('next', nextTarget)
     const redirectResponse = NextResponse.redirect(url)
     mergeCookies(supabaseResponse, redirectResponse)
     return redirectResponse
