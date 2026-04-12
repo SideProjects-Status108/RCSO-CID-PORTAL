@@ -3,7 +3,11 @@ import 'server-only'
 import { createClient } from '@/lib/supabase/server'
 import { getSessionUserWithProfile } from '@/lib/auth/get-session'
 import { hasRole, UserRole } from '@/lib/auth/roles'
-import { fetchCurrentOnCall } from '@/lib/schedule/queries'
+import {
+  countUpcomingPublishedEventsStartingWithinDays,
+  fetchCurrentOnCall,
+  fetchUpcomingPublishedEventsStartingWithinDays,
+} from '@/lib/schedule/queries'
 import { fetchPersonnelByUserIds } from '@/lib/directory/queries'
 import {
   countActiveCasesForUser,
@@ -15,7 +19,10 @@ import {
   fetchActivePairingForFto,
   fetchDitProgressForUser,
 } from '@/lib/training/queries'
+import { countSubmittedPendingForms } from '@/lib/forms/queries'
+import { fetchNotificationsForUser } from '@/lib/notifications/queries'
 import type { ScheduleEventRow } from '@/types/schedule'
+import type { NotificationRow } from '@/types/notifications'
 
 async function countOpenRequestsForSupervision(): Promise<number> {
   const supabase = await createClient()
@@ -52,46 +59,6 @@ async function fetchRecentForms(userId: string) {
       template_name: ft?.name ?? null,
     }
   })
-}
-
-async function fetchUnitWeekEvents(): Promise<ScheduleEventRow[]> {
-  const supabase = await createClient()
-  const start = new Date()
-  start.setHours(0, 0, 0, 0)
-  const end = new Date(start)
-  end.setDate(end.getDate() + 7)
-  const { data, error } = await supabase
-    .from('schedule_events')
-    .select('*')
-    .eq('status', 'published')
-    .gte('start_datetime', start.toISOString())
-    .lte('start_datetime', end.toISOString())
-    .order('start_datetime')
-    .limit(5)
-  if (error || !data) return []
-  return data
-    .map((r) => {
-      const et = r.event_type as ScheduleEventRow['event_type']
-      const st = r.status as ScheduleEventRow['status']
-      return {
-        id: r.id as string,
-        event_type: et,
-        title: String(r.title ?? ''),
-        assigned_to: String(r.assigned_to),
-        created_by: String(r.created_by),
-        start_datetime: String(r.start_datetime),
-        end_datetime: String(r.end_datetime),
-        is_all_day: Boolean(r.is_all_day),
-        is_recurring: Boolean(r.is_recurring),
-        recurrence_rule: (r.recurrence_rule as string | null) ?? null,
-        gcal_event_id: (r.gcal_event_id as string | null) ?? null,
-        notes: (r.notes as string | null) ?? null,
-        status: st,
-        created_at: String(r.created_at),
-        updated_at: String(r.updated_at),
-      }
-    })
-    .filter(Boolean) as ScheduleEventRow[]
 }
 
 export async function loadDashboardData() {
@@ -146,7 +113,19 @@ export async function loadDashboardData() {
       updated_at: String(r.updated_at),
     })) ?? []
 
-  const unitWeek = supervisionPlus ? await fetchUnitWeekEvents() : []
+  const pendingFormsCount = await countSubmittedPendingForms()
+  const upcomingEventsCount = await countUpcomingPublishedEventsStartingWithinDays(
+    role,
+    uid,
+    7
+  )
+  const upcomingEvents = await fetchUpcomingPublishedEventsStartingWithinDays(
+    role,
+    uid,
+    7,
+    5
+  )
+  const recentNotifications: NotificationRow[] = await fetchNotificationsForUser(uid, 10)
 
   const openRequestsCount = supervisionPlus
     ? await countOpenRequestsForSupervision()
@@ -165,13 +144,7 @@ export async function loadDashboardData() {
 
   const recentForms = await fetchRecentForms(uid)
 
-  const showActiveDitsWidget = hasRole(role, [
-    UserRole.admin,
-    UserRole.supervision_admin,
-    UserRole.supervision,
-    UserRole.fto_coordinator,
-  ])
-  const activeDitsCount = showActiveDitsWidget ? await countActiveDitRecords() : 0
+  const activeDitsCount = await countActiveDitRecords()
 
   let myDitForFto: { ditName: string; phase: number } | null = null
   if (role === UserRole.fto) {
@@ -200,7 +173,10 @@ export async function loadDashboardData() {
     currentOnCall,
     onCallPerson,
     myTodayEvents,
-    unitWeek,
+    pendingFormsCount,
+    upcomingEventsCount,
+    upcomingEvents,
+    recentNotifications,
     openRequestsCount,
     myOpenRequestsCount,
     activeCasesCount,

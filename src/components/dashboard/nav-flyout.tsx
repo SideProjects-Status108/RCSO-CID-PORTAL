@@ -20,6 +20,9 @@ type NavFlyoutProps = {
   /** Desktop: vertical offset from viewport top (px). */
   topPx: number
   placement: 'rail' | 'bottom'
+  /** Desktop hover: cancel delayed close when pointer enters panel. */
+  onPointerEnter?: () => void
+  onPointerLeave?: () => void
 }
 
 export function NavFlyout({
@@ -29,6 +32,8 @@ export function NavFlyout({
   pathname,
   topPx,
   placement,
+  onPointerEnter,
+  onPointerLeave,
 }: NavFlyoutProps) {
   if (!open || links.length === 0) return null
 
@@ -36,6 +41,8 @@ export function NavFlyout({
     <div
       role="navigation"
       aria-label={groupLabel}
+      onPointerEnter={onPointerEnter}
+      onPointerLeave={onPointerLeave}
       className={cn(
         'fixed z-[60] flex flex-col border-border-subtle bg-bg-elevated shadow-xl duration-150 animate-in fade-in',
         placement === 'rail' ? 'slide-in-from-left-2' : 'slide-in-from-bottom-2',

@@ -41,6 +41,17 @@ function mapSubmission(r: Record<string, unknown>): FormSubmissionRow {
   }
 }
 
+/** Submitted forms awaiting approval (org-wide). */
+export async function countSubmittedPendingForms(): Promise<number> {
+  const supabase = await createClient()
+  const { count, error } = await supabase
+    .from('form_submissions')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'submitted')
+  if (error) return 0
+  return count ?? 0
+}
+
 export async function fetchPublishedTemplates(): Promise<FormTemplateRow[]> {
   const supabase = await createClient()
   const { data, error } = await supabase

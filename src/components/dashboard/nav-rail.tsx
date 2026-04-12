@@ -59,6 +59,30 @@ export function NavRail({
   const [mdUp, setMdUp] = useState(true)
   const railRef = useRef<HTMLDivElement>(null)
   const iconRefs = useRef<Map<string, HTMLButtonElement | HTMLAnchorElement>>(new Map())
+  const flyoutOpenDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const flyoutCloseDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearFlyoutOpenDelay = () => {
+    if (flyoutOpenDelayRef.current != null) {
+      clearTimeout(flyoutOpenDelayRef.current)
+      flyoutOpenDelayRef.current = null
+    }
+  }
+
+  const clearFlyoutCloseDelay = () => {
+    if (flyoutCloseDelayRef.current != null) {
+      clearTimeout(flyoutCloseDelayRef.current)
+      flyoutCloseDelayRef.current = null
+    }
+  }
+
+  const scheduleFlyoutClose = () => {
+    clearFlyoutCloseDelay()
+    flyoutCloseDelayRef.current = setTimeout(() => {
+      setOpenFlyoutId(null)
+      flyoutCloseDelayRef.current = null
+    }, 200)
+  }
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)')
@@ -66,6 +90,19 @@ export function NavRail({
     onChange()
     mq.addEventListener('change', onChange)
     return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (flyoutOpenDelayRef.current != null) {
+        clearTimeout(flyoutOpenDelayRef.current)
+        flyoutOpenDelayRef.current = null
+      }
+      if (flyoutCloseDelayRef.current != null) {
+        clearTimeout(flyoutCloseDelayRef.current)
+        flyoutCloseDelayRef.current = null
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -100,9 +137,32 @@ export function NavRail({
   }
 
   const toggleFlyout = (group: NavRailGroup & { kind: 'flyout' }, el: HTMLButtonElement) => {
+    clearFlyoutOpenDelay()
+    clearFlyoutCloseDelay()
     const r = el.getBoundingClientRect()
     setFlyoutTopPx(r.top)
     setOpenFlyoutId((prev) => (prev === group.id ? null : group.id))
+  }
+
+  const onDesktopFlyoutRailPointerEnter = (
+    group: NavRailGroup & { kind: 'flyout' },
+    el: HTMLButtonElement
+  ) => {
+    if (!mdUp) return
+    clearFlyoutCloseDelay()
+    clearFlyoutOpenDelay()
+    const r = el.getBoundingClientRect()
+    setFlyoutTopPx(r.top)
+    flyoutOpenDelayRef.current = setTimeout(() => {
+      setOpenFlyoutId(group.id)
+      flyoutOpenDelayRef.current = null
+    }, 110)
+  }
+
+  const onDesktopFlyoutRailPointerLeave = () => {
+    if (!mdUp) return
+    clearFlyoutOpenDelay()
+    scheduleFlyoutClose()
   }
 
   const openFlyoutGroup = groups.find((g) => g.id === openFlyoutId && g.kind === 'flyout') as
@@ -165,6 +225,8 @@ export function NavRail({
         ref={(el) => {
           if (el) setIconRef(group.id, el)
         }}
+        onPointerEnter={(e) => onDesktopFlyoutRailPointerEnter(group, e.currentTarget)}
+        onPointerLeave={onDesktopFlyoutRailPointerLeave}
         onClick={(e) => toggleFlyout(group, e.currentTarget)}
         className={cn(baseBtn, activeCls, flyoutOpen && 'bg-bg-elevated/50')}
       >
@@ -257,6 +319,15 @@ export function NavRail({
           pathname={pathname}
           topPx={flyoutTopPx}
           placement={mdUp ? 'rail' : 'bottom'}
+          onPointerEnter={
+            mdUp
+              ? () => {
+                  clearFlyoutOpenDelay()
+                  clearFlyoutCloseDelay()
+                }
+              : undefined
+          }
+          onPointerLeave={mdUp ? scheduleFlyoutClose : undefined}
         />
       </div>
     ) : null

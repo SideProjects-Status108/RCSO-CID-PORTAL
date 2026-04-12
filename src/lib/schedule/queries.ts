@@ -97,6 +97,101 @@ export async function fetchScheduleEventsInRange(
     .sort((a, b) => a.start_datetime.localeCompare(b.start_datetime))
 }
 
+const SUPERVISION_SCHEDULE_ROLES: UserRoleValue[] = [
+  UserRole.admin,
+  UserRole.supervision_admin,
+  UserRole.supervision,
+]
+
+/**
+ * Published events whose start time falls between now and now + `days`,
+ * with the same visibility rules as the main schedule (supervision sees all;
+ * others see assigned events plus on-call blocks unless DIT).
+ */
+export async function fetchUpcomingPublishedEventsStartingWithinDays(
+  viewerRole: UserRoleValue,
+  userId: string,
+  days: number,
+  limit: number
+): Promise<ScheduleEventRow[]> {
+  const supabase = await createClient()
+  const nowIso = new Date().toISOString()
+  const horizon = new Date()
+  horizon.setDate(horizon.getDate() + days)
+  const horizonIso = horizon.toISOString()
+
+  const supervision = hasRole(viewerRole, SUPERVISION_SCHEDULE_ROLES)
+
+  if (supervision) {
+    const { data, error } = await supabase
+      .from('schedule_events')
+      .select('*')
+      .eq('status', 'published')
+      .gte('start_datetime', nowIso)
+      .lte('start_datetime', horizonIso)
+      .order('start_datetime', { ascending: true })
+      .limit(limit)
+    if (error || !data) return []
+    return data
+      .map((r) => mapEvent(r as Record<string, unknown>))
+      .filter((r): r is ScheduleEventRow => r !== null)
+  }
+
+  const dit = viewerRole === UserRole.dit
+  const { data: own, error: e1 } = await supabase
+    .from('schedule_events')
+    .select('*')
+    .eq('status', 'published')
+    .eq('assigned_to', userId)
+    .gte('start_datetime', nowIso)
+    .lte('start_datetime', horizonIso)
+    .order('start_datetime', { ascending: true })
+
+  if (e1) return []
+
+  if (dit) {
+    return (own ?? [])
+      .map((r) => mapEvent(r as Record<string, unknown>))
+      .filter((r): r is ScheduleEventRow => r !== null)
+      .slice(0, limit)
+  }
+
+  const { data: oncall, error: e2 } = await supabase
+    .from('schedule_events')
+    .select('*')
+    .eq('status', 'published')
+    .eq('event_type', 'on_call')
+    .gte('start_datetime', nowIso)
+    .lte('start_datetime', horizonIso)
+    .order('start_datetime', { ascending: true })
+
+  if (e2) return []
+
+  const byId = new Map<string, Record<string, unknown>>()
+  for (const r of [...(own ?? []), ...(oncall ?? [])]) {
+    byId.set(r.id as string, r as Record<string, unknown>)
+  }
+  return [...byId.values()]
+    .map((r) => mapEvent(r))
+    .filter((r): r is ScheduleEventRow => r !== null)
+    .sort((a, b) => a.start_datetime.localeCompare(b.start_datetime))
+    .slice(0, limit)
+}
+
+export async function countUpcomingPublishedEventsStartingWithinDays(
+  viewerRole: UserRoleValue,
+  userId: string,
+  days: number
+): Promise<number> {
+  const events = await fetchUpcomingPublishedEventsStartingWithinDays(
+    viewerRole,
+    userId,
+    days,
+    500
+  )
+  return events.length
+}
+
 export async function fetchMyScheduleUpcoming(
   days: number
 ): Promise<ScheduleEventRow[]> {
