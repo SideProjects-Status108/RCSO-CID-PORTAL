@@ -171,6 +171,9 @@ FROM (
 JOIN public.tn_titles t ON t.title_number = m.title_number
 WHERE c.title_id = t.id AND c.chapter_number = m.chapter_number;
 
+-- Changing RETURNS TABLE columns requires drop first (42P13 if omitted).
+DROP FUNCTION IF EXISTS public.tn_code_search_sections(text, integer);
+
 CREATE OR REPLACE FUNCTION public.tn_code_search_sections(
   search_query text,
   result_limit integer DEFAULT 50
