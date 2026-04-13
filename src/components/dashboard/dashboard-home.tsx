@@ -7,9 +7,12 @@ import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { EventTypeBadge } from '@/components/app/event-type-badge'
 import { DashboardActivityFeed } from '@/components/dashboard/dashboard-activity-feed'
+import { DashboardCompanionPhoneLink } from '@/components/dashboard/dashboard-companion-phone-link'
 
 type DashboardHomeProps = {
   data: DashboardData
+  /** Absolute URL to companion schedule; only passed for admin / supervision roles. */
+  companionPhoneUrl?: string
 }
 
 function StatCard({
@@ -83,7 +86,7 @@ function QuickActionCard({
   )
 }
 
-export function DashboardHome({ data }: DashboardHomeProps) {
+export function DashboardHome({ data, companionPhoneUrl }: DashboardHomeProps) {
   const {
     role,
     supervisionPlus,
@@ -112,6 +115,8 @@ export function DashboardHome({ data }: DashboardHomeProps) {
           At-a-glance command view: workload, activity, schedule, and shortcuts.
         </p>
       </div>
+
+      {companionPhoneUrl ? <DashboardCompanionPhoneLink url={companionPhoneUrl} /> : null}
 
       <section aria-label="Key metrics">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
