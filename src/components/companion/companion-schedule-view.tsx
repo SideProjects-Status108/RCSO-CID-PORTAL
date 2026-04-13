@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Phone } from 'lucide-react'
+import { CalendarDays, Phone } from 'lucide-react'
 
 import { CompanionCard } from '@/components/companion/companion-card'
 import { CompanionEventTypeBadge } from '@/components/companion/event-type-badge'
@@ -107,7 +107,7 @@ export function CompanionScheduleView({
           type="button"
           onClick={() => setTab('my')}
           className={cn(
-            'min-h-10 flex-1 rounded-md text-sm font-medium transition-colors',
+            'min-h-10 flex-1 rounded-md font-heading text-sm font-medium tracking-wide transition-colors',
             tab === 'my' ? 'bg-bg-elevated text-accent-gold' : 'text-text-secondary'
           )}
         >
@@ -117,7 +117,7 @@ export function CompanionScheduleView({
           type="button"
           onClick={() => setTab('oncall')}
           className={cn(
-            'min-h-10 flex-1 rounded-md text-sm font-medium transition-colors',
+            'min-h-10 flex-1 rounded-md font-heading text-sm font-medium tracking-wide transition-colors',
             tab === 'oncall' ? 'bg-bg-elevated text-accent-gold' : 'text-text-secondary'
           )}
         >
@@ -140,7 +140,7 @@ export function CompanionScheduleView({
       {tab === 'my' ? (
         <>
           <div>
-            <p className="font-mono text-xl font-semibold tracking-tight text-accent-gold">
+            <p className="font-heading text-xl font-semibold tabular-nums tracking-tight text-accent-gold">
               {longDateHeader(today)}
             </p>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
@@ -149,8 +149,12 @@ export function CompanionScheduleView({
           </div>
 
           {todayEvents.length === 0 ? (
-            <CompanionCard>
-              <p className="text-sm text-text-secondary">No events scheduled today</p>
+            <CompanionCard className="flex flex-col items-center gap-2 py-8 text-center">
+              <CalendarDays className="size-10 text-accent-primary" strokeWidth={1.5} aria-hidden />
+              <p className="font-heading text-sm font-semibold text-text-primary">No events today</p>
+              <p className="font-sans text-xs text-text-secondary">
+                You have nothing on the schedule for this date.
+              </p>
             </CompanionCard>
           ) : (
             <ul className="space-y-2">
@@ -161,7 +165,7 @@ export function CompanionScheduleView({
                       <CompanionEventTypeBadge type={e.event_type} />
                       <span className="font-medium text-text-primary">{e.title}</span>
                     </div>
-                    <p className="font-mono text-xs text-accent-gold">{formatEventTime(e)}</p>
+                    <p className="font-heading text-xs tabular-nums text-accent-gold">{formatEventTime(e)}</p>
                     {e.notes?.trim() ? (
                       <p className="line-clamp-1 text-xs text-text-secondary">{e.notes.trim()}</p>
                     ) : null}
@@ -194,7 +198,7 @@ export function CompanionScheduleView({
                               <CompanionEventTypeBadge type={e.event_type} />
                               <span className="font-medium text-text-primary">{e.title}</span>
                             </div>
-                            <p className="font-mono text-xs text-accent-gold">{formatEventTime(e)}</p>
+                            <p className="font-heading text-xs tabular-nums text-accent-gold">{formatEventTime(e)}</p>
                             {e.notes?.trim() ? (
                               <p className="line-clamp-1 text-xs text-text-secondary">
                                 {e.notes.trim()}
@@ -272,10 +276,10 @@ function OnCallBoard({
             </p>
           </CompanionCard>
         ) : (
-          <CompanionCard>
-            <p className="text-sm text-text-secondary">
-              No on-call scheduled. Contact supervision.
-            </p>
+          <CompanionCard className="flex flex-col items-center gap-2 py-8 text-center">
+            <CalendarDays className="size-10 text-accent-primary" strokeWidth={1.5} aria-hidden />
+            <p className="font-heading text-sm font-semibold text-text-primary">No on-call scheduled</p>
+            <p className="font-sans text-xs text-text-secondary">Contact supervision if you need coverage.</p>
           </CompanionCard>
         )}
       </section>
@@ -285,8 +289,10 @@ function OnCallBoard({
           Upcoming on call
         </p>
         {upcomingOnCall.length === 0 ? (
-          <CompanionCard>
-            <p className="text-sm text-text-secondary">No upcoming on-call blocks.</p>
+          <CompanionCard className="flex flex-col items-center gap-2 py-8 text-center">
+            <CalendarDays className="size-10 text-accent-primary" strokeWidth={1.5} aria-hidden />
+            <p className="font-heading text-sm font-semibold text-text-primary">No upcoming on-call</p>
+            <p className="font-sans text-xs text-text-secondary">Blocks will appear here when published.</p>
           </CompanionCard>
         ) : (
           <ul className="space-y-2">
@@ -295,7 +301,7 @@ function OnCallBoard({
               return (
                 <li key={e.id}>
                   <CompanionCard className="flex flex-col gap-2">
-                    <p className="font-mono text-xs text-accent-gold">
+                    <p className="font-heading text-xs tabular-nums text-accent-gold">
                       {new Date(e.start_datetime).toLocaleString(undefined, {
                         weekday: 'short',
                         month: 'short',

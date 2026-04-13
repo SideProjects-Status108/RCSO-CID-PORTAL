@@ -32,6 +32,15 @@ export function BottomSheet({
     }
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
   return (
     <div
       className={cn(
@@ -48,13 +57,13 @@ export function BottomSheet({
       />
       <div
         className={cn(
-          'relative max-h-[min(85dvh,560px)] w-full overflow-y-auto rounded-t-xl border-t border-border-subtle bg-bg-surface shadow-2xl transition-transform duration-200 ease-out',
+          'relative flex max-h-[min(85dvh,560px)] w-full flex-col rounded-t-xl border-t border-border-subtle bg-bg-surface shadow-2xl transition-transform duration-200 ease-out',
           open ? 'translate-y-0' : 'translate-y-full',
           panelClassName
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 flex flex-col items-center border-b border-border-subtle bg-bg-surface px-4 pb-2 pt-2">
+        <div className="sticky top-0 z-10 flex shrink-0 flex-col items-center border-b border-border-subtle bg-bg-surface px-4 pb-2 pt-2">
           <div className="mb-2 h-1 w-10 rounded-full bg-border-subtle" aria-hidden />
           {title ? (
             <p className="w-full text-center font-heading text-xs font-semibold uppercase tracking-wide text-text-secondary">
@@ -62,7 +71,14 @@ export function BottomSheet({
             </p>
           ) : null}
         </div>
-        <div className={cn('p-4', footer ? 'pb-2' : 'pb-8')}>{children}</div>
+        <div
+          className={cn(
+            'min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-4',
+            footer ? 'pb-2' : 'pb-8'
+          )}
+        >
+          {children}
+        </div>
         {footer ? (
           <div className="sticky bottom-0 border-t border-border-subtle bg-bg-surface p-4 pt-2">
             {footer}

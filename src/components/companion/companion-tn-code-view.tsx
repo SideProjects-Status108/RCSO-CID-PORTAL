@@ -3,11 +3,22 @@
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bookmark, ChevronDown, ChevronUp, Loader2, Search, Trash2 } from 'lucide-react'
+import {
+  Bookmark,
+  ChevronDown,
+  ChevronUp,
+  History,
+  Loader2,
+  RefreshCw,
+  Search,
+  Trash2,
+} from 'lucide-react'
 
 import { BottomSheet } from '@/components/companion/bottom-sheet'
+import { CompanionCard } from '@/components/companion/companion-card'
 import { setTnBookmarkAction } from '@/app/(dashboard)/tn-code/actions'
 import type { TnBookmarkListItem, TnCodeSearchRpcRow, TnRecentListItem } from '@/types/tn-code'
+import { hapticSuccess } from '@/lib/haptic'
 import { cn } from '@/lib/utils'
 
 type ApiSectionDetail = {
@@ -86,6 +97,8 @@ export function CompanionTnCodeView({
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [searchLoading, setSearchLoading] = useState(false)
   const [searchResults, setSearchResults] = useState<TnCodeSearchRpcRow[]>([])
+  const [searchFetchError, setSearchFetchError] = useState(false)
+  const [searchRetryToken, setSearchRetryToken] = useState(0)
 
   const [bookmarkIds, setBookmarkIds] = useState<Set<string>>(
     () => new Set(initialBookmarkSectionIds)
@@ -107,14 +120,25 @@ export function CompanionTnCodeView({
     if (tab !== 'search') return
     if (!debouncedQuery) {
       setSearchResults([])
+      setSearchFetchError(false)
       return
     }
     let cancelled = false
     setSearchLoading(true)
+    setSearchFetchError(false)
     void fetch(`/api/tn-code/search?q=${encodeURIComponent(debouncedQuery)}&limit=20`)
-      .then(async (r) => r.json())
-      .then((j: { results?: TnCodeSearchRpcRow[] }) => {
+      .then(async (r) => {
+        if (!r.ok) throw new Error('bad status')
+        return r.json() as Promise<{ results?: TnCodeSearchRpcRow[] }>
+      })
+      .then((j) => {
         if (!cancelled) setSearchResults(j.results ?? [])
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSearchFetchError(true)
+          setSearchResults([])
+        }
       })
       .finally(() => {
         if (!cancelled) setSearchLoading(false)
@@ -122,7 +146,7 @@ export function CompanionTnCodeView({
     return () => {
       cancelled = true
     }
-  }, [debouncedQuery, tab])
+  }, [debouncedQuery, tab, searchRetryToken])
 
   useEffect(() => {
     if (tab === 'search') {
@@ -165,6 +189,7 @@ export function CompanionTnCodeView({
     const next = !bookmarked
     try {
       await setTnBookmarkAction(openSectionId, next)
+      hapticSuccess()
       setBookmarkIds((prev) => {
         const n = new Set(prev)
         if (next) n.add(openSectionId)
@@ -232,10 +257,12 @@ export function CompanionTnCodeView({
   }) => (
     <div className="flex gap-2 rounded-lg border border-border-subtle bg-bg-surface p-3">
       <button type="button" className="min-w-0 flex-1 text-left" onClick={onOpen}>
-        <p className="font-mono text-sm font-semibold text-accent-primary">{section_number}</p>
-        <p className="mt-0.5 text-sm font-medium text-text-primary">{section_title}</p>
-        {snippet ? <p className="mt-1 text-xs text-text-secondary">{snippet}</p> : null}
-        <p className="mt-1 text-[11px] text-text-disabled">{crumb}</p>
+        <p className="font-heading text-sm font-semibold tabular-nums text-accent-primary">
+          {section_number}
+        </p>
+        <p className="mt-0.5 font-sans text-sm font-medium text-text-primary">{section_title}</p>
+        {snippet ? <p className="mt-1 font-sans text-xs text-text-secondary">{snippet}</p> : null}
+        <p className="mt-1 font-sans text-[11px] text-text-disabled">{crumb}</p>
       </button>
       {trailing}
     </div>
@@ -251,17 +278,23 @@ export function CompanionTnCodeView({
       </h1>
 
       <div className="mt-3 flex rounded-md border border-border-subtle bg-bg-elevated p-0.5 text-sm font-medium">
-        {(['search', 'bookmarks', 'recents'] as const).map((k) => (
+        {(
+          [
+            { id: 'search' as const, label: 'Search' },
+            { id: 'bookmarks' as const, label: 'Bookmarks' },
+            { id: 'recents' as const, label: 'Recents' },
+          ] as const
+        ).map(({ id, label }) => (
           <button
-            key={k}
+            key={id}
             type="button"
             className={cn(
-              'min-h-10 flex-1 rounded-sm px-1 capitalize transition-colors',
-              tab === k ? 'bg-bg-surface text-text-primary shadow-sm' : 'text-text-secondary'
+              'min-h-10 flex-1 rounded-sm px-1 font-heading text-xs font-semibold uppercase tracking-wide transition-colors',
+              tab === id ? 'bg-bg-surface text-text-primary shadow-sm' : 'text-text-secondary'
             )}
-            onClick={() => setTab(k)}
+            onClick={() => setTab(id)}
           >
-            {k}
+            {label}
           </button>
         ))}
       </div>
@@ -280,12 +313,37 @@ export function CompanionTnCodeView({
             />
           </div>
           {searchLoading ? (
-            <p className="flex items-center gap-2 text-sm text-text-secondary">
+            <p className="flex items-center gap-2 font-sans text-sm text-text-secondary">
               <Loader2 className="size-4 animate-spin" aria-hidden />
               Searching…
             </p>
+          ) : searchFetchError && debouncedQuery ? (
+            <CompanionCard
+              role="button"
+              tabIndex={0}
+              className="flex cursor-pointer items-center gap-3"
+              onClick={() => setSearchRetryToken((n) => n + 1)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setSearchRetryToken((n) => n + 1)
+                }
+              }}
+            >
+              <RefreshCw className="size-6 shrink-0 text-accent-primary" strokeWidth={1.75} />
+              <div>
+                <p className="font-heading text-sm font-semibold text-text-primary">Something went wrong</p>
+                <p className="mt-0.5 font-sans text-xs text-text-secondary">Tap to retry</p>
+              </div>
+            </CompanionCard>
           ) : debouncedQuery && searchResults.length === 0 ? (
-            <p className="text-sm text-text-secondary">No results for &quot;{debouncedQuery}&quot;</p>
+            <CompanionCard className="flex flex-col items-center gap-2 py-8 text-center">
+              <Search className="size-10 text-text-disabled" strokeWidth={1.5} aria-hidden />
+              <p className="font-heading text-sm font-semibold text-text-primary">No results</p>
+              <p className="font-sans text-xs text-text-secondary">
+                No sections matched &quot;{debouncedQuery}&quot;. Try different keywords.
+              </p>
+            </CompanionCard>
           ) : (
             <ul className="space-y-2">
               {searchResults.map((r) => (
@@ -308,9 +366,13 @@ export function CompanionTnCodeView({
       {tab === 'bookmarks' ? (
         <div className="mt-4 space-y-2">
           {bookmarkRows.length === 0 ? (
-            <p className="text-sm text-text-secondary">
-              No bookmarks yet — search for a section and tap the bookmark icon
-            </p>
+            <CompanionCard className="flex flex-col items-center gap-2 py-10 text-center">
+              <Bookmark className="size-10 text-accent-primary" strokeWidth={1.5} aria-hidden />
+              <p className="font-heading text-sm font-semibold text-text-primary">No bookmarks yet</p>
+              <p className="font-sans text-xs text-text-secondary">
+                Search for a section and tap the bookmark icon to save it here.
+              </p>
+            </CompanionCard>
           ) : (
             bookmarkRows.map((row) => (
               <ResultCard
@@ -340,7 +402,13 @@ export function CompanionTnCodeView({
       {tab === 'recents' ? (
         <div className="mt-4 space-y-2">
           {recentRows.length === 0 ? (
-            <p className="text-sm text-text-secondary">No recent sections yet.</p>
+            <CompanionCard className="flex flex-col items-center gap-2 py-10 text-center">
+              <History className="size-10 text-accent-primary" strokeWidth={1.5} aria-hidden />
+              <p className="font-heading text-sm font-semibold text-text-primary">No recent sections</p>
+              <p className="font-sans text-xs text-text-secondary">
+                Opened sections are saved here automatically for quick return.
+              </p>
+            </CompanionCard>
           ) : (
             recentRows.map((row) => (
               <ResultCard
@@ -387,10 +455,10 @@ export function CompanionTnCodeView({
       >
         <div className="mb-2 flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="font-mono text-xl font-semibold text-accent-primary">
+            <p className="font-heading text-xl font-semibold tabular-nums text-accent-primary">
               {sectionDetail?.section_number ?? (sectionLoading ? '…' : '')}
             </p>
-            <p className="text-xs text-text-disabled">
+            <p className="font-sans text-xs text-text-disabled">
               {sectionDetail ? breadcrumbFromSection(sectionDetail) : ''}
             </p>
           </div>
@@ -407,10 +475,10 @@ export function CompanionTnCodeView({
           </button>
         </div>
         {sectionLoading ? (
-          <p className="text-sm text-text-secondary">Loading…</p>
+          <p className="font-sans text-sm text-text-secondary">Loading…</p>
         ) : sectionDetail ? (
           <>
-            <p className="text-sm font-semibold text-text-primary">{sectionDetail.section_title}</p>
+            <p className="font-sans text-sm font-semibold text-text-primary">{sectionDetail.section_title}</p>
             <div
               className="mt-3 max-h-[min(50dvh,420px)] overflow-y-auto text-[15px] leading-relaxed text-text-primary"
               style={{ fontFamily: 'var(--font-poppins), system-ui, sans-serif' }}

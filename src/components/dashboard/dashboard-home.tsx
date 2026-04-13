@@ -114,7 +114,7 @@ export function DashboardHome({ data }: DashboardHomeProps) {
       </div>
 
       <section aria-label="Key metrics">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <StatCard href="/operations/cases" value={activeCasesCount} label="Open cases" />
           <StatCard
             href="/operations/forms"

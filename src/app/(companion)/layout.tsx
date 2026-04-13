@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 
 import { CompanionShell } from '@/components/companion/companion-shell'
 import { getSessionUserWithProfile } from '@/lib/auth/get-session'
+import { fetchActiveCallOutCount } from '@/lib/companion/callout-queries'
 
 export default async function CompanionLayout({
   children,
@@ -13,5 +14,7 @@ export default async function CompanionLayout({
     redirect('/login?next=/app/schedule')
   }
 
-  return <CompanionShell>{children}</CompanionShell>
+  const callOutBadgeCount = await fetchActiveCallOutCount(session.user.id)
+
+  return <CompanionShell callOutBadgeCount={callOutBadgeCount}>{children}</CompanionShell>
 }

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { Mail, MessageSquare, Phone, X } from 'lucide-react'
+import { Mail, MessageSquare, Phone, Users, X } from 'lucide-react'
 
 import { BottomSheet } from '@/components/companion/bottom-sheet'
 import { CompanionCard } from '@/components/companion/companion-card'
@@ -120,63 +120,77 @@ export function CompanionDirectoryView({
         ))}
       </div>
 
-      <ul className="space-y-2">
-        {filtered.map((row) => (
-          <li key={row.id}>
-            <CompanionCard
-              className="flex cursor-pointer gap-3 p-3"
-              onClick={() => setSelected(row)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  setSelected(row)
-                }
-              }}
-              role="button"
-              tabIndex={0}
-            >
-              <Avatar photoUrl={row.photo_url} name={row.full_name} />
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-text-primary">{row.full_name}</p>
-                <p className="text-xs capitalize text-text-secondary">
-                  {roleDisplay(row)}
-                  {row.unit ? ` · ${row.unit}` : ''}
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-1">
-                {row.phone_cell ? (
-                  <>
-                    <a
-                      href={telHref(row.phone_cell) ?? undefined}
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex size-11 items-center justify-center rounded-lg border border-border-subtle text-accent-gold hover:bg-bg-elevated"
-                      aria-label="Call cell"
-                    >
-                      <Phone className="size-4" strokeWidth={1.75} />
-                    </a>
-                    <a
-                      href={smsHref(row.phone_cell) ?? undefined}
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex size-11 items-center justify-center rounded-lg border border-border-subtle text-accent-teal hover:bg-bg-elevated"
-                      aria-label="Text cell"
-                    >
-                      <MessageSquare className="size-4" strokeWidth={1.75} />
-                    </a>
-                  </>
-                ) : (
-                  <span className="flex size-11 items-center justify-center text-text-disabled" title="No cell">
-                    <Phone className="size-4 opacity-40" strokeWidth={1.75} />
-                  </span>
-                )}
-              </div>
-            </CompanionCard>
-          </li>
-        ))}
-      </ul>
-
-      {filtered.length === 0 ? (
-        <p className="text-center text-sm text-text-secondary">No matching personnel.</p>
-      ) : null}
+      {initialRows.length === 0 ? (
+        <CompanionCard className="flex flex-col items-center gap-2 py-10 text-center">
+          <Users className="size-10 text-accent-primary" strokeWidth={1.5} aria-hidden />
+          <p className="font-heading text-sm font-semibold text-text-primary">Directory is empty</p>
+          <p className="font-sans text-xs text-text-secondary">
+            No active personnel records are available for your access level.
+          </p>
+        </CompanionCard>
+      ) : filtered.length === 0 ? (
+        <CompanionCard className="flex flex-col items-center gap-2 py-10 text-center">
+          <Users className="size-10 text-text-disabled" strokeWidth={1.5} aria-hidden />
+          <p className="font-heading text-sm font-semibold text-text-primary">No results</p>
+          <p className="font-sans text-xs text-text-secondary">
+            Try a different search or filter — no one matches those criteria.
+          </p>
+        </CompanionCard>
+      ) : (
+        <ul className="space-y-2">
+          {filtered.map((row) => (
+            <li key={row.id}>
+              <CompanionCard
+                className="flex cursor-pointer gap-3 p-3"
+                onClick={() => setSelected(row)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    setSelected(row)
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                <Avatar photoUrl={row.photo_url} name={row.full_name} />
+                <div className="min-w-0 flex-1">
+                  <p className="font-sans font-medium text-text-primary">{row.full_name}</p>
+                  <p className="font-sans text-xs capitalize text-text-secondary">
+                    {roleDisplay(row)}
+                    {row.unit ? ` · ${row.unit}` : ''}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  {row.phone_cell ? (
+                    <>
+                      <a
+                        href={telHref(row.phone_cell) ?? undefined}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex size-11 items-center justify-center rounded-lg border border-border-subtle text-accent-gold hover:bg-bg-elevated"
+                        aria-label="Call cell"
+                      >
+                        <Phone className="size-4" strokeWidth={1.75} />
+                      </a>
+                      <a
+                        href={smsHref(row.phone_cell) ?? undefined}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex size-11 items-center justify-center rounded-lg border border-border-subtle text-accent-teal hover:bg-bg-elevated"
+                        aria-label="Text cell"
+                      >
+                        <MessageSquare className="size-4" strokeWidth={1.75} />
+                      </a>
+                    </>
+                  ) : (
+                    <span className="flex size-11 items-center justify-center text-text-disabled" title="No cell">
+                      <Phone className="size-4 opacity-40" strokeWidth={1.75} />
+                    </span>
+                  )}
+                </div>
+              </CompanionCard>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <BottomSheet
         open={Boolean(selected)}

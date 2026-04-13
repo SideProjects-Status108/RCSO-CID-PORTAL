@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useMemo, useRef, useState, startTransition } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react'
+import { Menu, X } from 'lucide-react'
 
 import { signOut } from '@/app/actions/auth'
 import { hasRole, UserRole } from '@/lib/auth/roles'
@@ -57,6 +58,11 @@ export function NavRail({
   const [openFlyoutId, setOpenFlyoutId] = useState<string | null>(null)
   const [flyoutTopPx, setFlyoutTopPx] = useState(64)
   const [mdUp, setMdUp] = useState(true)
+  const [mobileFullNavOpen, setMobileFullNavOpen] = useState(false)
+  const closeMobileNav = useCallback(() => {
+    setMobileFullNavOpen(false)
+    setOpenFlyoutId(null)
+  }, [])
   const railRef = useRef<HTMLDivElement>(null)
   const iconRefs = useRef<Map<string, HTMLButtonElement | HTMLAnchorElement>>(new Map())
   const flyoutOpenDelayRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -104,6 +110,24 @@ export function NavRail({
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (!mobileFullNavOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [mobileFullNavOpen])
+
+  useEffect(() => {
+    if (!mobileFullNavOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeMobileNav()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [mobileFullNavOpen, closeMobileNav])
 
   useEffect(() => {
     if (!openFlyoutId) return
@@ -345,88 +369,146 @@ export function NavRail({
       </div>
       {mdUp ? flyoutPanel : null}
 
-      {/* Mobile bottom bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t border-border-subtle bg-bg-surface px-1 md:hidden">
-        {groups.map((g) => (
-          <div key={g.id} className="flex shrink-0 justify-center">
-            {g.kind === 'direct' ? (
-              <Link
-                href={g.href}
-                onClick={() => setOpenFlyoutId(null)}
-                className={cn(
-                  'flex size-12 items-center justify-center rounded-lg text-text-secondary transition-colors',
-                  currentGroupId === g.id && 'bg-accent-primary-muted/35 text-accent-primary'
-                )}
-                title={g.label}
-              >
-                <g.icon className="size-5" strokeWidth={1.75} aria-hidden />
-                <span className="sr-only">{g.label}</span>
-              </Link>
-            ) : (
-              <button
+      <button
+        type="button"
+        className={cn(
+          buttonVariants({ variant: 'ghost', size: 'icon' }),
+          'fixed left-3 top-3 z-50 flex size-11 shrink-0 rounded-lg border border-border-subtle bg-bg-surface/95 text-text-primary shadow-sm backdrop-blur-sm md:hidden'
+        )}
+        aria-label="Open navigation menu"
+        onClick={() => setMobileFullNavOpen(true)}
+      >
+        <Menu className="size-6" strokeWidth={1.75} />
+      </button>
+
+      {mobileFullNavOpen ? (
+        <div className="fixed inset-0 z-[60] md:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/50"
+            aria-label="Close menu"
+            onClick={closeMobileNav}
+          />
+          <div
+            className="absolute inset-4 flex flex-col overflow-hidden rounded-xl border border-border-subtle bg-bg-surface shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex h-14 shrink-0 items-center justify-between border-b border-border-subtle px-4">
+              <span className="font-heading text-sm font-semibold tracking-wide text-text-primary">
+                Menu
+              </span>
+              <Button
                 type="button"
-                title={g.label}
-                aria-expanded={openFlyoutId === g.id}
-                onClick={(e) => toggleFlyout(g, e.currentTarget)}
-                className={cn(
-                  'flex size-12 items-center justify-center rounded-lg text-text-secondary transition-colors',
-                  currentGroupId === g.id && 'text-accent-primary',
-                  openFlyoutId === g.id && 'bg-bg-elevated/50'
-                )}
+                variant="ghost"
+                size="icon"
+                className="size-11 shrink-0"
+                aria-label="Close menu"
+                onClick={closeMobileNav}
               >
-                <g.icon className="size-5" strokeWidth={1.75} aria-hidden />
-                <span className="sr-only">{g.label}</span>
-              </button>
-            )}
-          </div>
-        ))}
-        <NotificationBell
-          initialUnread={initialUnreadNotifications}
-          triggerClassName="size-12 rounded-lg text-text-secondary hover:text-accent-primary"
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className={cn(
-              buttonVariants({ variant: 'ghost', size: 'icon' }),
-              'size-12 rounded-lg text-text-secondary'
-            )}
-            aria-label="Account menu"
-          >
-            <Avatar className="size-8 border border-border-subtle">
-              <AvatarFallback className="bg-bg-elevated text-xs text-text-primary">
-                {initials(profile.full_name)}
-              </AvatarFallback>
-            </Avatar>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            side="top"
-            className="w-56 border-border-subtle bg-bg-elevated text-text-primary"
-          >
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col gap-0.5">
-                <span className="truncate font-medium">{profile.full_name || email || 'User'}</span>
-                <span className="truncate text-xs text-text-secondary capitalize">
-                  {profile.role.replaceAll('_', ' ')}
-                </span>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-border-subtle" />
-            <div className="p-1">
-              <form action={signOut}>
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  className="w-full justify-start text-text-primary hover:bg-bg-app hover:text-text-primary"
-                >
-                  Log out
-                </Button>
-              </form>
+                <X className="size-6" strokeWidth={1.75} />
+              </Button>
             </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      {!mdUp ? flyoutPanel : null}
+            <nav
+              className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4"
+              aria-label="Primary mobile"
+            >
+              <div className="space-y-6">
+                {groups.map((g) => (
+                  <div key={g.id}>
+                    <p className="mb-2 font-heading text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
+                      {g.label}
+                    </p>
+                    {g.kind === 'direct' ? (
+                      <Link
+                        href={g.href}
+                        onClick={closeMobileNav}
+                        className={cn(
+                          'flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium text-text-primary hover:bg-bg-elevated',
+                          currentGroupId === g.id && 'bg-accent-primary-muted/25 text-accent-primary'
+                        )}
+                      >
+                        {g.label}
+                      </Link>
+                    ) : (
+                      <ul className="space-y-1">
+                        {g.children.map((c) => (
+                          <li key={c.href}>
+                            <Link
+                              href={c.href}
+                              onClick={closeMobileNav}
+                              className={cn(
+                                'flex min-h-11 items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated',
+                                (pathname === c.href || pathname.startsWith(`${c.href}/`)) &&
+                                  'bg-accent-primary-muted/20 text-accent-primary'
+                              )}
+                            >
+                              <span>{c.label}</span>
+                              {c.showRequestsBadge && requestsInboxCount > 0 ? (
+                                <span className="rounded-full bg-danger px-2 py-0.5 text-[10px] font-semibold text-white">
+                                  {requestsInboxCount}
+                                </span>
+                              ) : null}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </nav>
+            <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border-subtle px-4 py-3">
+              <NotificationBell
+                initialUnread={initialUnreadNotifications}
+                triggerClassName="size-11 rounded-lg border border-border-subtle text-text-secondary hover:text-accent-primary"
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className={cn(
+                    buttonVariants({ variant: 'ghost', size: 'icon' }),
+                    'size-11 rounded-lg border border-border-subtle text-text-secondary'
+                  )}
+                  aria-label="Account menu"
+                >
+                  <Avatar className="size-8 border border-border-subtle">
+                    <AvatarFallback className="bg-bg-elevated text-xs text-text-primary">
+                      {initials(profile.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  side="top"
+                  className="w-56 border-border-subtle bg-bg-elevated text-text-primary"
+                >
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="truncate font-medium">
+                        {profile.full_name || email || 'User'}
+                      </span>
+                      <span className="truncate text-xs text-text-secondary capitalize">
+                        {profile.role.replaceAll('_', ' ')}
+                      </span>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-border-subtle" />
+                  <div className="p-1">
+                    <form action={signOut}>
+                      <Button
+                        type="submit"
+                        variant="ghost"
+                        className="w-full justify-start text-text-primary hover:bg-bg-app hover:text-text-primary"
+                      >
+                        Log out
+                      </Button>
+                    </form>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   )
 }

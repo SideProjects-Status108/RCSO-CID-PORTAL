@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useLayoutEffect, useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
@@ -34,6 +34,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { EventTypeBadge } from '@/components/app/event-type-badge'
 import { StatusStamp } from '@/components/app/status-stamp'
 import { cn } from '@/lib/utils'
+import { useMediaQuery } from '@/lib/use-media-query'
 
 const ScheduleCalendar = dynamic(
   () =>
@@ -102,16 +103,16 @@ type ScheduleViewProps = {
 export function ScheduleView({ data }: ScheduleViewProps) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
-  const [calView, setCalView] = useState<
-    'dayGridMonth' | 'timeGridWeek' | 'listWeek'
-  >('dayGridMonth')
+  const narrowCalendar = useMediaQuery('(max-width: 639px)')
+  const [calView, setCalView] = useState<'dayGridMonth' | 'timeGridWeek' | 'listWeek'>(
+    'dayGridMonth'
+  )
 
-  useLayoutEffect(() => {
-    if (typeof window === 'undefined') return
-    if (window.matchMedia('(max-width: 639px)').matches) {
-      setCalView('listWeek')
+  useEffect(() => {
+    if (narrowCalendar) {
+      setCalView((v) => (v === 'dayGridMonth' ? 'listWeek' : v))
     }
-  }, [])
+  }, [narrowCalendar])
   const [typeFilters, setTypeFilters] = useState<Record<ScheduleEventType, boolean>>(
     () =>
       Object.fromEntries(eventTypes.map((t) => [t, true])) as Record<

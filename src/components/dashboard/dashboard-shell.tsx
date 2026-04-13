@@ -33,9 +33,9 @@ export function DashboardShell({
         requestsInboxCount={requestsInboxCount}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col pb-16 pl-0 md:pb-0 md:pl-16">
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center border-b border-border-subtle bg-bg-app/95 px-4 backdrop-blur-sm md:px-6">
-          <h1 className="truncate font-heading text-lg font-medium tracking-wide text-text-primary">
+      <div className="flex min-w-0 flex-1 flex-col pl-0 md:pl-16">
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border-subtle bg-bg-app/95 pl-14 pr-4 backdrop-blur-sm md:pl-6">
+          <h1 className="min-w-0 flex-1 truncate font-heading text-lg font-medium tracking-wide text-text-primary">
             {pageTitle}
           </h1>
         </header>

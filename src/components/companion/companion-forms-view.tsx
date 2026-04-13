@@ -6,10 +6,12 @@ import {
   ClipboardList,
   FileQuestion,
   GraduationCap,
+  RefreshCw,
   Search as SearchIcon,
 } from 'lucide-react'
 
 import { BottomSheet } from '@/components/companion/bottom-sheet'
+import { CompanionCard } from '@/components/companion/companion-card'
 import { CompanionFlash } from '@/components/companion/companion-flash'
 import { DetectiveActivityFormSheet } from '@/components/companion/forms/DetectiveActivityFormSheet'
 import { DITObservationFormSheet } from '@/components/companion/forms/DITObservationFormSheet'
@@ -22,6 +24,7 @@ import { submissionStatusForStamp } from '@/lib/forms/submission-status-display'
 import type { CompanionFormSubmissionListItem } from '@/lib/companion/forms-queries'
 import type { PersonnelDirectoryRow } from '@/types/personnel'
 import type { SubmissionDetail } from '@/lib/forms/queries'
+import { hapticSuccess } from '@/lib/haptic'
 import { cn } from '@/lib/utils'
 
 type SheetKey =
@@ -60,13 +63,16 @@ export function CompanionFormsView({
   const [flash, setFlash] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState(false)
   const [detail, setDetail] = useState<SubmissionDetail | null>(null)
+  const [detailRetryId, setDetailRetryId] = useState<string | null>(null)
 
   const refresh = useCallback(() => {
     startNav(() => router.refresh())
   }, [router])
 
   const onSubmitted = useCallback(() => {
+    hapticSuccess()
     setFlash({ tone: 'success', text: 'Submitted successfully.' })
     setTab('mine')
     refresh()
@@ -116,10 +122,21 @@ export function CompanionFormsView({
   async function openSubmissionRow(id: string) {
     setDetailOpen(true)
     setDetailLoading(true)
+    setDetailError(false)
+    setDetailRetryId(id)
     setDetail(null)
     try {
       const d = await getSubmissionDetailAction(id)
-      setDetail(d)
+      if (!d) {
+        setDetailError(true)
+        setDetail(null)
+      } else {
+        setDetail(d)
+        setDetailError(false)
+      }
+    } catch {
+      setDetailError(true)
+      setDetail(null)
     } finally {
       setDetailLoading(false)
     }
@@ -141,7 +158,7 @@ export function CompanionFormsView({
         <button
           type="button"
           className={cn(
-            'min-h-10 flex-1 rounded-sm px-2 transition-colors',
+            'min-h-10 flex-1 rounded-sm px-2 font-heading text-sm font-medium tracking-wide transition-colors',
             tab === 'submit' ? 'bg-bg-surface text-text-primary shadow-sm' : 'text-text-secondary'
           )}
           onClick={() => setTab('submit')}
@@ -151,7 +168,7 @@ export function CompanionFormsView({
         <button
           type="button"
           className={cn(
-            'min-h-10 flex-1 rounded-sm px-2 transition-colors',
+            'min-h-10 flex-1 rounded-sm px-2 font-heading text-sm font-medium tracking-wide transition-colors',
             tab === 'mine' ? 'bg-bg-surface text-text-primary shadow-sm' : 'text-text-secondary'
           )}
           onClick={() => setTab('mine')}
@@ -178,7 +195,13 @@ export function CompanionFormsView({
       ) : (
         <ul className="mt-4 space-y-2">
           {initialSubmissions.length === 0 ? (
-            <p className="text-sm text-text-secondary">No submissions yet.</p>
+            <CompanionCard className="flex flex-col items-center gap-2 py-10 text-center">
+              <ClipboardList className="size-10 text-accent-primary" strokeWidth={1.5} aria-hidden />
+              <p className="font-heading text-sm font-semibold text-text-primary">No submissions yet</p>
+              <p className="font-sans text-xs text-text-secondary">
+                Use the Submit tab to send a form — it will appear here with status updates.
+              </p>
+            </CompanionCard>
           ) : (
             initialSubmissions.map((s) => {
               const st = submissionStatusForStamp(s.status)
@@ -243,14 +266,37 @@ export function CompanionFormsView({
         onClose={() => {
           setDetailOpen(false)
           setDetail(null)
+          setDetailError(false)
+          setDetailRetryId(null)
         }}
         title={detail?.template.name ?? 'Submission'}
         panelClassName="max-h-[min(90dvh,720px)]"
       >
         {detailLoading ? (
-          <p className="text-sm text-text-secondary">Loading…</p>
+          <p className="font-sans text-sm text-text-secondary">Loading…</p>
+        ) : detailError ? (
+          <CompanionCard
+            role="button"
+            tabIndex={0}
+            className="flex cursor-pointer items-center gap-3"
+            onClick={() => {
+              if (detailRetryId) void openSubmissionRow(detailRetryId)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                if (detailRetryId) void openSubmissionRow(detailRetryId)
+              }
+            }}
+          >
+            <RefreshCw className="size-6 shrink-0 text-accent-primary" strokeWidth={1.75} />
+            <div>
+              <p className="font-heading text-sm font-semibold text-text-primary">Something went wrong</p>
+              <p className="mt-0.5 font-sans text-xs text-text-secondary">Tap to retry</p>
+            </div>
+          </CompanionCard>
         ) : detail ? (
-          <div className="space-y-4 text-sm">
+          <div className="space-y-4 font-sans text-sm">
             <div className="flex flex-wrap gap-2 text-xs text-text-secondary">
               <span>Status: {detail.submission.status}</span>
               {detail.case_number ? <span>Case: {detail.case_number}</span> : null}
@@ -261,7 +307,7 @@ export function CompanionFormsView({
             />
           </div>
         ) : (
-          <p className="text-sm text-text-secondary">Could not load this submission.</p>
+          <p className="font-sans text-sm text-text-secondary">Could not load this submission.</p>
         )}
       </BottomSheet>
     </div>

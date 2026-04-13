@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Bell } from 'lucide-react'
 import { useMemo, useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -15,6 +16,7 @@ import { createCallOutAction } from '@/app/(companion)/app/callout/actions'
 import { callOutAddress, callOutCaseNumber } from '@/lib/companion/callout-utils'
 import { formatRelativeTime } from '@/lib/companion/format-relative'
 import type { RequestRow } from '@/types/requests'
+import { hapticSuccess } from '@/lib/haptic'
 import { cn } from '@/lib/utils'
 
 const formSchema = z.object({
@@ -87,6 +89,7 @@ export function CompanionCalloutView({
           caseNumber: values.caseNumber?.trim() || undefined,
           notes: values.notes?.trim() || undefined,
         })
+        hapticSuccess()
         setPostSuccess({ address: values.address.trim() })
         setFlash({ tone: 'success', text: 'Call-out created.' })
         reset({ address: '', caseNumber: '', notes: '' })
@@ -123,7 +126,7 @@ export function CompanionCalloutView({
         </h2>
         <form className="space-y-3" onSubmit={onSubmit} noValidate>
           <div>
-            <label className="text-xs font-medium text-text-secondary" htmlFor="co-address">
+            <label className="font-sans text-xs font-medium text-text-secondary" htmlFor="co-address">
               Address
             </label>
             <input
@@ -141,7 +144,7 @@ export function CompanionCalloutView({
             ) : null}
           </div>
           <div>
-            <label className="text-xs font-medium text-text-secondary" htmlFor="co-case">
+            <label className="font-sans text-xs font-medium text-text-secondary" htmlFor="co-case">
               Case number (optional)
             </label>
             <input
@@ -154,7 +157,7 @@ export function CompanionCalloutView({
             ) : null}
           </div>
           <div>
-            <label className="text-xs font-medium text-text-secondary" htmlFor="co-notes">
+            <label className="font-sans text-xs font-medium text-text-secondary" htmlFor="co-notes">
               Notes (optional)
             </label>
             <textarea
@@ -210,7 +213,13 @@ export function CompanionCalloutView({
           Active call-outs
         </h2>
         {activeSorted.length === 0 ? (
-          <p className="text-sm text-text-secondary">No active call-outs</p>
+          <CompanionCard className="flex flex-col items-center gap-2 py-8 text-center">
+            <Bell className="size-10 text-accent-primary" strokeWidth={1.5} aria-hidden />
+            <p className="font-heading text-sm font-semibold text-text-primary">No active call-outs</p>
+            <p className="font-sans text-xs text-text-secondary">
+              When you or your team post an urgent call-out, it will show here.
+            </p>
+          </CompanionCard>
         ) : (
           <ul className="space-y-3">
             {activeSorted.map((r) => {
@@ -260,7 +269,11 @@ export function CompanionCalloutView({
         {recentOpen ? (
           <ul className="mt-3 space-y-3">
             {initialRecent.length === 0 ? (
-              <p className="text-sm text-text-secondary">No recent call-outs</p>
+              <CompanionCard className="flex flex-col items-center gap-2 py-6 text-center">
+                <Bell className="size-8 text-text-disabled" strokeWidth={1.5} aria-hidden />
+                <p className="font-heading text-sm font-semibold text-text-primary">No recent call-outs</p>
+                <p className="font-sans text-xs text-text-secondary">Resolved entries appear here after you create one.</p>
+              </CompanionCard>
             ) : (
               initialRecent.map((r) => {
                 const addr = callOutAddress(r)
