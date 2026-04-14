@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Rutherford County (placeholder extent)" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-86.55, 35.72],
+            [-86.22, 35.72],
+            [-86.22, 35.98],
+            [-86.55, 35.98],
+            [-86.55, 35.72]
+          ]
+        ]
+      }
+    }
+  ]
+}

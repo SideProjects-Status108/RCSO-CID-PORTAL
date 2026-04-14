@@ -13,11 +13,20 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
+  Layers,
   Minus,
   Plus,
   Search,
   X,
 } from 'lucide-react'
+
+import { BottomSheet } from '@/components/companion/bottom-sheet'
+import { GEOJSON_LAYERS, initialRutherfordOverlayVisibility } from '@/lib/map/geojson-layers'
+import {
+  addOrUpdateRutherfordOverlay,
+  fetchRutherfordGeojson,
+  setRutherfordOverlayVisibility,
+} from '@/lib/map/rutherford-geojson-map'
 
 import { saveMapPolygonAction, deleteMapPolygonAction } from '@/app/(dashboard)/map/actions'
 import { geocodeAddress } from '@/lib/mapbox/geocode'
@@ -27,6 +36,7 @@ import type { CaseTypeRow } from '@/types/operations'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { Modal } from '@/components/app/modal'
 import { hasRole, UserRole, type UserRoleValue } from '@/lib/auth/roles'
 
@@ -38,6 +48,10 @@ const MAPBOX_WORKER_PATH = '/mapbox-gl-csp-worker.js'
 
 const ACCENT = '#1E6FD9'
 const MAP_FONTS: [string, string] = ['DIN Offc Pro Medium', 'Arial Unicode MS Regular']
+
+/** Rutherford County, TN — default when no ?address= geocode (Phase 8A). */
+const DEFAULT_MAP_CENTER: [number, number] = [-86.3985, 35.8456]
+const DEFAULT_MAP_ZOOM = 11
 
 function webgl2Available() {
   const canvas = document.createElement('canvas')
@@ -178,6 +192,15 @@ export function FieldMap({
   const [zonesMissing, setZonesMissing] = useState(false)
   const [search, setSearch] = useState('')
   const [companionSearchOpen, setCompanionSearchOpen] = useState(false)
+  const [overlayVisible, setOverlayVisible] = useState(initialRutherfordOverlayVisibility)
+  const [overlayMissing, setOverlayMissing] = useState<Record<string, boolean>>({})
+  const [mapStyleReadyTick, setMapStyleReadyTick] = useState(0)
+  const [rutherfordPanelOpen, setRutherfordPanelOpen] = useState(false)
+  const [companionGeoSheetOpen, setCompanionGeoSheetOpen] = useState(false)
+  const overlayDataCache = useRef<Map<string, FeatureCollection>>(new Map())
+  const overlayFetchInflight = useRef<Set<string>>(new Set())
+  const overlayVisibleRef = useRef(overlayVisible)
+  overlayVisibleRef.current = overlayVisible
   const locateClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [polygons, setPolygons] = useState(initialPolygons)
   useEffect(() => {
@@ -358,6 +381,51 @@ export function FieldMap({
   }, [applySources])
 
   useEffect(() => {
+    const map = mapRef.current
+    if (!map?.isStyleLoaded() || mapStyleReadyTick < 1) return
+
+    const beforeId = map.getLayer('cases-cluster') ? 'cases-cluster' : undefined
+
+    for (const def of GEOJSON_LAYERS) {
+      const want = overlayVisible[def.id] ?? false
+      if (!want) {
+        setRutherfordOverlayVisibility(map, def.id, false)
+        continue
+      }
+      if (overlayMissing[def.id]) {
+        setRutherfordOverlayVisibility(map, def.id, false)
+        continue
+      }
+
+      const cached = overlayDataCache.current.get(def.id)
+      if (cached) {
+        addOrUpdateRutherfordOverlay(map, def, cached, beforeId)
+        continue
+      }
+
+      if (overlayFetchInflight.current.has(def.id)) continue
+      overlayFetchInflight.current.add(def.id)
+
+      void fetchRutherfordGeojson(def).then((data) => {
+        overlayFetchInflight.current.delete(def.id)
+        if (!data) {
+          setOverlayMissing((prev) => ({ ...prev, [def.id]: true }))
+          const m = mapRef.current
+          if (m?.isStyleLoaded()) setRutherfordOverlayVisibility(m, def.id, false)
+          return
+        }
+        overlayDataCache.current.set(def.id, data)
+        const m = mapRef.current
+        if (!m?.isStyleLoaded()) return
+        const bid = m.getLayer('cases-cluster') ? 'cases-cluster' : undefined
+        if (overlayVisibleRef.current[def.id]) {
+          addOrUpdateRutherfordOverlay(m, def, data, bid)
+        }
+      })
+    }
+  }, [mapStyleReadyTick, overlayVisible, overlayMissing])
+
+  useEffect(() => {
     if (!companionMode) return
     setLayerCases(false)
     setLayerCallouts(false)
@@ -432,8 +500,8 @@ export function FieldMap({
       map = new mapboxgl.Map({
         container,
         style: mapboxStyleUrl,
-        center: [-86.5, 35.85],
-        zoom: 8,
+        center: DEFAULT_MAP_CENTER,
+        zoom: DEFAULT_MAP_ZOOM,
       })
       mapRef.current = map
 
@@ -629,6 +697,8 @@ export function FieldMap({
           paint: { 'line-color': ACCENT, 'line-width': 2, 'line-opacity': 0.85 },
         })
       }
+
+      setMapStyleReadyTick((n) => n + 1)
 
       void fetch('/api/map/zones', { credentials: 'same-origin' })
         .then(async (r) => {
@@ -996,6 +1066,61 @@ export function FieldMap({
       ) : null}
 
       {!companionMode ? (
+        <div className="pointer-events-none absolute right-2 top-3 z-[12] flex flex-col items-end gap-1">
+          <button
+            type="button"
+            title="Map overlays (GeoJSON)"
+            aria-expanded={rutherfordPanelOpen}
+            aria-label="Toggle map GeoJSON layers"
+            onClick={() => setRutherfordPanelOpen((o) => !o)}
+            className="pointer-events-auto flex size-10 items-center justify-center rounded-lg border border-border-subtle bg-bg-surface/95 text-text-primary shadow-md backdrop-blur-sm hover:bg-bg-elevated"
+          >
+            <Layers className="size-5" strokeWidth={1.75} />
+          </button>
+          {rutherfordPanelOpen ? (
+            <div className="pointer-events-auto w-56 rounded-lg border border-border-subtle bg-bg-elevated p-3 shadow-lg">
+              <p className="font-heading text-xs font-medium uppercase tracking-wide text-text-secondary">
+                Map Layers
+              </p>
+              <ul className="mt-3 space-y-2.5">
+                {GEOJSON_LAYERS.map((def) => (
+                  <li
+                    key={def.id}
+                    className={cn(
+                      'flex items-center gap-2',
+                      overlayMissing[def.id] && 'cursor-not-allowed opacity-50'
+                    )}
+                    title={overlayMissing[def.id] ? 'File not found' : undefined}
+                  >
+                    <span
+                      className="size-2.5 shrink-0 rounded-full ring-1 ring-border-subtle"
+                      style={{ backgroundColor: def.color }}
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1 font-sans text-xs text-text-primary">{def.label}</span>
+                    <Switch
+                      checked={overlayVisible[def.id] ?? false}
+                      disabled={overlayMissing[def.id]}
+                      onCheckedChange={(on) => {
+                        setOverlayVisible((prev) => ({ ...prev, [def.id]: on }))
+                        if (on) {
+                          setOverlayMissing((prev) => {
+                            const next = { ...prev }
+                            delete next[def.id]
+                            return next
+                          })
+                        }
+                      }}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {!companionMode ? (
       <form
         className="pointer-events-none absolute left-1/2 top-3 z-10 flex w-[min(96%,420px)] -translate-x-1/2 gap-2"
         onSubmit={(e) => {
@@ -1017,47 +1142,58 @@ export function FieldMap({
 
       {companionMode ? (
         <>
-          <div className="pointer-events-none absolute left-2 top-2 z-10 flex max-w-[min(100%,calc(100%-5rem))] items-start gap-1">
-            {!companionSearchOpen ? (
-              <button
-                type="button"
-                title="Search address"
-                aria-label="Open address search"
-                onClick={() => setCompanionSearchOpen(true)}
-                className="pointer-events-auto flex size-12 items-center justify-center rounded-lg border border-border-subtle bg-bg-surface/95 text-text-primary shadow-md backdrop-blur-sm"
-              >
-                <Search className="size-5" />
-              </button>
-            ) : (
-              <form
-                className="pointer-events-auto flex w-[min(100%,280px)] gap-1 rounded-lg border border-border-subtle bg-bg-surface/95 p-1 shadow-md backdrop-blur-sm"
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  runSearch()
-                  setCompanionSearchOpen(false)
-                }}
-              >
-                <Input
-                  className="h-12 min-h-12 flex-1 border-0 bg-transparent text-base shadow-none"
-                  placeholder="Address…"
-                  value={search}
-                  autoFocus
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                <Button type="submit" className="h-12 shrink-0 px-3">
-                  Go
-                </Button>
-                <Button
+          <div className="pointer-events-none absolute left-2 top-2 z-10 flex max-w-[min(100%,calc(100%-5rem))] flex-col items-start gap-2">
+            <div className="flex items-start gap-1">
+              {!companionSearchOpen ? (
+                <button
                   type="button"
-                  variant="outline"
-                  className="h-12 shrink-0 px-2"
-                  onClick={() => setCompanionSearchOpen(false)}
-                  aria-label="Close search"
+                  title="Search address"
+                  aria-label="Open address search"
+                  onClick={() => setCompanionSearchOpen(true)}
+                  className="pointer-events-auto flex size-12 items-center justify-center rounded-lg border border-border-subtle bg-bg-surface/95 text-text-primary shadow-md backdrop-blur-sm"
                 >
-                  <X className="size-4" />
-                </Button>
-              </form>
-            )}
+                  <Search className="size-5" />
+                </button>
+              ) : (
+                <form
+                  className="pointer-events-auto flex w-[min(100%,280px)] gap-1 rounded-lg border border-border-subtle bg-bg-surface/95 p-1 shadow-md backdrop-blur-sm"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    runSearch()
+                    setCompanionSearchOpen(false)
+                  }}
+                >
+                  <Input
+                    className="h-12 min-h-12 flex-1 border-0 bg-transparent text-base shadow-none"
+                    placeholder="Address…"
+                    value={search}
+                    autoFocus
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                  <Button type="submit" className="h-12 shrink-0 px-3">
+                    Go
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-12 shrink-0 px-2"
+                    onClick={() => setCompanionSearchOpen(false)}
+                    aria-label="Close search"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </form>
+              )}
+            </div>
+            <button
+              type="button"
+              title="Map layers (GeoJSON)"
+              aria-label="Open map layers"
+              onClick={() => setCompanionGeoSheetOpen(true)}
+              className="pointer-events-auto flex size-12 items-center justify-center rounded-lg border border-border-subtle bg-bg-surface/95 text-text-primary shadow-md backdrop-blur-sm"
+            >
+              <Layers className="size-5" strokeWidth={1.75} />
+            </button>
           </div>
           <div className="pointer-events-none absolute right-2 top-2 z-10">
             <button
@@ -1088,6 +1224,40 @@ export function FieldMap({
               <Minus className="size-6" />
             </button>
           </div>
+          <BottomSheet
+            open={companionGeoSheetOpen}
+            onClose={() => setCompanionGeoSheetOpen(false)}
+            title="Map layers"
+          >
+            <ul className="space-y-3">
+              {GEOJSON_LAYERS.map((def) => (
+                <li
+                  key={def.id}
+                  className={cn(
+                    'flex items-center justify-between gap-3',
+                    overlayMissing[def.id] && 'opacity-50'
+                  )}
+                  title={overlayMissing[def.id] ? 'File not found' : undefined}
+                >
+                  <span className="min-w-0 text-sm text-text-primary">{def.label}</span>
+                  <Switch
+                    checked={overlayVisible[def.id] ?? false}
+                    disabled={overlayMissing[def.id]}
+                    onCheckedChange={(on) => {
+                      setOverlayVisible((prev) => ({ ...prev, [def.id]: on }))
+                      if (on) {
+                        setOverlayMissing((prev) => {
+                          const next = { ...prev }
+                          delete next[def.id]
+                          return next
+                        })
+                      }
+                    }}
+                  />
+                </li>
+              ))}
+            </ul>
+          </BottomSheet>
         </>
       ) : null}
 
