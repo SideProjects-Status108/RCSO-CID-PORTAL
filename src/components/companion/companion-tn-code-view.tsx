@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 
 import { BottomSheet } from '@/components/companion/bottom-sheet'
+import { TnCodeMarkdown } from '@/components/tn-code/tn-code-markdown'
 import { CompanionCard } from '@/components/companion/companion-card'
 import { setTnBookmarkAction } from '@/app/(dashboard)/tn-code/actions'
 import type { TnBookmarkListItem, TnCodeSearchRpcRow, TnRecentListItem } from '@/types/tn-code'
@@ -219,20 +220,55 @@ export function CompanionTnCodeView({
   const runAiSummary = async () => {
     if (!openSectionId) return
     setSummaryLoading(true)
-    setSummaryText(null)
+    setSummaryText('')
+    setSummaryOpen(true)
     try {
       const res = await fetch('/api/tn-code/summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sectionId: openSectionId }),
       })
-      const j = (await res.json()) as { summary?: string; error?: string }
-      if (j.error) setSummaryText(j.error)
-      else setSummaryText(j.summary ?? '')
-      setSummaryOpen(true)
+      const ct = res.headers.get('content-type') ?? ''
+      if (!res.ok || !res.body || !ct.includes('ndjson')) {
+        let err = 'Could not load summary.'
+        try {
+          const j = (await res.json()) as { error?: string }
+          if (j.error) err = j.error
+        } catch {
+          /* ignore */
+        }
+        setSummaryText(err)
+        return
+      }
+      const reader = res.body.getReader()
+      const dec = new TextDecoder()
+      let buffer = ''
+      let streamed = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += dec.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) {
+          if (!line.trim()) continue
+          let msg: { type: string; text?: string; message?: string }
+          try {
+            msg = JSON.parse(line) as typeof msg
+          } catch {
+            continue
+          }
+          if (msg.type === 'token' && msg.text) {
+            streamed += msg.text
+            setSummaryText(streamed)
+          }
+          if (msg.type === 'error' && msg.message) {
+            setSummaryText(msg.message)
+          }
+        }
+      }
     } catch {
       setSummaryText('Could not load summary.')
-      setSummaryOpen(true)
     } finally {
       setSummaryLoading(false)
     }
@@ -501,7 +537,12 @@ export function CompanionTnCodeView({
                 </button>
                 {summaryOpen ? (
                   <div className="mt-2 rounded-md border border-border-subtle bg-bg-elevated p-3 text-sm leading-relaxed text-text-primary">
-                    {summaryText}
+                    {summaryLoading && !summaryText.trim() ? (
+                      <p className="mb-2 text-xs text-text-secondary" aria-live="polite">
+                        Generating summary…
+                      </p>
+                    ) : null}
+                    <TnCodeMarkdown content={summaryText} />
                   </div>
                 ) : null}
               </div>
