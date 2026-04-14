@@ -63,7 +63,7 @@ function highlightExcerpt(text: string, query: string): string {
     const re = new RegExp(`(${escapeRegExp(term)})`, 'gi')
     out = out.replace(
       re,
-      '<mark class="rounded bg-accent-gold/20 px-0.5 text-text-primary">$1</mark>'
+      '<mark class="rounded bg-accent-primary/20 px-0.5 text-text-primary">$1</mark>'
     )
   }
   return out
@@ -506,11 +506,11 @@ export function TnCodeView({
                                     className={cn(
                                       'flex w-full gap-2 px-5 py-1.5 text-left text-xs transition-colors duration-150',
                                       active
-                                        ? 'border-l-2 border-accent-gold bg-bg-elevated/50 text-text-primary'
+                                        ? 'border-l-2 border-accent-primary bg-bg-elevated/50 text-text-primary'
                                         : 'border-l-2 border-transparent text-text-secondary hover:bg-bg-elevated/25'
                                     )}
                                   >
-                                    <span className="shrink-0 font-mono text-accent-gold">
+                                    <span className="shrink-0 font-mono text-accent-primary">
                                       {sec.section_number}
                                     </span>
                                     <span className="min-w-0 truncate">
@@ -553,7 +553,7 @@ export function TnCodeView({
         <>
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-mono text-2xl font-semibold text-accent-gold">
+              <p className="font-mono text-2xl font-semibold text-accent-primary">
                 {sectionDetail.section_number}
               </p>
               <h2 className="mt-1 text-lg font-medium text-text-primary">
@@ -570,7 +570,7 @@ export function TnCodeView({
                 title={bookmarked ? 'Remove bookmark' : 'Bookmark'}
               >
                 <BookmarkIcon
-                  className={cn(bookmarked ? 'fill-accent-gold text-accent-gold' : '')}
+                  className={cn(bookmarked ? 'fill-accent-gold text-accent-primary' : '')}
                   aria-hidden
                 />
               </Button>
@@ -611,7 +611,7 @@ export function TnCodeView({
           {aiSummary ? (
             <div className="mx-auto mt-8 w-full max-w-[65ch] rounded-lg border border-border-subtle bg-bg-elevated p-4">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-accent-gold">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-accent-primary">
                   <SparklesIcon className="size-4" aria-hidden />
                   AI Summary
                 </h3>
@@ -715,7 +715,7 @@ export function TnCodeView({
                       selectSection(r.id, 'browse')
                     }}
                   >
-                    <div className="font-mono text-sm text-accent-gold">{r.section_number}</div>
+                    <div className="font-mono text-sm text-accent-primary">{r.section_number}</div>
                     <div className="text-sm font-medium text-text-primary">{r.section_title}</div>
                     <div className="mt-0.5 text-xs text-text-secondary">
                       Title {r.title_number} › Chapter {r.chapter_number}
@@ -803,7 +803,7 @@ export function TnCodeView({
                 <li key={num}>
                   <button
                     type="button"
-                    className="font-mono text-sm text-accent-gold underline"
+                    className="font-mono text-sm text-accent-primary underline"
                     onClick={() => void openCitedSection(num)}
                   >
                     {num}
@@ -845,7 +845,7 @@ export function TnCodeView({
                     selectSection(s.id, 'browse')
                   }}
                 >
-                  <div className="font-mono text-sm text-accent-gold">{s.section_number}</div>
+                  <div className="font-mono text-sm text-accent-primary">{s.section_number}</div>
                   <div className="text-sm text-text-primary">{s.section_title}</div>
                   <div className="text-xs text-text-secondary">
                     Title {t?.title_number} › Chapter {ch?.chapter_number}
@@ -900,7 +900,7 @@ export function TnCodeView({
                   className="w-full rounded-lg border border-border-subtle bg-bg-surface p-3 text-left transition-colors hover:bg-bg-elevated/30"
                   onClick={() => selectSection(s.id, 'browse')}
                 >
-                  <div className="font-mono text-sm text-accent-gold">{s.section_number}</div>
+                  <div className="font-mono text-sm text-accent-primary">{s.section_number}</div>
                   <div className="text-sm text-text-primary">{s.section_title}</div>
                   <div className="text-xs text-text-secondary">
                     Title {t?.title_number} › Chapter {ch?.chapter_number}
