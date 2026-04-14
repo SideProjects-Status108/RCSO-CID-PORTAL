@@ -1,20 +1,26 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { z } from 'zod'
 
 import { createClient } from '@/lib/supabase/server'
 import { getSessionUserWithProfile } from '@/lib/auth/get-session'
 
+const notificationIdSchema = z.string().uuid()
+
 export async function markNotificationReadAction(id: string) {
   const session = await getSessionUserWithProfile()
   if (!session) return
+  const parsed = notificationIdSchema.safeParse(id)
+  if (!parsed.success) return
   const supabase = await createClient()
   await supabase
     .from('notifications')
     .update({ is_read: true })
-    .eq('id', id)
+    .eq('id', parsed.data)
     .eq('user_id', session.user.id)
   revalidatePath('/dashboard')
+  revalidatePath('/app/notifications')
 }
 
 export async function markAllNotificationsReadAction() {
@@ -27,6 +33,7 @@ export async function markAllNotificationsReadAction() {
     .eq('user_id', session.user.id)
     .eq('is_read', false)
   revalidatePath('/dashboard')
+  revalidatePath('/app/notifications')
 }
 
 export async function fetchNotificationsPanelDataAction() {

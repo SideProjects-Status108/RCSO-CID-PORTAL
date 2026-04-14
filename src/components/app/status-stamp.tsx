@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 
 type StatusStampProps = {
   children: string
-  variant?: 'neutral' | 'teal' | 'gold' | 'muted' | 'danger'
+  variant?: 'neutral' | 'teal' | 'gold' | 'primary' | 'muted' | 'danger'
   className?: string
 }
 
@@ -10,6 +10,7 @@ const variants: Record<NonNullable<StatusStampProps['variant']>, string> = {
   neutral: 'border-border-subtle bg-bg-elevated text-text-secondary',
   teal: 'border-accent-teal/50 bg-accent-teal/10 text-accent-teal',
   gold: 'border-accent-gold/50 bg-accent-gold/10 text-accent-gold',
+  primary: 'border-accent-primary/45 bg-accent-primary-muted text-accent-primary',
   muted: 'border-border-subtle bg-bg-app text-text-disabled',
   danger: 'border-danger/50 bg-danger/10 text-danger',
 }

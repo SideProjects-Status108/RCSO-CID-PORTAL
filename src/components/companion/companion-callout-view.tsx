@@ -49,9 +49,9 @@ function requestStatusLabel(status: RequestRow['status']): string {
 
 function requestStatusVariant(
   status: RequestRow['status']
-): 'neutral' | 'teal' | 'gold' | 'muted' {
+): 'neutral' | 'teal' | 'primary' | 'muted' {
   if (status === 'in_progress') return 'teal'
-  if (status === 'open' || status === 'acknowledged') return 'gold'
+  if (status === 'open' || status === 'acknowledged') return 'primary'
   return 'muted'
 }
 

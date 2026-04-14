@@ -7,9 +7,11 @@ import {
   Bell,
   BookOpen,
   Calendar,
+  ClipboardList,
   FileText,
   Grid3x3,
   Map,
+  Megaphone,
   Monitor,
   Settings,
   Users,
@@ -22,7 +24,7 @@ import { cn } from '@/lib/utils'
 
 const tabs = [
   { href: '/app/schedule', label: 'SCHEDULE', icon: Calendar },
-  { href: '/app/callout', label: 'CALL-OUT', icon: Bell },
+  { href: '/app/callout', label: 'CALL-OUT', icon: Megaphone },
   { href: '/app/forms', label: 'FORMS', icon: FileText },
   { href: '/app/directory', label: 'DIRECTORY', icon: Users },
   { href: '/app/more', label: 'MORE', icon: Grid3x3 },
@@ -50,10 +52,17 @@ export function CompanionShell({
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg-app text-text-primary">
-      <header className="fixed left-0 right-0 top-0 z-30 flex h-12 items-center border-b border-border-subtle bg-bg-surface px-4">
-        <span className="font-heading text-xs font-semibold uppercase tracking-widest text-accent-primary">
+      <header className="fixed left-0 right-0 top-0 z-30 flex h-12 items-center justify-between border-b border-border-subtle bg-bg-surface px-4">
+        <span className="font-heading text-sm font-semibold uppercase tracking-widest text-text-primary">
           CID PORTAL
         </span>
+        <Link
+          href="/app/notifications"
+          aria-label="Notifications"
+          className="flex size-10 shrink-0 items-center justify-center rounded-lg text-text-primary transition-colors hover:bg-bg-elevated active:bg-bg-elevated"
+        >
+          <Bell className="size-5" strokeWidth={1.75} aria-hidden />
+        </Link>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden pt-12 pb-20">
@@ -78,12 +87,12 @@ export function CompanionShell({
               key={href}
               href={href}
               className={cn(
-                'relative flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1 font-heading text-sm font-medium uppercase tracking-wide transition-colors',
+                'relative flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1 font-heading text-[10px] font-medium uppercase tracking-wide transition-colors',
                 active ? 'text-accent-primary' : 'text-text-secondary'
               )}
             >
               <Icon className="size-5 shrink-0" strokeWidth={1.75} aria-hidden />
-              <span className="max-w-full truncate">{label}</span>
+              <span className="max-w-full truncate leading-tight">{label}</span>
               {showCallBadge ? (
                 <span className="absolute right-1 top-1 flex min-w-[1.125rem] items-center justify-center rounded-full bg-danger px-1 text-[9px] font-semibold leading-none text-white">
                   {callOutBadgeCount > 9 ? '9+' : callOutBadgeCount}
@@ -103,7 +112,7 @@ export function CompanionShell({
               className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 font-sans text-sm text-text-primary hover:bg-bg-elevated"
             >
               <Map className="size-5 text-accent-primary" strokeWidth={1.75} aria-hidden />
-              Field Map
+              GeoMap
             </Link>
           </li>
           <li>
@@ -113,7 +122,17 @@ export function CompanionShell({
               className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 font-sans text-sm text-text-primary hover:bg-bg-elevated"
             >
               <BookOpen className="size-5 text-accent-primary" strokeWidth={1.75} aria-hidden />
-              TN Code
+              TCA Reference
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/app/field-notes"
+              onClick={() => setMoreOpen(false)}
+              className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 font-sans text-sm text-text-primary hover:bg-bg-elevated"
+            >
+              <ClipboardList className="size-5 text-accent-primary" strokeWidth={1.75} aria-hidden />
+              Field Notes
             </Link>
           </li>
           <li>
