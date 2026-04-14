@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Shield } from 'lucide-react'
 
+import { sanitizeInternalRedirect } from '@/lib/auth/safe-redirect'
 import { createClient } from '@/lib/supabase/client'
 import { loginSchema, type LoginFormValues } from '@/lib/validations/auth'
 import { Button } from '@/components/ui/button'
@@ -27,7 +28,6 @@ type LoginFormProps = {
 export function LoginForm({ bootstrapSignupEnabled }: LoginFormProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const nextPath = searchParams.get('next') ?? '/dashboard'
   const urlError = searchParams.get('error')
   const reason = searchParams.get('reason')
 
@@ -49,7 +49,7 @@ export function LoginForm({ bootstrapSignupEnabled }: LoginFormProps) {
       setFormError(error.message)
       return
     }
-    router.push(nextPath.startsWith('/') ? nextPath : '/dashboard')
+    router.push(sanitizeInternalRedirect(searchParams.get('next')))
     router.refresh()
   }
 

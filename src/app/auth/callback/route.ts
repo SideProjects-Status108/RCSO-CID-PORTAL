@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 
+import { sanitizeInternalRedirect } from '@/lib/auth/safe-redirect'
 import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const code = url.searchParams.get('code')
-  const nextPath = url.searchParams.get('next') ?? '/dashboard'
+  const nextPath = sanitizeInternalRedirect(url.searchParams.get('next'))
 
   if (!code) {
     return NextResponse.redirect(new URL('/login?error=missing_code', url.origin))
