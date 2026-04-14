@@ -30,8 +30,8 @@ export function DashboardCompanionPhoneLink({ url }: { url: string }) {
       className="rounded-lg border border-accent-primary/25 bg-bg-surface p-5"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        <div className="shrink-0 self-start rounded-lg border border-border-subtle bg-white p-2">
-          <QRCode value={url} size={144} level="M" fgColor="#0e0f11" bgColor="#ffffff" />
+        <div className="shrink-0 self-start rounded-lg border border-border-subtle bg-bg-surface p-2">
+          <QRCode value={url} size={144} level="M" fgColor="#e8e6e0" bgColor="#252830" />
         </div>
         <div className="min-w-0 flex-1 space-y-3">
           <div className="flex items-center gap-2">

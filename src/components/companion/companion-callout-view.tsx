@@ -132,7 +132,7 @@ export function CompanionCalloutView({
             <input
               id="co-address"
               className={cn(
-                'mt-1 min-h-12 w-full rounded-md border border-border-subtle bg-bg-app px-3 text-base text-text-primary placeholder:text-text-disabled',
+                'mt-1 min-h-12 w-full rounded-md border border-border-subtle bg-bg-elevated px-3 text-base text-text-primary placeholder:text-text-disabled',
                 errors.address && 'border-danger'
               )}
               placeholder="Street address or intersection"
@@ -149,7 +149,7 @@ export function CompanionCalloutView({
             </label>
             <input
               id="co-case"
-              className="mt-1 min-h-12 w-full rounded-md border border-border-subtle bg-bg-app px-3 text-base text-text-primary placeholder:text-text-disabled"
+              className="mt-1 min-h-12 w-full rounded-md border border-border-subtle bg-bg-elevated px-3 text-base text-text-primary placeholder:text-text-disabled"
               {...register('caseNumber')}
             />
             {errors.caseNumber ? (
@@ -163,7 +163,7 @@ export function CompanionCalloutView({
             <textarea
               id="co-notes"
               rows={3}
-              className="mt-1 min-h-[5.5rem] w-full resize-y rounded-md border border-border-subtle bg-bg-app px-3 py-2 text-base text-text-primary placeholder:text-text-disabled"
+              className="mt-1 min-h-[5.5rem] w-full resize-y rounded-md border border-border-subtle bg-bg-elevated px-3 py-2 text-base text-text-primary placeholder:text-text-disabled"
               {...register('notes')}
             />
             {errors.notes ? (

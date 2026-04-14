@@ -74,10 +74,21 @@ export function OperationsView({
 
   const filtered = cases.filter((c) => {
     if (statusF !== 'all' && c.status !== statusF) return false
-    if (typeF !== 'all' && c.case_type_id !== typeF) return false
-    if (detF !== 'all' && c.assigned_detective !== detF) return false
-    if (search.trim() && !c.case_number.toLowerCase().includes(search.trim().toLowerCase()))
+    if (typeF === '__free__') {
+      if (c.case_type_id != null) return false
+    } else if (typeF !== 'all' && c.case_type_id !== typeF) {
       return false
+    }
+    if (detF !== 'all' && c.assigned_detective !== detF) return false
+    if (search.trim()) {
+      const q = search.trim().toLowerCase()
+      if (
+        !c.case_number.toLowerCase().includes(q) &&
+        !(c.case_type_name?.toLowerCase().includes(q) ?? false)
+      ) {
+        return false
+      }
+    }
     return true
   })
 
@@ -93,7 +104,7 @@ export function OperationsView({
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">Operations</h1>
           <p className="mt-1 max-w-2xl text-sm text-text-secondary">
-            Case tracking for CID squads. Case numbers use the selected type prefix.
+            Case tracking for CID squads. Enter a short case type label and your agency case number.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -149,6 +160,7 @@ export function OperationsView({
             </SelectTrigger>
             <SelectContent className="border-border-subtle bg-bg-elevated">
               <SelectItem value="all">All types</SelectItem>
+              <SelectItem value="__free__">Free-text type</SelectItem>
               {caseTypes.map((t) => (
                 <SelectItem key={t.id} value={t.id}>
                   {t.name}
@@ -237,7 +249,6 @@ export function OperationsView({
       <NewCaseModal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        caseTypes={caseTypes}
         onCreated={() => {
           setModalOpen(false)
           router.refresh()
@@ -414,35 +425,37 @@ function CaseDetailBody({
 function NewCaseModal({
   open,
   onOpenChange,
-  caseTypes,
   onCreated,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
-  caseTypes: CaseTypeRow[]
   onCreated: () => void
 }) {
   const [caseNumber, setCaseNumber] = useState('')
-  const [typeId, setTypeId] = useState(caseTypes[0]?.id ?? '')
+  const [caseTypeLabel, setCaseTypeLabel] = useState('')
   const [opened, setOpened] = useState(() => new Date().toISOString().slice(0, 10))
   const [notes, setNotes] = useState('')
   const [err, setErr] = useState<string | null>(null)
   const [pending, start] = useTransition()
 
-  const prefix = caseTypes.find((t) => t.id === typeId)?.prefix ?? ''
-
   async function submit() {
     setErr(null)
+    const label = caseTypeLabel.trim()
+    if (!label || label.length > 100) {
+      setErr('Case type is required (1–100 characters).')
+      return
+    }
     start(async () => {
       try {
         await createCaseAction({
           case_number: caseNumber.trim(),
-          case_type_id: typeId,
+          case_type_label: label,
           date_opened: opened,
           notes: notes.trim() || null,
           assigned_detective: null,
         })
         setCaseNumber('')
+        setCaseTypeLabel('')
         setNotes('')
         onCreated()
       } catch (e) {
@@ -456,45 +469,41 @@ function NewCaseModal({
       <div className="space-y-3">
         {err ? <p className="text-sm text-danger">{err}</p> : null}
         <div className="space-y-1">
-          <Label>Case type</Label>
-          <Select value={typeId} onValueChange={(v) => v && setTypeId(v)}>
-            <SelectTrigger className="border-border-subtle bg-bg-surface">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="border-border-subtle bg-bg-elevated">
-              {caseTypes.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.name} ({t.prefix})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label>Case number * {prefix ? `(prefix ${prefix})` : null}</Label>
+          <Label className="text-text-secondary">Case type</Label>
           <Input
-            value={caseNumber}
-            onChange={(e) => setCaseNumber(e.target.value)}
-            className="border-border-subtle bg-bg-surface font-mono"
-            placeholder={prefix ? `${prefix}001` : ''}
+            value={caseTypeLabel}
+            onChange={(e) => setCaseTypeLabel(e.target.value)}
+            maxLength={100}
+            className="border-border-subtle bg-bg-elevated text-text-primary placeholder:text-text-disabled"
+            placeholder="e.g., Theft, Assault, Fraud, etc."
+            autoComplete="off"
           />
         </div>
         <div className="space-y-1">
-          <Label>Date opened</Label>
+          <Label className="text-text-secondary">Case number *</Label>
+          <Input
+            value={caseNumber}
+            onChange={(e) => setCaseNumber(e.target.value)}
+            className="border-border-subtle bg-bg-elevated font-mono text-text-primary placeholder:text-text-disabled"
+            placeholder="Agency case number"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-text-secondary">Date opened</Label>
           <Input
             type="date"
             value={opened}
             onChange={(e) => setOpened(e.target.value)}
-            className="border-border-subtle bg-bg-surface"
+            className="border-border-subtle bg-bg-elevated text-text-primary"
           />
         </div>
         <div className="space-y-1">
-          <Label>Initial notes</Label>
+          <Label className="text-text-secondary">Initial notes</Label>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
-            className="border-border-subtle bg-bg-surface"
+            className="border-border-subtle bg-bg-elevated text-text-primary placeholder:text-text-disabled"
           />
         </div>
         <div className="flex justify-end gap-2 pt-2">
@@ -503,8 +512,8 @@ function NewCaseModal({
           </Button>
           <Button
             type="button"
-            disabled={pending || !typeId}
-            className="border border-accent-primary/30 bg-accent-primary text-bg-app"
+            disabled={pending || !caseNumber.trim() || !caseTypeLabel.trim()}
+            className="border border-accent-primary/30 bg-accent-primary text-bg-app hover:bg-accent-primary-hover"
             onClick={() => void submit()}
           >
             Create

@@ -59,7 +59,7 @@ export async function fetchCaseMapMarkers(
     return {
       id: String(r.id),
       case_number: String(r.case_number ?? ''),
-      case_type_id: String(r.case_type_id),
+      case_type_id: r.case_type_id != null ? String(r.case_type_id) : '__custom__',
       case_type_name: ct?.name ?? null,
       assigned_detective: aid,
       assigned_name: aid ? nameById[aid] ?? null : null,

@@ -159,3 +159,23 @@
 .mapboxgl-canvas {
   outline: none;
 }
+
+/* FullCalendar — dark theme day cells (elevation + hover) */
+.schedule-fc .fc-daygrid-day-frame {
+  margin: 2px;
+  min-height: 4.5rem;
+  border-radius: 0.5rem;
+  background-color: var(--color-bg-surface);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.schedule-fc .fc-daygrid-day:not(.fc-day-other) .fc-daygrid-day-frame:hover {
+  background-color: var(--color-bg-elevated);
+  cursor: pointer;
+}
+.schedule-fc .fc-daygrid-day.fc-day-other .fc-daygrid-day-frame {
+  opacity: 0.45;
+  box-shadow: none;
+}

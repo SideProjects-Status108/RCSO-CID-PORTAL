@@ -8,15 +8,16 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        default:
+          "border border-accent-primary/30 bg-accent-primary text-bg-app hover:bg-accent-primary-hover [a]:hover:bg-accent-primary-hover",
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-border-subtle bg-bg-surface text-text-primary hover:bg-bg-elevated aria-expanded:bg-bg-elevated",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "border border-border-subtle bg-bg-elevated text-text-primary hover:bg-bg-surface aria-expanded:bg-bg-surface",
         ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+          "text-text-primary hover:bg-bg-elevated aria-expanded:bg-bg-elevated",
         destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+          "border border-danger/40 bg-danger text-white hover:opacity-90 focus-visible:border-danger focus-visible:ring-danger/30",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

@@ -30,7 +30,7 @@ export function Modal({
       <DialogContent
         showCloseButton
         className={cn(
-          'max-h-[90vh] max-w-lg overflow-y-auto border-border-subtle bg-bg-surface text-text-primary sm:max-w-lg',
+          'max-h-[90vh] max-w-lg overflow-y-auto border-border-subtle bg-bg-elevated text-text-primary sm:max-w-lg',
           className
         )}
       >

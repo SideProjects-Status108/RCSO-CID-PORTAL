@@ -21,11 +21,11 @@ import { CompanionPullRefresh } from '@/components/companion/companion-pull-refr
 import { cn } from '@/lib/utils'
 
 const tabs = [
-  { href: '/app/schedule', label: 'Schedule', icon: Calendar },
-  { href: '/app/callout', label: 'Call-Out', icon: Bell },
-  { href: '/app/forms', label: 'Forms', icon: FileText },
-  { href: '/app/directory', label: 'Directory', icon: Users },
-  { href: '/app/more', label: 'More', icon: Grid3x3 },
+  { href: '/app/schedule', label: 'SCHEDULE', icon: Calendar },
+  { href: '/app/callout', label: 'CALL-OUT', icon: Bell },
+  { href: '/app/forms', label: 'FORMS', icon: FileText },
+  { href: '/app/directory', label: 'DIRECTORY', icon: Users },
+  { href: '/app/more', label: 'MORE', icon: Grid3x3 },
 ] as const
 
 export function CompanionShell({
@@ -78,8 +78,8 @@ export function CompanionShell({
               key={href}
               href={href}
               className={cn(
-                'relative flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1 font-heading text-[10px] font-medium tracking-wide transition-colors',
-                active ? 'text-accent-gold' : 'text-text-secondary'
+                'relative flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-1 font-heading text-sm font-medium uppercase tracking-wide transition-colors',
+                active ? 'text-accent-primary' : 'text-text-secondary'
               )}
             >
               <Icon className="size-5 shrink-0" strokeWidth={1.75} aria-hidden />
@@ -102,8 +102,8 @@ export function CompanionShell({
               onClick={() => setMoreOpen(false)}
               className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 font-sans text-sm text-text-primary hover:bg-bg-elevated"
             >
-              <Map className="size-5 text-accent-gold" strokeWidth={1.75} aria-hidden />
-              Field map
+              <Map className="size-5 text-accent-primary" strokeWidth={1.75} aria-hidden />
+              Field Map
             </Link>
           </li>
           <li>
@@ -112,7 +112,7 @@ export function CompanionShell({
               onClick={() => setMoreOpen(false)}
               className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 font-sans text-sm text-text-primary hover:bg-bg-elevated"
             >
-              <BookOpen className="size-5 text-accent-gold" strokeWidth={1.75} aria-hidden />
+              <BookOpen className="size-5 text-accent-primary" strokeWidth={1.75} aria-hidden />
               TN Code
             </Link>
           </li>
@@ -122,7 +122,7 @@ export function CompanionShell({
               onClick={() => setMoreOpen(false)}
               className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 font-sans text-sm text-text-primary hover:bg-bg-elevated"
             >
-              <Settings className="size-5 text-accent-gold" strokeWidth={1.75} aria-hidden />
+              <Settings className="size-5 text-accent-primary" strokeWidth={1.75} aria-hidden />
               Settings
             </Link>
           </li>
@@ -132,8 +132,8 @@ export function CompanionShell({
               onClick={() => setMoreOpen(false)}
               className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 font-sans text-sm text-text-primary hover:bg-bg-elevated"
             >
-              <Monitor className="size-5 text-accent-gold" strokeWidth={1.75} aria-hidden />
-              Switch to desktop
+              <Monitor className="size-5 text-accent-primary" strokeWidth={1.75} aria-hidden />
+              Switch to Desktop
             </Link>
           </li>
         </ul>

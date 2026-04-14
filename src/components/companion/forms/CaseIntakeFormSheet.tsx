@@ -10,12 +10,10 @@ import { submitFormAction } from '@/app/(dashboard)/forms/actions'
 import type { PersonnelDirectoryRow } from '@/types/personnel'
 import { cn } from '@/lib/utils'
 
-const CASE_TYPES = ['Felony', 'Misdemeanor', 'Death Investigation', 'Property', 'Other'] as const
-
 const schema = z.object({
   case_number: z.string().trim().min(1, 'Case number is required').max(80),
   complainant_name: z.string().trim().max(200).optional(),
-  case_type: z.enum(CASE_TYPES),
+  case_type: z.string().trim().min(1, 'Incident type is required').max(100),
   incident_date: z.string().min(1, 'Incident date is required'),
   location: z.string().trim().max(500).optional(),
   initial_notes: z.string().trim().min(1, 'Summary is required').max(12000),
@@ -25,7 +23,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>
 
 const inputClass =
-  'min-h-12 w-full rounded-md border border-border-subtle bg-bg-app px-3 text-base text-text-primary'
+  'min-h-12 w-full rounded-md border border-border-subtle bg-bg-elevated px-3 text-base text-text-primary placeholder:text-text-disabled'
 
 export function CaseIntakeFormSheet({
   open,
@@ -54,7 +52,7 @@ export function CaseIntakeFormSheet({
     defaultValues: {
       case_number: '',
       complainant_name: '',
-      case_type: 'Other',
+      case_type: '',
       incident_date: new Date().toISOString().slice(0, 10),
       location: '',
       initial_notes: '',
@@ -87,7 +85,7 @@ export function CaseIntakeFormSheet({
             caseId: null,
             formData: {
               case_number: values.case_number.trim(),
-              case_type: values.case_type,
+              case_type: values.case_type.trim(),
               date_assigned: values.incident_date,
               assigned_to: det.full_name,
               referring_agency: values.complainant_name?.trim() || '',
@@ -135,17 +133,19 @@ export function CaseIntakeFormSheet({
         </div>
         <div>
           <label className="text-xs font-medium text-text-secondary">Complainant name</label>
-          <input className="mt-1 min-h-12 w-full rounded-md border border-border-subtle bg-bg-app px-3 text-base" {...register('complainant_name')} />
+          <input className={cn('mt-1', inputClass)} {...register('complainant_name')} />
         </div>
         <div>
           <label className="text-xs font-medium text-text-secondary">Incident type</label>
-          <select className={cn('mt-1', inputClass)} {...register('case_type')}>
-            {CASE_TYPES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          <input
+            type="text"
+            placeholder="e.g., Theft, Assault, Fraud, etc."
+            className={cn('mt-1', inputClass, errors.case_type && 'border-danger')}
+            {...register('case_type')}
+          />
+          {errors.case_type ? (
+            <p className="mt-1 text-xs text-danger">{errors.case_type.message}</p>
+          ) : null}
         </div>
         <div>
           <label className="text-xs font-medium text-text-secondary">Incident date</label>
@@ -157,14 +157,14 @@ export function CaseIntakeFormSheet({
         </div>
         <div>
           <label className="text-xs font-medium text-text-secondary">Location</label>
-          <input className="mt-1 min-h-12 w-full rounded-md border border-border-subtle bg-bg-app px-3 text-base" {...register('location')} />
+          <input className={cn('mt-1', inputClass)} {...register('location')} />
         </div>
         <div>
           <label className="text-xs font-medium text-text-secondary">Brief summary</label>
           <textarea
             rows={4}
             className={cn(
-              'mt-1 min-h-[6rem] w-full resize-y rounded-md border border-border-subtle bg-bg-app px-3 py-2 text-base',
+              'mt-1 min-h-[6rem] w-full resize-y rounded-md border border-border-subtle bg-bg-elevated px-3 py-2 text-base text-text-primary placeholder:text-text-disabled',
               errors.initial_notes && 'border-danger'
             )}
             {...register('initial_notes')}

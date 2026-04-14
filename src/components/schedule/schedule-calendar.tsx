@@ -19,12 +19,13 @@ const colors: Record<ScheduleEventType, string> = {
   fto_shift: '#b5651d',
 }
 
-export type ScheduleCalendarView = 'dayGridMonth' | 'timeGridWeek' | 'listWeek'
+export type ScheduleCalendarView = 'dayGridMonth' | 'timeGridWeek' | 'listWeek' | 'listTwoWeek'
 
 type ScheduleCalendarProps = {
   events: ScheduleEventRow[]
   initialView: ScheduleCalendarView
   onEventClick: (event: ScheduleEventRow) => void
+  onDayClick?: (date: Date) => void
 }
 
 function handleEventDidMount(arg: { el: HTMLElement; event: { extendedProps: Record<string, unknown> } }) {
@@ -58,6 +59,7 @@ export function ScheduleCalendar({
   events,
   initialView,
   onEventClick,
+  onDayClick,
 }: ScheduleCalendarProps) {
   const fcEvents = useMemo<EventInput[]>(
     () =>
@@ -86,16 +88,16 @@ export function ScheduleCalendar({
       className={[
         'schedule-fc text-text-primary',
         '[&_.fc]:text-text-primary',
-        '[&_.fc-toolbar-title]:font-heading [&_.fc-toolbar-title]:text-lg [&_.fc-toolbar-title]:tracking-wide [&_.fc-toolbar-title]:text-text-primary',
+        '[&_.fc-toolbar-title]:font-heading [&_.fc-toolbar-title]:text-2xl [&_.fc-toolbar-title]:tracking-wide [&_.fc-toolbar-title]:text-text-primary',
         '[&_.fc-button]:border-border-subtle [&_.fc-button]:bg-bg-elevated [&_.fc-button]:text-text-primary [&_.fc-button]:font-heading [&_.fc-button]:text-xs [&_.fc-button]:tracking-wide',
         '[&_.fc-button-primary]:border-accent-primary/40 [&_.fc-button-primary]:bg-accent-primary [&_.fc-button-primary]:text-bg-app',
-        '[&_.fc-col-header-cell]:border-border-subtle',
-        '[&_.fc-daygrid-day]:border-border-subtle',
+        '[&_.fc-col-header-cell]:border-border-subtle [&_.fc-col-header-cell]:bg-bg-elevated [&_.fc-col-header-cell]:font-heading [&_.fc-col-header-cell]:text-xs [&_.fc-col-header-cell]:font-semibold [&_.fc-col-header-cell]:uppercase [&_.fc-col-header-cell]:tracking-wide [&_.fc-col-header-cell]:text-text-secondary',
+        '[&_.fc-daygrid-day]:border-border-subtle [&_.fc-daygrid-day]:bg-transparent',
         '[&_.fc-scrollgrid]:border-border-subtle',
         '[&_.fc-theme-standard_td]:border-border-subtle',
         '[&_.fc-timegrid-slot]:border-border-subtle',
-        '[&_.fc-daygrid-day.fc-day-today]:border-t-2 [&_.fc-daygrid-day.fc-day-today]:border-t-accent-primary [&_.fc-daygrid-day.fc-day-today]:bg-accent-primary-muted/35',
-        '[&_.fc-timegrid-col.fc-day-today]:border-t-2 [&_.fc-timegrid-col.fc-day-today]:border-t-accent-primary [&_.fc-timegrid-col.fc-day-today]:bg-accent-primary-muted/25',
+        '[&_.fc-daygrid-day.fc-day-today]:border-l-4 [&_.fc-daygrid-day.fc-day-today]:border-l-accent-primary [&_.fc-daygrid-day.fc-day-today]:border-t-border-subtle [&_.fc-daygrid-day.fc-day-today]:bg-accent-primary-muted/40',
+        '[&_.fc-timegrid-col.fc-day-today]:border-l-4 [&_.fc-timegrid-col.fc-day-today]:border-l-accent-primary [&_.fc-timegrid-col.fc-day-today]:border-t-accent-primary [&_.fc-timegrid-col.fc-day-today]:bg-accent-primary-muted/25',
         '[&_.fc-list-day-cushion]:bg-bg-elevated [&_.fc-list-day-cushion]:text-text-primary',
         '[&_.cid-cal-event_.fc-event-main]:overflow-hidden',
         '[&_.fc-daygrid-event-harness]:min-h-[28px]',
@@ -108,11 +110,18 @@ export function ScheduleCalendar({
         headerToolbar={{
           left: 'prev,next today',
           center: 'title',
-          right: 'dayGridMonth,timeGridWeek,listWeek',
+          right: 'dayGridMonth,timeGridWeek,listWeek,listTwoWeek',
         }}
         height="auto"
         events={fcEvents}
         eventClick={handleClick}
+        dateClick={
+          onDayClick
+            ? (arg) => {
+                onDayClick(arg.date)
+              }
+            : undefined
+        }
         eventDidMount={handleEventDidMount}
         eventContent={eventContent}
         nowIndicator

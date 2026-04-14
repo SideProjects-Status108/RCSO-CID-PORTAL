@@ -35,6 +35,7 @@ import { EventTypeBadge } from '@/components/app/event-type-badge'
 import { StatusStamp } from '@/components/app/status-stamp'
 import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/lib/use-media-query'
+import { ScheduleDayDetailDialog } from '@/components/schedule/schedule-day-detail-dialog'
 
 const ScheduleCalendar = dynamic(
   () =>
@@ -103,14 +104,18 @@ type ScheduleViewProps = {
 export function ScheduleView({ data }: ScheduleViewProps) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
-  const narrowCalendar = useMediaQuery('(max-width: 639px)')
-  const [calView, setCalView] = useState<'dayGridMonth' | 'timeGridWeek' | 'listWeek'>(
-    'dayGridMonth'
-  )
+  const narrowCalendar = useMediaQuery('(max-width: 767px)')
+  const [calView, setCalView] = useState<
+    'dayGridMonth' | 'timeGridWeek' | 'listWeek' | 'listTwoWeek'
+  >('dayGridMonth')
+  const [dayPanelOpen, setDayPanelOpen] = useState(false)
+  const [dayPanelDate, setDayPanelDate] = useState<Date | null>(null)
 
   useEffect(() => {
     if (narrowCalendar) {
-      setCalView((v) => (v === 'dayGridMonth' ? 'listWeek' : v))
+      setCalView((v) =>
+        v === 'dayGridMonth' || v === 'timeGridWeek' ? 'listTwoWeek' : v
+      )
     }
   }, [narrowCalendar])
   const [typeFilters, setTypeFilters] = useState<Record<ScheduleEventType, boolean>>(
@@ -156,6 +161,27 @@ export function ScheduleView({ data }: ScheduleViewProps) {
     setEditing(null)
     const start = new Date()
     start.setMinutes(0, 0, 0)
+    const end = new Date(start)
+    end.setHours(end.getHours() + 1)
+    form.reset({
+      title: '',
+      event_type: data.ftcOnly ? 'fto_shift' : 'regular',
+      assigned_to: data.session.user.id,
+      start_datetime: toLocalInput(start),
+      end_datetime: toLocalInput(end),
+      is_all_day: false,
+      status: 'draft',
+      notes: '',
+      recurrence: 'none',
+      recurrence_custom: '',
+    })
+    setModalOpen(true)
+  }
+
+  function openCreateForDay(day: Date) {
+    setEditing(null)
+    const start = new Date(day)
+    start.setHours(9, 0, 0, 0)
     const end = new Date(start)
     end.setHours(end.getHours() + 1)
     form.reset({
@@ -325,6 +351,17 @@ export function ScheduleView({ data }: ScheduleViewProps) {
               >
                 Agenda
               </Button>
+              <Button
+                type="button"
+                variant={calView === 'listTwoWeek' ? 'default' : 'outline'}
+                className={cn(
+                  calView === 'listTwoWeek' &&
+                    'border-accent-primary/30 bg-accent-primary text-bg-app'
+                )}
+                onClick={() => setCalView('listTwoWeek')}
+              >
+                2 wk
+              </Button>
             </div>
             {canAdd ? (
               <Button
@@ -343,6 +380,18 @@ export function ScheduleView({ data }: ScheduleViewProps) {
             events={filteredEvents}
             initialView={calView}
             onEventClick={(ev) => setDrawerEvent(ev)}
+            onDayClick={(d) => {
+              setDayPanelDate(d)
+              setDayPanelOpen(true)
+            }}
+          />
+          <ScheduleDayDetailDialog
+            open={dayPanelOpen}
+            onOpenChange={setDayPanelOpen}
+            day={dayPanelDate}
+            events={filteredEvents}
+            canAdd={canAdd}
+            onNewEvent={(d) => openCreateForDay(d)}
           />
         </TabsContent>
         <TabsContent value="mine" className="space-y-3 pt-4">

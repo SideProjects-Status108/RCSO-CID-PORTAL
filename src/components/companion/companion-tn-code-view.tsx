@@ -305,7 +305,7 @@ export function CompanionTnCodeView({
             <Search className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-text-disabled" />
             <input
               ref={searchInputRef}
-              className="min-h-12 w-full rounded-md border border-border-subtle bg-bg-app py-2 pl-11 pr-3 text-base text-text-primary placeholder:text-text-disabled"
+              className="min-h-12 w-full rounded-md border border-border-subtle bg-bg-elevated py-2 pl-11 pr-3 text-base text-text-primary placeholder:text-text-disabled"
               placeholder="Search sections…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}

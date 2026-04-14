@@ -11,7 +11,13 @@ export default async function FieldNotesPage() {
   const session = await getSessionUserWithProfile()
   if (!session) redirect('/login')
 
-  const notes = await fetchFieldNotesList()
+  let notes: Awaited<ReturnType<typeof fetchFieldNotesList>> = []
+  try {
+    notes = await fetchFieldNotesList()
+  } catch (e) {
+    console.error('[field_notes] page load failed:', e)
+    notes = []
+  }
   const isSupervisionPlus = hasRole(session.profile.role, [
     UserRole.admin,
     UserRole.supervision_admin,

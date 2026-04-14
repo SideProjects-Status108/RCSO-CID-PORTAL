@@ -108,7 +108,7 @@ export function CompanionScheduleView({
           onClick={() => setTab('my')}
           className={cn(
             'min-h-10 flex-1 rounded-md font-heading text-sm font-medium tracking-wide transition-colors',
-            tab === 'my' ? 'bg-bg-elevated text-accent-gold' : 'text-text-secondary'
+            tab === 'my' ? 'bg-bg-elevated text-accent-primary' : 'text-text-secondary'
           )}
         >
           My schedule
@@ -118,7 +118,7 @@ export function CompanionScheduleView({
           onClick={() => setTab('oncall')}
           className={cn(
             'min-h-10 flex-1 rounded-md font-heading text-sm font-medium tracking-wide transition-colors',
-            tab === 'oncall' ? 'bg-bg-elevated text-accent-gold' : 'text-text-secondary'
+            tab === 'oncall' ? 'bg-bg-elevated text-accent-primary' : 'text-text-secondary'
           )}
         >
           On call
@@ -126,7 +126,7 @@ export function CompanionScheduleView({
       </div>
 
       {viewAsBlocked ? (
-        <p className="rounded-lg border border-accent-gold/30 bg-bg-surface px-3 py-2 text-xs text-text-secondary">
+        <p className="rounded-lg border border-accent-primary/30 bg-bg-surface px-3 py-2 text-xs text-text-secondary">
           You can only open another member&apos;s schedule from the directory if you have
           supervision access. Showing your schedule instead.
         </p>
@@ -140,7 +140,7 @@ export function CompanionScheduleView({
       {tab === 'my' ? (
         <>
           <div>
-            <p className="font-heading text-xl font-semibold tabular-nums tracking-tight text-accent-gold">
+            <p className="font-heading text-xl font-semibold tabular-nums tracking-tight text-text-primary">
               {longDateHeader(today)}
             </p>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
@@ -165,7 +165,7 @@ export function CompanionScheduleView({
                       <CompanionEventTypeBadge type={e.event_type} />
                       <span className="font-medium text-text-primary">{e.title}</span>
                     </div>
-                    <p className="font-heading text-xs tabular-nums text-accent-gold">{formatEventTime(e)}</p>
+                    <p className="font-heading text-xs tabular-nums text-text-secondary">{formatEventTime(e)}</p>
                     {e.notes?.trim() ? (
                       <p className="line-clamp-1 text-xs text-text-secondary">{e.notes.trim()}</p>
                     ) : null}
@@ -198,7 +198,7 @@ export function CompanionScheduleView({
                               <CompanionEventTypeBadge type={e.event_type} />
                               <span className="font-medium text-text-primary">{e.title}</span>
                             </div>
-                            <p className="font-heading text-xs tabular-nums text-accent-gold">{formatEventTime(e)}</p>
+                            <p className="font-heading text-xs tabular-nums text-text-secondary">{formatEventTime(e)}</p>
                             {e.notes?.trim() ? (
                               <p className="line-clamp-1 text-xs text-text-secondary">
                                 {e.notes.trim()}
@@ -301,7 +301,7 @@ function OnCallBoard({
               return (
                 <li key={e.id}>
                   <CompanionCard className="flex flex-col gap-2">
-                    <p className="font-heading text-xs tabular-nums text-accent-gold">
+                    <p className="font-heading text-xs tabular-nums text-text-secondary">
                       {new Date(e.start_datetime).toLocaleString(undefined, {
                         weekday: 'short',
                         month: 'short',
@@ -316,7 +316,7 @@ function OnCallBoard({
                         href={`tel:${p.phone_cell.replace(/\s/g, '')}`}
                         className="inline-flex min-h-10 items-center gap-2 text-sm text-accent-teal underline"
                       >
-                        <Phone className="size-4 shrink-0 text-accent-gold" strokeWidth={1.75} />
+                        <Phone className="size-4 shrink-0 text-accent-primary" strokeWidth={1.75} />
                         {p.phone_cell}
                       </a>
                     ) : (

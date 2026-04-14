@@ -17,7 +17,7 @@ function canManageCaseTypes(role: Parameters<typeof hasRole>[0]) {
 
 export async function createCaseAction(input: {
   case_number: string
-  case_type_id: string
+  case_type_label: string
   date_opened: string
   notes: string | null
   assigned_detective: string | null
@@ -26,23 +26,18 @@ export async function createCaseAction(input: {
   if (!session) throw new Error('Unauthorized')
   if (!canCreateCase(session.profile.role)) throw new Error('Forbidden')
 
-  const supabase = await createClient()
-  const { data: ct, error: ce } = await supabase
-    .from('case_types')
-    .select('prefix')
-    .eq('id', input.case_type_id)
-    .maybeSingle()
-  if (ce || !ct) throw new Error('Invalid case type')
+  const label = input.case_type_label.trim()
+  if (!label) throw new Error('Case type is required')
+  if (label.length > 100) throw new Error('Case type must be 100 characters or less')
 
-  const prefix = String(ct.prefix ?? '')
   const num = input.case_number.trim()
-  if (prefix && !num.toUpperCase().startsWith(prefix.toUpperCase())) {
-    throw new Error(`Case number must start with prefix ${prefix}`)
-  }
+  if (!num) throw new Error('Case number is required')
 
+  const supabase = await createClient()
   const { error } = await supabase.from('cases').insert({
     case_number: num,
-    case_type_id: input.case_type_id,
+    case_type_id: null,
+    case_type_label: label,
     date_opened: input.date_opened,
     notes: input.notes?.trim() || null,
     assigned_detective: input.assigned_detective,

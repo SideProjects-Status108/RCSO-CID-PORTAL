@@ -11,7 +11,8 @@ export type CaseTypeRow = {
 export type CaseListRow = {
   id: string
   case_number: string
-  case_type_id: string
+  /** Legacy FK; null when case was created with free-text type only. */
+  case_type_id: string | null
   case_type_name: string | null
   case_type_prefix: string | null
   assigned_detective: string | null

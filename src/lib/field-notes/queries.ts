@@ -25,13 +25,22 @@ export function mapFieldNoteRow(r: Record<string, unknown>): FieldNoteRow {
 }
 
 export async function fetchFieldNotesList(): Promise<FieldNoteRow[]> {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('field_notes')
-    .select('*')
-    .order('updated_at', { ascending: false })
-  if (error || !data) return []
-  return data.map((r) => mapFieldNoteRow(r as Record<string, unknown>))
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('field_notes')
+      .select('*')
+      .order('updated_at', { ascending: false })
+    if (error) {
+      console.error('[field_notes] list query failed:', error.message, error.code, error.details)
+      return []
+    }
+    if (!data) return []
+    return data.map((r) => mapFieldNoteRow(r as Record<string, unknown>))
+  } catch (e) {
+    console.error('[field_notes] list unexpected error:', e)
+    return []
+  }
 }
 
 export async function fetchFieldNoteById(id: string): Promise<FieldNoteRow | null> {

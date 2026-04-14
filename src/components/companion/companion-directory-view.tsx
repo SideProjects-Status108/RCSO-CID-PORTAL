@@ -166,7 +166,7 @@ export function CompanionDirectoryView({
                       <a
                         href={telHref(row.phone_cell) ?? undefined}
                         onClick={(e) => e.stopPropagation()}
-                        className="flex size-11 items-center justify-center rounded-lg border border-border-subtle text-accent-gold hover:bg-bg-elevated"
+                        className="flex size-11 items-center justify-center rounded-lg border border-border-subtle text-accent-primary hover:bg-bg-elevated"
                         aria-label="Call cell"
                       >
                         <Phone className="size-4" strokeWidth={1.75} />
@@ -226,7 +226,7 @@ function FilterChip({
       className={cn(
         'shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
         active
-          ? 'border-accent-gold/50 bg-accent-gold/15 text-accent-gold'
+          ? 'border-accent-primary/50 bg-accent-primary/15 text-accent-primary'
           : 'border-border-subtle bg-bg-surface text-text-secondary'
       )}
     >
@@ -249,7 +249,7 @@ function Avatar({ photoUrl, name }: { photoUrl: string | null; name: string }) {
     )
   }
   return (
-    <div className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-bg-elevated font-mono text-xs font-semibold text-accent-gold">
+    <div className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-bg-elevated font-mono text-xs font-semibold text-accent-primary">
       {initials(name)}
     </div>
   )
@@ -286,7 +286,7 @@ function ProfileSheetBody({
       <div className="flex flex-col items-center gap-2 pt-2">
         <LargeAvatar photoUrl={row.photo_url} name={row.full_name} />
         <p className="text-center text-xl font-semibold text-text-primary">{row.full_name}</p>
-        <p className="font-mono text-sm text-accent-gold">{row.badge_number ?? '—'}</p>
+        <p className="font-mono text-sm text-accent-primary">{row.badge_number ?? '—'}</p>
         <p className="text-center text-sm capitalize text-text-secondary">
           {roleDisplay(row)}
           {row.unit ? ` · ${row.unit}` : ''}
@@ -307,10 +307,10 @@ function ProfileSheetBody({
                 href={cellTel}
                 className={cn(
                   buttonVariants({ variant: 'outline', size: 'sm' }),
-                  'inline-flex gap-2 border-accent-gold/40'
+                  'inline-flex gap-2 border-accent-primary/40'
                 )}
               >
-                <Phone className="size-4 text-accent-gold" strokeWidth={1.75} />
+                <Phone className="size-4 text-accent-primary" strokeWidth={1.75} />
                 Call cell
               </a>
             ) : null}
@@ -386,7 +386,7 @@ function LargeAvatar({ photoUrl, name }: { photoUrl: string | null; name: string
     )
   }
   return (
-    <div className="flex size-20 items-center justify-center rounded-full border border-border-subtle bg-bg-elevated font-mono text-lg font-semibold text-accent-gold">
+    <div className="flex size-20 items-center justify-center rounded-full border border-border-subtle bg-bg-elevated font-mono text-lg font-semibold text-accent-primary">
       {initials(name)}
     </div>
   )

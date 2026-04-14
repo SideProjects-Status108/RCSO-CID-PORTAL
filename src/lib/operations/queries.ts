@@ -56,11 +56,16 @@ function mapCaseRow(
   ct: { name?: string; prefix?: string } | null,
   linked: number
 ): CaseListRow {
+  const rawLabel =
+    r.case_type_label != null && String(r.case_type_label).trim() !== ''
+      ? String(r.case_type_label).trim()
+      : null
+  const typeName = rawLabel ?? ct?.name ?? null
   return {
     id: String(r.id),
     case_number: String(r.case_number ?? ''),
-    case_type_id: String(r.case_type_id),
-    case_type_name: ct?.name ?? null,
+    case_type_id: r.case_type_id != null ? String(r.case_type_id) : null,
+    case_type_name: typeName,
     case_type_prefix: ct?.prefix ?? null,
     assigned_detective: r.assigned_detective != null ? String(r.assigned_detective) : null,
     status: r.status as CaseListRow['status'],
@@ -118,7 +123,11 @@ export async function fetchCasesList(
     q = q.eq('assigned_detective', filters.assigned_detective)
   }
   if (filters.case_type_id && filters.case_type_id !== 'all') {
-    q = q.eq('case_type_id', filters.case_type_id)
+    if (filters.case_type_id === '__free__') {
+      q = q.is('case_type_id', null)
+    } else {
+      q = q.eq('case_type_id', filters.case_type_id)
+    }
   }
   if (filters.date_from) {
     q = q.gte('date_opened', filters.date_from)
@@ -142,7 +151,11 @@ export async function fetchCasesList(
 
   const s = filters.search?.trim().toLowerCase()
   if (s) {
-    rows = rows.filter((c) => c.case_number.toLowerCase().includes(s))
+    rows = rows.filter(
+      (c) =>
+        c.case_number.toLowerCase().includes(s) ||
+        (c.case_type_name?.toLowerCase().includes(s) ?? false)
+    )
   }
   return rows
 }
