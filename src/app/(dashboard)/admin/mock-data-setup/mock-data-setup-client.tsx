@@ -146,7 +146,10 @@ export function MockDataSetupClient() {
         <p className="mt-1 text-amber-100/90">
           Do not use in production. All accounts use the email pattern{' '}
           <code className="rounded bg-black/30 px-1">mock-*@rcso.local</code>. Purge only affects those
-          addresses.
+          addresses. Personnel and pairing flows read the <code className="rounded bg-black/30 px-1">
+            personnel_directory
+          </code>{' '}
+          table — if you seeded before that was added, purge once and seed again so directory rows exist.
         </p>
       </div>
 

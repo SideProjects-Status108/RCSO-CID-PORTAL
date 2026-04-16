@@ -113,6 +113,29 @@ export default async function MockDataScenariosPage() {
         expect="Full-directory visibility matches RLS for supervision / coordinator roles."
       />
 
+      <section className="rounded-xl border border-border-subtle bg-bg-surface p-4 text-sm text-text-secondary">
+        <h2 className="text-base font-semibold text-text-primary">Personnel and New pairing / enroll</h2>
+        <ul className="mt-2 list-disc space-y-2 pl-5">
+          <li>
+            <strong className="text-text-primary">Personnel</strong> comes from the{' '}
+            <code className="rounded bg-bg-elevated px-1">personnel_directory</code> table, not from{' '}
+            <code className="rounded bg-bg-elevated px-1">profiles</code> alone. The mock seed now inserts both. If
+            your roster was empty, purge and re-seed once.
+          </li>
+          <li>
+            <strong className="text-text-primary">Enroll DIT</strong> (new DIT + pairing) is allowed only for{' '}
+            <strong className="text-text-primary">FTO coordinators</strong> in this app (
+            <code className="rounded bg-bg-elevated px-1">mock-ftoc-001@rcso.local</code>).
+          </li>
+          <li>
+            <strong className="text-text-primary">New pairing</strong> (pair with an existing enrolled DIT) is
+            allowed for <strong className="text-text-primary">supervision+</strong> (captain, lieutenant, sergeants
+            in the mock set) or <strong className="text-text-primary">FTO coordinators</strong> — not for plain FTO
+            accounts.
+          </li>
+        </ul>
+      </section>
+
       <p className="text-xs text-text-disabled">
         Passwords are only shown once on the setup page after seeding. Re-seed after purge to issue new passwords.
       </p>

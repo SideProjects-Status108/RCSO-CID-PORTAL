@@ -2,7 +2,7 @@ import 'server-only'
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-import { UserRole } from '@/lib/auth/roles'
+import { UserRole, type UserRoleValue } from '@/lib/auth/roles'
 import {
   isMockRcsoLocalEmail,
   MOCK_ACCOUNT_SPECS,
@@ -12,6 +12,27 @@ import type { MockAccountWithPassword } from '@/lib/admin/mock-data-types'
 
 const EXPL_SAMPLE =
   'Structured coaching notes for this rating during mock CID training seed — meets minimum length.'
+
+function personnelRoleLabel(role: UserRoleValue): string {
+  switch (role) {
+    case UserRole.supervision_admin:
+      return 'Supervision (admin scope)'
+    case UserRole.supervision:
+      return 'Supervision'
+    case UserRole.fto_coordinator:
+      return 'FTO coordinator'
+    case UserRole.fto:
+      return 'Field training officer'
+    case UserRole.dit:
+      return 'Detective in training'
+    case UserRole.detective:
+      return 'Detective'
+    case UserRole.admin:
+      return 'Administrator'
+    default:
+      return role
+  }
+}
 
 function randomPassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%'
@@ -166,12 +187,13 @@ export async function seedMockTrainingData(svc: SupabaseClient): Promise<{
     const id = created.user.id
     idByEmail[spec.email] = id
 
+    const phoneCell = `615-555-0${String(100 + accounts.length).slice(-3)}`
     const { error: pErr } = await svc.from('profiles').insert({
       id,
       role: spec.role,
       full_name: spec.full_name,
       badge_number: spec.badge_number,
-      phone_cell: `615-555-0${String(100 + accounts.length).slice(-3)}`,
+      phone_cell: phoneCell,
       phone_office: null,
       unit: 'CID',
       is_active: true,
@@ -179,6 +201,27 @@ export async function seedMockTrainingData(svc: SupabaseClient): Promise<{
     if (pErr) {
       await svc.auth.admin.deleteUser(id)
       throw new Error(`profiles insert failed for ${spec.email}: ${pErr.message}`)
+    }
+
+    const { error: dirErr } = await svc.from('personnel_directory').insert({
+      user_id: id,
+      full_name: spec.full_name,
+      badge_number: spec.badge_number,
+      role_label: personnelRoleLabel(spec.role),
+      system_role: spec.role,
+      unit: 'CID',
+      assignment: null,
+      phone_cell: phoneCell,
+      phone_office: null,
+      email: spec.email,
+      photo_url: null,
+      is_active: true,
+      notes: 'Mock CID directory row (portal test data)',
+    })
+    if (dirErr) {
+      await svc.from('profiles').delete().eq('id', id)
+      await svc.auth.admin.deleteUser(id)
+      throw new Error(`personnel_directory insert failed for ${spec.email}: ${dirErr.message}`)
     }
 
     accounts.push({ ...spec, password, id })
@@ -386,6 +429,14 @@ export async function purgeMockTrainingData(svc: SupabaseClient): Promise<{
     const { error: delP } = await svc.from('fto_pairings').delete().in('id', pairingIds)
     if (delP) throw new Error(`delete pairings: ${delP.message}`)
   }
+
+  const { error: delPd } = await svc.from('personnel_directory').delete().in('user_id', ids)
+  if (delPd) throw new Error(`delete personnel_directory: ${delPd.message}`)
+  const { error: delPdEmail } = await svc
+    .from('personnel_directory')
+    .delete()
+    .ilike('email', 'mock-%@rcso.local')
+  if (delPdEmail) throw new Error(`delete personnel_directory by email: ${delPdEmail.message}`)
 
   const { error: delDr } = await svc.from('dit_records').delete().in('user_id', ids)
   if (delDr) throw new Error(`delete dit_records: ${delDr.message}`)
