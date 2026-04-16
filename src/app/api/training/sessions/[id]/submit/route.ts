@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
 
-import { createClient } from '@/lib/supabase/server'
+import { fetchPersonnelByUserIds } from '@/lib/directory/queries'
+import { buildUnobservedCompetenciesEmail } from '@/lib/email/templates/training'
+import { logTrainingEmailPreview } from '@/lib/email/training-notifications'
+import { requireJsonSession, requireTrainingSessionEditor } from '@/lib/training/api-auth'
 import {
+  fetchPairingById,
   fetchSessionCompetencyScores,
   fetchWeeklySession,
+  identifyUnobservedCompetencies,
+  replaceUnobservedCompetenciesForSession,
   updateSessionStatus,
 } from '@/lib/training/queries'
 
@@ -11,16 +17,20 @@ const MIN_EXPLANATION = 12
 
 export async function POST(_request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id: session_id } = await ctx.params
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const gate = await requireJsonSession()
+  if (!gate.ok) return gate.response
 
   try {
     const session = await fetchWeeklySession(session_id)
+    const canEdit = await requireTrainingSessionEditor(
+      gate.session.user.id,
+      gate.session.profile.role,
+      session.pairing_id
+    )
+    if (!canEdit) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     if (session.status !== 'draft') {
       return NextResponse.json({ error: 'Only draft sessions can be submitted' }, { status: 409 })
     }
@@ -42,7 +52,27 @@ export async function POST(_request: Request, ctx: { params: Promise<{ id: strin
     }
 
     await updateSessionStatus(session_id, 'submitted')
-    return NextResponse.json({ ok: true })
+    await replaceUnobservedCompetenciesForSession(session_id)
+    const unobserved = await identifyUnobservedCompetencies(session_id)
+
+    const pairing = await fetchPairingById(session.pairing_id)
+    if (pairing) {
+      const personnel = await fetchPersonnelByUserIds([pairing.dit_id, pairing.fto_id, gate.session.user.id])
+      const name = (uid: string) => personnel.find((p) => p.user_id === uid)?.full_name ?? 'Trainee'
+      const weekLabel = `${session.week_start_date} – ${session.week_end_date}`
+      const mail = buildUnobservedCompetenciesEmail({
+        ditName: name(pairing.dit_id),
+        ftoName: name(pairing.fto_id),
+        weekLabel,
+        items: unobserved.map((u) => ({ key: u.competency_key, label: u.competency_label })),
+      })
+      logTrainingEmailPreview('unobserved', mail.subject, mail.html)
+    }
+
+    return NextResponse.json({
+      success: true,
+      unobserved_count: unobserved.length,
+    })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Failed to submit evaluation'
     return NextResponse.json({ error: msg }, { status: 500 })

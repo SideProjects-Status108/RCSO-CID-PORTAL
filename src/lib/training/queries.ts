@@ -985,3 +985,107 @@ export async function ensureWeeklyTrainingSession(
     throwTraining('Could not create or load weekly training session')
   }
 }
+
+export async function fetchActivePairingForDitUser(ditUserId: string): Promise<FtoPairingRow | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('fto_pairings')
+    .select('*')
+    .eq('dit_id', ditUserId)
+    .eq('is_active', true)
+    .order('start_date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error || !data) return null
+  return mapPairing(data as Record<string, unknown>)
+}
+
+export async function fetchWeeklySessionsForPairing(
+  pairingId: string,
+  limit = 8
+): Promise<WeeklyTrainingSession[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('weekly_training_sessions')
+    .select('*')
+    .eq('pairing_id', pairingId)
+    .order('week_start_date', { ascending: false })
+    .limit(limit)
+  if (error || !data) return []
+  return data.map((r) => mapWeeklySession(r as Record<string, unknown>))
+}
+
+export async function fetchDeficiencyFormsForPairing(pairingId: string): Promise<DeficiencyForm[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('deficiency_forms')
+    .select('*')
+    .eq('pairing_id', pairingId)
+    .order('created_at', { ascending: false })
+    .limit(30)
+  if (error || !data) return []
+  return data.map((r) => mapDeficiencyForm(r as Record<string, unknown>))
+}
+
+/** After weekly eval submit: replace unobserved rows for competencies with no score this week. */
+export async function replaceUnobservedCompetenciesForSession(sessionId: string): Promise<number> {
+  const supabase = await createClient()
+  const { data: masters, error: mErr } = await supabase
+    .from('competency_masters')
+    .select('key, label')
+    .order('sort_order', { ascending: true })
+  if (mErr) throwTraining('Failed to load competency masters for unobserved', mErr)
+
+  const scores = await fetchSessionCompetencyScores(sessionId)
+  const scoredKeys = new Set(scores.filter((s) => s.score != null).map((s) => s.competency_key))
+
+  const { error: dErr } = await supabase.from('unobserved_competencies').delete().eq('session_id', sessionId)
+  if (dErr) throwTraining('Failed to clear prior unobserved rows', dErr)
+
+  const rows = (masters ?? [])
+    .filter((m) => !scoredKeys.has(String((m as { key: string }).key)))
+    .map((m) => ({
+      session_id: sessionId,
+      competency_key: String((m as { key: string }).key),
+      competency_label: String((m as { label: string }).label ?? ''),
+      days_since_last_observed: null as number | null,
+    }))
+
+  if (rows.length === 0) return 0
+  const { error: iErr } = await supabase.from('unobserved_competencies').insert(rows)
+  if (iErr) throwTraining('Failed to insert unobserved competencies', iErr)
+  return rows.length
+}
+
+export type WeeklyScoreTrendRow = {
+  week_start_date: string
+  week_end_date: string
+  scores: Record<string, number | null>
+}
+
+export async function fetchWeeklyScoreTrendForPairing(
+  pairingId: string,
+  competencyKeys: string[],
+  weeks = 4
+): Promise<WeeklyScoreTrendRow[]> {
+  const sessions = await fetchWeeklySessionsForPairing(pairingId, weeks)
+  const chronological = [...sessions].reverse()
+  const keys = new Set(competencyKeys)
+  const out: WeeklyScoreTrendRow[] = []
+  for (const s of chronological) {
+    const scoresList = await fetchSessionCompetencyScores(s.id)
+    const scores: Record<string, number | null> = {}
+    for (const k of competencyKeys) scores[k] = null
+    for (const row of scoresList) {
+      if (keys.has(row.competency_key)) {
+        scores[row.competency_key] = row.score
+      }
+    }
+    out.push({
+      week_start_date: s.week_start_date,
+      week_end_date: s.week_end_date,
+      scores,
+    })
+  }
+  return out
+}

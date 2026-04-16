@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { createClient } from '@/lib/supabase/server'
+import { requireJsonSession, requireTrainingSessionEditor } from '@/lib/training/api-auth'
 import { ensureWeeklyTrainingSession } from '@/lib/training/queries'
 
 type PostBody = {
@@ -10,13 +10,8 @@ type PostBody = {
 }
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const gate = await requireJsonSession()
+  if (!gate.ok) return gate.response
 
   let body: PostBody
   try {
@@ -35,9 +30,18 @@ export async function POST(request: Request) {
     )
   }
 
+  const allowed = await requireTrainingSessionEditor(
+    gate.session.user.id,
+    gate.session.profile.role,
+    pairing_id
+  )
+  if (!allowed) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   try {
     const session = await ensureWeeklyTrainingSession(pairing_id, week_start_date, week_end_date)
-    return NextResponse.json({ session })
+    return NextResponse.json({ session, session_id: session.id })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Failed to create session'
     return NextResponse.json({ error: msg }, { status: 500 })

@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server'
 
-import { createClient } from '@/lib/supabase/server'
+import { requireJsonSession, requireTrainingSessionEditor } from '@/lib/training/api-auth'
 import {
   deleteWeeklyCompetencyScore,
   fetchWeeklySession,
   saveCompetencyScore,
 } from '@/lib/training/queries'
 import type { WeeklyCompetencyScore } from '@/types/training'
+
+const MIN_EXPLANATION = 12
 
 type ScoreRow = {
   competency_key: string
@@ -20,13 +22,8 @@ type ScoreRow = {
 
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id: session_id } = await ctx.params
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const gate = await requireJsonSession()
+  if (!gate.ok) return gate.response
 
   let body: { scores?: ScoreRow[] }
   try {
@@ -42,6 +39,14 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
 
   try {
     const session = await fetchWeeklySession(session_id)
+    const canEdit = await requireTrainingSessionEditor(
+      gate.session.user.id,
+      gate.session.profile.role,
+      session.pairing_id
+    )
+    if (!canEdit) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
     if (session.status !== 'draft') {
       return NextResponse.json({ error: 'Only draft sessions can be edited' }, { status: 409 })
     }
@@ -57,6 +62,17 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
       const n = Number(r.score)
       if (n < 1 || n > 5) {
         return NextResponse.json({ error: `Invalid score for ${r.competency_key}` }, { status: 400 })
+      }
+      if (n === 1 || n === 2 || n === 5) {
+        const ex = (r.explanation ?? '').trim()
+        if (ex.length > 0 && ex.length < MIN_EXPLANATION) {
+          return NextResponse.json(
+            {
+              error: `Explanation for ${r.competency_key} must be at least ${MIN_EXPLANATION} characters when provided`,
+            },
+            { status: 400 }
+          )
+        }
       }
       const explanation_required = Boolean(
         r.explanation_required ?? (n === 1 || n === 2 || n === 5)
@@ -77,7 +93,8 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
       await saveCompetencyScore(row)
     }
 
-    return NextResponse.json({ ok: true })
+    const updated = await fetchWeeklySession(session_id)
+    return NextResponse.json({ ok: true, session: updated })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Failed to save draft'
     return NextResponse.json({ error: msg }, { status: 500 })

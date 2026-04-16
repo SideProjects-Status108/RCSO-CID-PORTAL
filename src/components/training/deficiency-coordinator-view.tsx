@@ -82,32 +82,18 @@ export function DeficiencyCoordinatorView() {
     start(async () => {
       setMsg(null)
       try {
-        const startIso = meetingLocal
-          ? new Date(meetingLocal).toISOString()
-          : new Date().toISOString()
-        const cal = await fetch('/api/calendar/create-event', {
+        const res = await fetch(`/api/training/deficiency-forms/${pick.id}/schedule-meeting`, {
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            title: `Coaching: deficiency ${pick.id.slice(0, 8)}`,
-            start: startIso,
-            end: new Date(new Date(startIso).getTime() + 45 * 60_000).toISOString(),
-            attendees: ['coordinator', 'fto'],
+            meeting_date: meetingLocal ? meetingLocal.slice(0, 10) : null,
+            action_notes: coordNotes.trim() || null,
+            additional_notes: coordNotes.trim() || null,
           }),
         })
-        const cj = (await cal.json()) as { eventId?: string; error?: string }
-        if (!cal.ok) throw new Error(cj.error ?? 'Calendar stub failed')
-
-        await postAction(pick.id, {
-          action_level: 'coordinator',
-          action_type: 'scheduled_meeting',
-          action_notes: coordNotes.trim() || null,
-          meeting_date: meetingLocal ? meetingLocal.slice(0, 10) : null,
-          calendar_meeting_id: cj.eventId ?? null,
-          meeting_attendees: ['Coordinator', 'FTO'],
-        })
-        await patchForm(pick.id, { status: 'coaching_active', additional_notes: coordNotes.trim() || null })
+        const j = (await res.json()) as { error?: string }
+        if (!res.ok) throw new Error(j.error ?? 'Schedule failed')
         setMsg('Meeting logged and status set to coaching active.')
         await load()
         setPick(null)
@@ -141,32 +127,20 @@ export function DeficiencyCoordinatorView() {
     start(async () => {
       setMsg(null)
       try {
-        const startIso = meetingLocal
-          ? new Date(meetingLocal).toISOString()
-          : new Date().toISOString()
-        const cal = await fetch('/api/calendar/create-event', {
+        const history = `Form ${pick.id}. Prior status: ${pick.status}. ${escNotes}`.trim()
+        const res = await fetch(`/api/training/deficiency-forms/${pick.id}/escalate`, {
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            title: `Escalation (Sgt): deficiency ${pick.id.slice(0, 8)}`,
-            start: startIso,
-            attendees: ['FTO Sgt', 'Coordinator', 'FTO', 'DIT'],
+            level: 'sgt',
+            meeting_date: meetingLocal ? meetingLocal.slice(0, 10) : null,
+            action_notes: history,
+            additional_notes: coordNotes.trim() || null,
           }),
         })
-        const cj = (await cal.json()) as { eventId?: string; error?: string }
-        if (!cal.ok) throw new Error(cj.error ?? 'Calendar stub failed')
-
-        const history = `Form ${pick.id}. Prior status: ${pick.status}. ${escNotes}`.trim()
-        await postAction(pick.id, {
-          action_level: 'coordinator',
-          action_type: 'escalate_to_sgt',
-          action_notes: history,
-          meeting_date: meetingLocal ? meetingLocal.slice(0, 10) : null,
-          calendar_meeting_id: cj.eventId ?? null,
-          meeting_attendees: ['FTO Sgt', 'Coordinator', 'FTO', 'DIT'],
-        })
-        await patchForm(pick.id, { status: 'escalated_to_sgt', additional_notes: coordNotes.trim() || null })
+        const j = (await res.json()) as { error?: string }
+        if (!res.ok) throw new Error(j.error ?? 'Escalation failed')
         setMsg('Escalated to FTO Sgt (stub calendar event).')
         await load()
         setPick(null)

@@ -1,4 +1,5 @@
 # Cursor Prompts: Command Board (Phase 1)
+
 ## Small, Focused Chunks — One Component Per Prompt
 
 **Goal:** Build the Command Board system in relative chunks. Each prompt is standalone, achievable in one session, minimal complexity.
@@ -148,12 +149,14 @@ Investigation Tasks:
 ```
 
 **Output:**
+
 - SQL schema (PostgreSQL)
 - Foreign key relationships documented
 - Indexes for frequently-searched fields (complaint_id, detective_id, case_status)
 - No data; no APIs; schema only
 
 **User Controls:**
+
 - Table names, field names, data types
 - Enum values
 - Required vs. optional fields
@@ -232,18 +235,21 @@ GET /api/cases/:id/tasks/:task_id/history — get task change history
 ```
 
 **Input Validation:**
+
 - Required fields cannot be empty
 - Enum fields validate against allowed values
 - Foreign key references validate existence
 - Timestamps auto-set by system
 
 **Output:**
+
 - REST endpoint documentation
 - Request/response examples for each endpoint
 - Error handling (404, 400, 401, 500)
 - No UI; endpoints only
 
 **User Controls:**
+
 - Endpoint names, HTTP methods
 - Required fields per endpoint
 - Validation rules
@@ -282,23 +288,27 @@ Build the responsive desktop UI layout for Command Board. Structure only, no dat
 ```
 
 **Responsive:**
+
 - Full desktop: sidebar + main area side-by-side
 - Tablet: sidebar collapses to icons
 - Mobile: sidebar becomes drawer menu
 
 **Styling:**
+
 - Dark theme (war room display suitable)
 - Clear hierarchy, minimal clutter
 - Tab navigation (click to switch views)
 - No data in tables yet (just column headers)
 
 **Output:**
+
 - HTML/CSS skeleton (or React components with placeholder content)
 - Responsive grid layout
 - Tab navigation working (clicks change tabs)
 - No API integration yet
 
 **User Controls:**
+
 - Colors, fonts, spacing
 - Sidebar width
 - Tab names and order
@@ -322,6 +332,7 @@ Build the header bar (top of Command Board). Displays case info, tier, status, t
 ```
 
 **Dynamic Fields:**
+
 - Complaint number
 - Incident type
 - Tier (color-coded: Tier 1=blue, Tier 2=orange, Tier 3=red)
@@ -333,17 +344,20 @@ Build the header bar (top of Command Board). Displays case info, tier, status, t
 - If supervisor on-scene: "Supervisor: McPherson"
 
 **Interaction:**
+
 - Click complaint number → open case details panel (not built yet)
 - Click tier badge → shows tier info (not built yet)
 - Click lead detective → shows their contact info (not built yet)
 
 **Output:**
+
 - React component with prop-based data
 - Real-time elapsed time calculation
 - Color-coded status indicators
 - Responsive (shrink gracefully on smaller screens)
 
 **User Controls:**
+
 - Colors for each tier
 - Time format (12hr vs 24hr)
 - Fields displayed in header
@@ -373,15 +387,18 @@ Medical Examiner       Davis              ME-555   Body Location     Active     
 ```
 
 **Features:**
+
 - Sortable by: Role, Name, Badge, Location
 - Searchable by: Name, Badge, Role
 - Color-coded Status: Active=green, On-Leave=yellow, Unavailable=red
 - [···] menu per row (not functional yet)
 
 **Data Source:**
+
 - GET /api/cases/:id/personnel endpoint
 
 **Output:**
+
 - React table component
 - Sorting functionality
 - Search/filter input
@@ -389,6 +406,7 @@ Medical Examiner       Davis              ME-555   Body Location     Active     
 - Click row → shows personnel detail panel (panel not built yet)
 
 **User Controls:**
+
 - Column order
 - Column visibility (hide/show columns)
 - Default sort order
@@ -425,20 +443,24 @@ VICTIM 1: John Smith, DOB 1955 (70yo, White Male)
 ```
 
 **Interactive:**
+
 - Expand/collapse each category
 - Click on person → shows full detail (interview status, link expiration, notes)
 - Shows interview status icons (✓ interviewed, ⏳ pending, ✗ declined)
 
 **Data Source:**
+
 - GET /api/cases/:id/victims/:victim_id/details
 
 **Output:**
+
 - React tree component
 - Expand/collapse working
 - Click to show person detail (in modal or side panel)
 - Interview status indicators
 
 **User Controls:**
+
 - Category names and order
 - Expand/collapse default state
 - Color scheme
@@ -452,6 +474,7 @@ VICTIM 1: John Smith, DOB 1955 (70yo, White Male)
 Build the edit mode for Victimology Tree. Add, edit, delete person entries.
 
 **Features:**
+
 - Click [+ Add Family Member] → form appears
 - Form fields: Name, Relationship, Contact phone, Contact address, Notes
 - Click on existing person → form appears with pre-filled data
@@ -459,6 +482,7 @@ Build the edit mode for Victimology Tree. Add, edit, delete person entries.
 - [Delete] button → confirm and DELETE
 
 **Output:**
+
 - Form component for adding/editing
 - Input validation (name required, phone format, etc.)
 - Save/cancel buttons
@@ -466,6 +490,7 @@ Build the edit mode for Victimology Tree. Add, edit, delete person entries.
 - Success notification on save
 
 **User Controls:**
+
 - Form field labels
 - Required vs optional fields
 - Validation messages
@@ -506,15 +531,18 @@ CURRENT STATUS:
 ```
 
 **Data Source:**
+
 - GET /api/cases/:id/suspects
 
 **Output:**
+
 - React component with hierarchical display
 - Expandable sections
 - Status color-coded (threat level: red/orange/yellow/green)
 - Suspect count (supports multiple suspects)
 
 **User Controls:**
+
 - Section names and order
 - Color coding for threat levels
 
@@ -527,12 +555,14 @@ CURRENT STATUS:
 Build edit mode for Suspect information. Add, edit, delete suspects.
 
 **Features:**
+
 - Click [+ Add Suspect] → form appears
 - Form fields: Physical description, Clothing, Weapon, Vehicle, Relationship to victim, Motive hypothesis, etc.
 - Click on existing suspect → edit form
 - [BOLO] button → marks BOLO as issued, records timestamp
 
 **Output:**
+
 - Form component
 - Save/delete/BOLO buttons
 - API integration
@@ -570,20 +600,24 @@ FACT (What I Know for Fact)           WITHIN (What I Think I kNow)           VER
 ```
 
 **Color-Coding:**
+
 - Green = Verified ✓
 - Yellow = In Progress (actively being verified)
 - Red = Unverified ✗
 - Gray = Hypothesis (?—not yet assigned to verify)
 
 **Interactive:**
+
 - Click row → expands to show full text
 - Filter by status (verified, unverified, in-progress)
 - Sort by priority (critical → high → medium → low)
 
 **Data Source:**
+
 - GET /api/cases/:id/fwv
 
 **Output:**
+
 - React table component
 - Color-coded status
 - Expandable rows
@@ -598,12 +632,14 @@ FACT (What I Know for Fact)           WITHIN (What I Think I kNow)           VER
 Build edit mode for F/W/V tracker. Create, edit, delete entries.
 
 **Features:**
+
 - Click [+ Add Entry] → form appears
 - Form fields: Fact statement, Within hypothesis, Verify steps, Priority, Status
 - Click on existing entry → edit form
 - Update status (unverified → in-progress → verified)
 
 **Output:**
+
 - Form component
 - Status selector dropdown
 - Priority selector
@@ -635,21 +671,25 @@ CRIME TIMELINE
 ```
 
 **Interactive:**
+
 - Hover over event → shows full details
 - Click event → opens detail panel
 - Zoom in/out to change time scale
 - Can toggle between "Crime Timeline" and "Investigation Timeline"
 
 **Data Source:**
+
 - GET /api/cases/:id/timeline?event_type=crime_event
 
 **Output:**
+
 - React timeline component
 - Vertical timeline with events
 - Time labels, event descriptions
 - Click to detail
 
 **User Controls:**
+
 - Time format (12hr vs 24hr)
 - Colors for event types
 - Zoom levels
@@ -683,13 +723,16 @@ INVESTIGATION TIMELINE
 ```
 
 **Interactive:**
+
 - Same as crime timeline
 - Can overlay both timelines (show crime events + investigation events on same view)
 
 **Data Source:**
+
 - GET /api/cases/:id/timeline?event_type=investigation_milestone
 
 **Output:**
+
 - React timeline component (reuse from Prompt 12)
 - Switchable between crime/investigation/both
 
@@ -702,6 +745,7 @@ INVESTIGATION TIMELINE
 Build map display with timeline events pinned to locations.
 
 **Map Features:**
+
 - Crime event location (red pin)
 - Investigation milestones (blue pins)
 - Evidence found locations (green pins)
@@ -711,15 +755,18 @@ Build map display with timeline events pinned to locations.
 - Zoom/pan works normally
 
 **Data Source:**
+
 - GET /api/cases/:id/timeline (includes lat/long)
 
 **Output:**
+
 - Map component (Mapbox, Leaflet, or Google Maps)
 - Pinned events with color-coding
 - Click pin → show event details
 - Zoom/pan controls
 
 **User Controls:**
+
 - Map provider (if choice available)
 - Pin colors
 - Default zoom level
@@ -750,15 +797,18 @@ Gunshot residue testing           Lab           3 days    Submit   MEDIUM     3 
 ```
 
 **Interactive:**
+
 - Click task → shows full details (description, notes, due date, assignee)
 - Sort by: Due date, Priority, Status, Assignee
 - Filter by: Status (not started, in progress, done), Priority, Assignee
 - Color-coded: Critical=red, High=orange, Medium=yellow, Low=gray
 
 **Data Source:**
+
 - GET /api/cases/:id/tasks
 
 **Output:**
+
 - React table component
 - Sorting/filtering working
 - Click row → detail panel
@@ -773,6 +823,7 @@ Gunshot residue testing           Lab           3 days    Submit   MEDIUM     3 
 Build task management: create new tasks, edit existing, assign/reassign.
 
 **Features:**
+
 - [+ Create Task] → form with: Title, Description, Assigned to, Due date, Priority
 - Click existing task → edit form
 - [Reassign] button → change assignee (with notification)
@@ -780,6 +831,7 @@ Build task management: create new tasks, edit existing, assign/reassign.
 - [Delete] button → remove task
 
 **Output:**
+
 - Form component
 - Assignee dropdown (filtered by available personnel)
 - Due date picker
@@ -818,17 +870,20 @@ System:
 ```
 
 **Data:**
+
 - POST /api/cases/:id/personnel/:assignment_id/handover (initiate)
 - PATCH /api/cases/:id/handover/:handover_id (update status)
 - GET /api/cases/:id/handover/log (view handover history)
 
 **Output:**
+
 - Dialog/modal for initiating handover
 - Handover log display (showing all handovers for case)
 - Automatic notifications
 - Task reassignment (if duration >4 hours)
 
 **User Controls:**
+
 - Handover reason options
 - Duration categories
 
@@ -864,11 +919,13 @@ Build iPad layout optimized for scene entry. Portrait/landscape responsive.
 ```
 
 **Responsive:**
+
 - Portrait: Full screen form, tabs below
 - Landscape: Side-by-side tabs and form
 - Large touch targets (buttons, inputs)
 
 **Output:**
+
 - React Native or responsive web component
 - Tab navigation working
 - Form inputs functional (no API yet)
@@ -882,6 +939,7 @@ Build iPad layout optimized for scene entry. Portrait/landscape responsive.
 Build handwriting-to-text conversion on iPad. Detective writes → system converts to text.
 
 **Features:**
+
 - [HANDWRITE MODE] button → opens canvas
 - Detective draws/writes on iPad screen
 - When done, click [CONVERT TO TEXT]
@@ -891,10 +949,12 @@ Build handwriting-to-text conversion on iPad. Detective writes → system conver
 - Click [SAVE] → goes to appropriate field (Victimology? Evidence? Suspect? Auto-categorize based on content)
 
 **Library/Tool:**
+
 - Use web-based OCR (Google Vision API, Tesseract.js, or similar)
 - Handwriting-to-text is known hard problem; acknowledge accuracy ~70-80% (user should review/edit)
 
 **Output:**
+
 - Canvas component for handwriting capture
 - OCR integration
 - Text output field (editable)
@@ -909,6 +969,7 @@ Build handwriting-to-text conversion on iPad. Detective writes → system conver
 Build voice recording capability (hands-free).
 
 **Features:**
+
 - [VOICE NOTE] button → starts recording
 - Visual indicator (recording light/timer)
 - Recording icon with time elapsed
@@ -917,6 +978,7 @@ Build voice recording capability (hands-free).
 - [ATTACH TO CASE] → saves audio file to case, creates text transcript if available
 
 **Output:**
+
 - Audio recorder component
 - Save audio to case file
 - Auto-transcription (optional)
@@ -933,12 +995,14 @@ Build voice recording capability (hands-free).
 Build real-time sync between desktop Command Board and iPad input. When iPad submits data, desktop updates immediately (no page refresh).
 
 **Architecture:**
+
 - WebSocket connection (not polling)
 - When iPad saves data → POST to API → WebSocket broadcast to desktop
 - When desktop gets update → table refreshes, timeline updates, etc.
 - Bi-directional: desktop update → iPad sees it
 
 **Features:**
+
 - Real-time task list updates
 - Real-time personnel changes
 - Real-time evidence logging
@@ -946,6 +1010,7 @@ Build real-time sync between desktop Command Board and iPad input. When iPad sub
 - Conflict resolution (if two people edit same field, last-write-wins or merge)
 
 **Output:**
+
 - WebSocket server implementation
 - Client-side sync logic (React hooks or similar)
 - Event broadcasting
@@ -960,12 +1025,14 @@ Build real-time sync between desktop Command Board and iPad input. When iPad sub
 Build offline capability for iPad. Detective can fill out form offline, syncs when connected.
 
 **Features:**
+
 - Check for internet connection
 - If offline: work locally, store data in browser storage/local DB
 - When connection restored: sync to server
 - Conflict resolution (if case was updated by someone else while offline)
 
 **Output:**
+
 - Offline detection
 - Local storage mechanism (IndexedDB or similar)
 - Sync queue (when online, sync queued changes)
@@ -982,6 +1049,7 @@ Build offline capability for iPad. Detective can fill out form offline, syncs wh
 Build a script/component to populate Command Board with realistic sample data for testing/demo.
 
 **Generates:**
+
 - Sample case with complaint number
 - Sample victims (with family trees)
 - Sample suspects
@@ -992,11 +1060,13 @@ Build a script/component to populate Command Board with realistic sample data fo
 - Sample interviews
 
 **Usage:**
+
 - Run once to populate test data
 - Allows testing UI without manually entering everything
 - Can be reset/cleared for next test
 
 **Output:**
+
 - Script that calls APIs to create sample data
 - Or button in admin panel to generate test data
 
@@ -1009,6 +1079,7 @@ Build a script/component to populate Command Board with realistic sample data fo
 Build simple admin panel for case management, user management, system status.
 
 **Features:**
+
 - List all cases (create, delete, archive)
 - List all users (create, deactivate)
 - View system health (API status, database status, sync status)
@@ -1016,6 +1087,7 @@ Build simple admin panel for case management, user management, system status.
 - Clear test data
 
 **Output:**
+
 - Admin panel UI
 - Basic case/user CRUD
 - System status display
@@ -1025,6 +1097,7 @@ Build simple admin panel for case management, user management, system status.
 ## BUILD SEQUENCE (Phase 1)
 
 **Foundation First:**
+
 1. Prompt 1: Database schema
 2. Prompt 2: API endpoints
 
@@ -1082,6 +1155,7 @@ Build simple admin panel for case management, user management, system status.
 ---
 
 ## EACH PROMPT IS:
+
 - ✓ Single-focus (one component/feature)
 - ✓ Achievable in one session
 - ✓ Clear success criteria

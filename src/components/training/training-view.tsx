@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 
@@ -10,7 +11,8 @@ import {
 import type { DitRecordRow, EvaluationRow, FtoPairingRow } from '@/types/training'
 import type { PersonnelDirectoryRow } from '@/types/personnel'
 import { UserRole, type UserRoleValue } from '@/lib/auth/roles'
-import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TrainingDitDrawer } from './training-dit-drawer'
 import { EnrollDitModal, NewPairingModal } from './training-enroll-modals'
@@ -170,6 +172,20 @@ export function TrainingView({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {viewerRole === UserRole.dit ? (
+            <Link
+              href="/training/dit-dashboard"
+              className={cn(
+                buttonVariants({
+                  variant: 'outline',
+                  size: 'default',
+                  className: 'border-accent-teal/40 text-accent-teal',
+                })
+              )}
+            >
+              Weekly progress
+            </Link>
+          ) : null}
           {canNewPairing ? (
             <Button
               type="button"
