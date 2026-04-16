@@ -22,7 +22,12 @@ export async function GET() {
   }
 
   try {
-    const { seeded, mock_user_count } = await getMockDataStatus(svc)
+    const {
+      seeded,
+      mock_user_count,
+      mock_with_personnel_row,
+      personnel_directory_gap,
+    } = await getMockDataStatus(svc)
     const status_label =
       mock_user_count === 0
         ? 'not_seeded'
@@ -35,6 +40,8 @@ export async function GET() {
       mock_user_count,
       expected: EXPECTED_MOCK_USERS,
       status_label,
+      mock_with_personnel_row,
+      personnel_directory_gap,
     })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Status failed'

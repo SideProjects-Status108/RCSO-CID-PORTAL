@@ -26,10 +26,13 @@ export default async function MockDataScenariosPage() {
     try {
       const st = await getMockDataStatus(svc)
       const fullRoster = st.mock_user_count === 35
+      const directoryOk = st.personnel_directory_gap === 0
       verify = {
-        ok: fullRoster,
+        ok: fullRoster && directoryOk,
         message: fullRoster
-          ? 'Detected 35 mock auth users. Open Training to confirm pairings (6 rows), exposures, and weekly sessions.'
+          ? directoryOk
+            ? 'Detected 35 mock auth users and 35 personnel_directory rows. Open Training to confirm pairings (6 rows), exposures, and weekly sessions.'
+            : `Detected 35 mock auth users but personnel_directory gap is ${st.personnel_directory_gap}. Use Mock data setup → Repair personnel directory (or purge + re-seed).`
           : `Found ${st.mock_user_count} mock user(s); expected 35 after a full seed. Purge and re-seed if needed.`,
       }
     } catch {

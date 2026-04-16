@@ -2,7 +2,7 @@ import 'server-only'
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-import { UserRole, type UserRoleValue } from '@/lib/auth/roles'
+import { UserRole, type UserRoleValue, isUserRole } from '@/lib/auth/roles'
 import {
   isMockRcsoLocalEmail,
   MOCK_ACCOUNT_SPECS,
@@ -149,10 +149,103 @@ async function listAllAuthUsers(svc: SupabaseClient) {
 export async function getMockDataStatus(svc: SupabaseClient): Promise<{
   seeded: boolean
   mock_user_count: number
+  mock_with_personnel_row: number
+  personnel_directory_gap: number
 }> {
   const users = await listAllAuthUsers(svc)
   const mock = users.filter((u) => isMockRcsoLocalEmail(u.email))
-  return { seeded: mock.length > 0, mock_user_count: mock.length }
+  const mockIds = mock.map((u) => u.id)
+  let mockWithPersonnelRow = 0
+  if (mockIds.length) {
+    const { data: dirRows, error } = await svc
+      .from('personnel_directory')
+      .select('user_id')
+      .in('user_id', mockIds)
+    if (!error && dirRows) {
+      const seen = new Set(dirRows.map((r) => String((r as { user_id: string }).user_id)))
+      mockWithPersonnelRow = mockIds.filter((id) => seen.has(id)).length
+    }
+  }
+  return {
+    seeded: mock.length > 0,
+    mock_user_count: mock.length,
+    mock_with_personnel_row: mockWithPersonnelRow,
+    personnel_directory_gap: mock.length - mockWithPersonnelRow,
+  }
+}
+
+/**
+ * Backfill `personnel_directory` for mock-*@rcso.local users that have profiles but no directory row
+ * (e.g. seeded before directory inserts existed). Idempotent.
+ */
+export async function repairMockPersonnelDirectory(svc: SupabaseClient): Promise<{
+  mock_auth_users: number
+  rows_inserted: number
+  skipped_already_present: number
+  skipped_no_profile: number
+}> {
+  const users = await listAllAuthUsers(svc)
+  const mock = users.filter((u) => isMockRcsoLocalEmail(u.email))
+  let rows_inserted = 0
+  let skipped_already_present = 0
+  let skipped_no_profile = 0
+
+  for (const u of mock) {
+    const id = u.id
+    const email = u.email ?? ''
+    const { data: existing } = await svc.from('personnel_directory').select('id').eq('user_id', id).maybeSingle()
+    if (existing) {
+      skipped_already_present += 1
+      continue
+    }
+    const { data: profile, error: pe } = await svc.from('profiles').select('*').eq('id', id).maybeSingle()
+    if (pe || !profile) {
+      skipped_no_profile += 1
+      continue
+    }
+    const pr = profile as Record<string, unknown>
+    const roleRaw = pr.role
+    if (typeof roleRaw !== 'string' || !isUserRole(roleRaw)) {
+      skipped_no_profile += 1
+      continue
+    }
+    const role = roleRaw
+    const phoneCell = pr.phone_cell != null ? String(pr.phone_cell) : null
+    const { error: insErr } = await svc.from('personnel_directory').insert({
+      user_id: id,
+      full_name: String(pr.full_name ?? ''),
+      badge_number: pr.badge_number != null ? String(pr.badge_number) : null,
+      role_label: personnelRoleLabel(role),
+      system_role: role,
+      unit: pr.unit != null ? String(pr.unit) : 'CID',
+      assignment: null,
+      phone_cell: phoneCell,
+      phone_office: pr.phone_office != null ? String(pr.phone_office) : null,
+      email: email || null,
+      photo_url: null,
+      is_active: Boolean(pr.is_active ?? true),
+      notes: 'Mock CID directory row (repair backfill)',
+    })
+    if (insErr) {
+      console.error('[mock-data] repair insert failed', id, insErr.message)
+      continue
+    }
+    rows_inserted += 1
+  }
+
+  console.info('[mock-data] REPAIR personnel_directory', new Date().toISOString(), {
+    rows_inserted,
+    skipped_already_present,
+    skipped_no_profile,
+    mock_total: mock.length,
+  })
+
+  return {
+    mock_auth_users: mock.length,
+    rows_inserted,
+    skipped_already_present,
+    skipped_no_profile,
+  }
 }
 
 export async function seedMockTrainingData(svc: SupabaseClient): Promise<{

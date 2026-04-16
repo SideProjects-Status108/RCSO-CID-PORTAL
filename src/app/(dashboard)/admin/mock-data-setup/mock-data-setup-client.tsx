@@ -12,6 +12,8 @@ type Status = {
   mock_user_count: number
   expected: number
   status_label: string
+  mock_with_personnel_row?: number
+  personnel_directory_gap?: number
 }
 
 type AccountRow = { email: string; name: string; role: string; password: string }
@@ -43,6 +45,8 @@ export function MockDataSetupClient() {
           mock_user_count: j.mock_user_count,
           expected: j.expected,
           status_label: j.status_label,
+          mock_with_personnel_row: j.mock_with_personnel_row,
+          personnel_directory_gap: j.personnel_directory_gap,
         })
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Status error')
@@ -77,6 +81,30 @@ export function MockDataSetupClient() {
         await loadStatus()
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Seed failed')
+      }
+    })
+  }
+
+  const repairDirectory = () => {
+    start(async () => {
+      setError(null)
+      try {
+        const res = await fetch('/api/admin/mock-data/repair-directory', {
+          method: 'POST',
+          credentials: 'same-origin',
+        })
+        const j = (await res.json()) as {
+          error?: string
+          rows_inserted?: number
+          skipped_already_present?: number
+        }
+        if (!res.ok) throw new Error(j.error ?? 'Repair failed')
+        setLastPurgeMessage(
+          `Personnel repair: inserted ${j.rows_inserted ?? 0} directory row(s); already had row for ${j.skipped_already_present ?? 0} user(s).`
+        )
+        await loadStatus()
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Repair failed')
       }
     })
   }
@@ -172,9 +200,24 @@ export function MockDataSetupClient() {
         <h2 className="text-sm font-semibold uppercase tracking-wide text-text-secondary">Status</h2>
         <p className="mt-2 text-lg font-medium text-text-primary">{statusLabel}</p>
         {status ? (
-          <p className="mt-1 font-mono text-xs text-text-secondary">
-            Mock auth users detected: {status.mock_user_count} (expected {status.expected})
-          </p>
+          <div className="mt-1 space-y-1 font-mono text-xs text-text-secondary">
+            <p>
+              Mock auth users: {status.mock_user_count} (expected {status.expected})
+            </p>
+            {typeof status.personnel_directory_gap === 'number' && status.mock_user_count > 0 ? (
+              <p>
+                Personnel directory rows for those users: {status.mock_with_personnel_row ?? '—'} — gap:{' '}
+                <span
+                  className={
+                    status.personnel_directory_gap > 0 ? 'font-semibold text-amber-200' : 'text-emerald-200/90'
+                  }
+                >
+                  {status.personnel_directory_gap}
+                </span>{' '}
+                (gap must be 0 for Training/Personnel pickers to work)
+              </p>
+            ) : null}
+          </div>
         ) : null}
         {lastSeedMeta ? <p className="mt-2 text-xs text-text-secondary">{lastSeedMeta}</p> : null}
         {lastPurgeMessage ? <p className="mt-2 text-xs text-text-secondary">{lastPurgeMessage}</p> : null}
@@ -212,6 +255,15 @@ export function MockDataSetupClient() {
         </Button>
         <Button type="button" variant="outline" onClick={loadStatus} disabled={!serviceOk}>
           Refresh status
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={repairDirectory}
+          disabled={!serviceOk}
+          title="Adds missing personnel_directory rows for mock-*@rcso.local without purging"
+        >
+          Repair personnel directory
         </Button>
         <Link
           href="/admin/mock-data-scenarios"
