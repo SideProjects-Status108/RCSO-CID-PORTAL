@@ -1,4 +1,5 @@
 # Cursor Prompts for CID Case Management System
+
 ## Architecture & Framework Build
 
 **Goal:** Create a flexible framework that the user can configure and control. Cursor builds the structural capacity; user defines the operational rules.
@@ -10,6 +11,7 @@
 **For Cursor:**
 
 Build an authentication system with flexible role definitions. Requirements:
+
 - User login (email/password or SSO)
 - Role types: Lead Detective, Co-Lead Detective, Detective, Evidence Tech, Canvass Team, SWAT Commander, Sergeant, DA/Prosecutor, Admin
 - Each role can have custom permissions (read-only, can assign tasks, can file supplements, can modify case tier, etc.)
@@ -18,6 +20,7 @@ Build an authentication system with flexible role definitions. Requirements:
 - Roles are assignable per case (same person might be Lead on one case, Detective on another)
 
 **Output:** 
+
 - User authentication flow (login, session management)
 - Role/permission database schema
 - API endpoints for user management
@@ -32,6 +35,7 @@ Build an authentication system with flexible role definitions. Requirements:
 **For Cursor:**
 
 Build case creation flow that captures initial information and automatically scaffolds the investigation. Requirements:
+
 - Case intake form: case name, location, date/time, incident type (shooting, unattended death, stabbing, etc.), initial description, reporting officer
 - Tier selection (1, 2, 3) with clear descriptions
 - Tier selected → auto-loads task template (Tier 1 has X tasks, Tier 2 has Y tasks, Tier 3 has Z tasks)
@@ -40,6 +44,7 @@ Build case creation flow that captures initial information and automatically sca
 - Database stores: case record, all initial tasks in "Pending" state, case metadata
 
 **Output:**
+
 - Case intake form (UI)
 - Tier templates (configuration, not hardcoded)
 - Task creation logic (intake triggers template loading)
@@ -54,6 +59,7 @@ Build case creation flow that captures initial information and automatically sca
 **For Cursor:**
 
 Build the task data model and lifecycle. Requirements:
+
 - Task record fields: ID, case_id, title, description, type (enum: interview, canvass, evidence, warrant, etc.), created_date, created_by, assigned_to (role), assigned_person (detective), deadline, priority (low/medium/high/critical)
 - Task status machine: Pending → In Progress → Waiting For → Blocked → Complete (allow status updates via UI)
 - Task detail view: show all metadata, linked evidence, linked supplements, notes field
@@ -64,6 +70,7 @@ Build the task data model and lifecycle. Requirements:
 - Search/filter tasks by: assignee, status, deadline, type, case
 
 **Output:**
+
 - Task database schema
 - Task CRUD APIs
 - Task board UI (Kanban layout)
@@ -79,6 +86,7 @@ Build the task data model and lifecycle. Requirements:
 **For Cursor:**
 
 Build supplement tracking linked to tasks. Requirements:
+
 - Supplement record: ID, task_id, type (enum: interview_report, evidence_report, analysis, etc.), required (boolean), due_date, filed_date, filed_by, file_link (document upload), status (outstanding/filed/overdue)
 - When task is created with "supplement_required=true," auto-create linked supplement record
 - Supplement lifecycle: Outstanding → Filed OR Outstanding → Overdue (if due_date passed without filing)
@@ -89,6 +97,7 @@ Build supplement tracking linked to tasks. Requirements:
 - Audit trail: who filed, when, document version history
 
 **Output:**
+
 - Supplement database schema
 - Supplement CRUD APIs
 - Supplement tracker dashboard
@@ -104,6 +113,7 @@ Build supplement tracking linked to tasks. Requirements:
 **For Cursor:**
 
 Build evidence intake and tracking system. Requirements:
+
 - Evidence record: ID, case_id, description, type (enum: physical, digital, video, photo, document), date_obtained, obtained_by (detective), obtained_from (location/source), current_location, current_custodian, status (intake/cataloged/analysis_pending/analysis_in_progress/analysis_complete/archive)
 - Evidence intake form: fill in evidence details, auto-timestamp, auto-attach detective name
 - Evidence detail view: show all metadata, custody chain (log of who had it, when), linked task (which task obtained this), linked supplement (analysis results)
@@ -112,6 +122,7 @@ Build evidence intake and tracking system. Requirements:
 - Evidence search: by type, status, date, custodian
 
 **Output:**
+
 - Evidence database schema
 - Evidence intake form
 - Evidence CRUD APIs
@@ -127,6 +138,7 @@ Build evidence intake and tracking system. Requirements:
 **For Cursor:**
 
 Build dual timeline visualization. Requirements:
+
 - Timeline event record: ID, case_id, event_type (enum: case or investigation), description, timestamp, location, linked_to (task_id or evidence_id or person_id), source (detective narrative, video timestamp, phone data, etc.)
 - Timeline entry form: quick entry (timestamp, description, type, link to case item)
 - Timeline view: vertical timeline, events ordered by timestamp, color-coded by type (case=red, investigation=blue), hover shows details
@@ -135,6 +147,7 @@ Build dual timeline visualization. Requirements:
 - Timeline search: by date, description, linked item
 
 **Output:**
+
 - Timeline event database schema
 - Timeline entry form
 - Timeline CRUD APIs
@@ -150,6 +163,7 @@ Build dual timeline visualization. Requirements:
 **For Cursor:**
 
 Build notification system that's flexible for different use cases (broadcast milestones vs. task assignment). Requirements:
+
 - Notification record: ID, case_id, type (enum: task_assignment, milestone, alert, update, info), recipient (person or role), message, created_by, created_date, acknowledged (boolean)
 - Notification rules (configurable by admin): 
   - Task assigned → notify assigned person + lead detective
@@ -163,6 +177,7 @@ Build notification system that's flexible for different use cases (broadcast mil
 - Read status: track if notification was seen
 
 **Output:**
+
 - Notification database schema
 - Notification rule engine (configurable, not hardcoded)
 - API for creating notifications
@@ -179,6 +194,7 @@ Build notification system that's flexible for different use cases (broadcast mil
 **For Cursor:**
 
 Build framework to tie Risk Assessment form to case data. Requirements:
+
 - Risk Assessment form: structured form with sections (Situation, Suspect Info, Dangerous Items, Location Risk, Techniques/Equipment)
 - Form data stored as: form_record_id, case_id, section_scores (Section A: 5 points, Section B: 12 points, etc.), total_score
 - Auto-calculation: as fields are filled, total score updates
@@ -191,6 +207,7 @@ Build framework to tie Risk Assessment form to case data. Requirements:
 - Audit trail: when form was filled, by whom, what changed
 
 **Output:**
+
 - Risk Assessment database schema
 - Risk Assessment form UI (with auto-calculation)
 - Form CRUD APIs
@@ -206,6 +223,7 @@ Build framework to tie Risk Assessment form to case data. Requirements:
 **For Cursor:**
 
 Build warrant lifecycle tracking. Requirements:
+
 - Warrant record: ID, case_id, type (search warrant, arrest warrant, phone warrant, etc.), status (drafted/submitted/signed/served/results_documented), drafted_date, drafted_by, submitted_date, signed_date, signed_by_judge, served_date, served_by, results_documented_date
 - Warrant detail view: full warrant text (upload), items to be seized, location, risk level
 - Warrant status board: show all warrants for case, current status
@@ -214,6 +232,7 @@ Build warrant lifecycle tracking. Requirements:
 - Warrant audit trail: timestamp every status change
 
 **Output:**
+
 - Warrant database schema
 - Warrant creation/editing form
 - Warrant status tracking APIs
@@ -229,6 +248,7 @@ Build warrant lifecycle tracking. Requirements:
 **For Cursor:**
 
 Build iPad-specific features. Requirements:
+
 - Responsive UI: all interfaces work on iPad (Safari, full-screen app if possible)
 - Offline capability: critical data cached locally, sync when connection returns
 - Task assignment on iPad: assigned detective taps to accept/view details
@@ -240,6 +260,7 @@ Build iPad-specific features. Requirements:
 - Geolocation (optional): auto-tag evidence/timeline entries with location
 
 **Output:**
+
 - Responsive CSS for iPad
 - Offline sync logic
 - iOS push notification integration
@@ -255,6 +276,7 @@ Build iPad-specific features. Requirements:
 **For Cursor:**
 
 Build a large-screen display optimized for war room use. Requirements:
+
 - War room dashboard: read-only view of case status, suitable for 55"+ screen
 - Display layout: sections for Task Board (Kanban), Evidence Tracker, Timeline, Open Questions, Team Roster
 - Real-time updates: when detective updates task on iPad, dashboard refreshes without manual refresh
@@ -263,6 +285,7 @@ Build a large-screen display optimized for war room use. Requirements:
 - Display mode: kick it to a TV/projector, starts in full-screen
 
 **Output:**
+
 - War room dashboard UI (fullscreen-optimized)
 - WebSocket or polling for real-time updates
 - Display layout configuration
@@ -277,6 +300,7 @@ Build a large-screen display optimized for war room use. Requirements:
 **For Cursor:**
 
 Build admin controls so user can customize the system without code changes. Requirements:
+
 - Admin login (separate from case users)
 - Task type management: create/edit task types, set default fields
 - Tier templates: edit which tasks appear in Tier 1/2/3, reorder
@@ -290,6 +314,7 @@ Build admin controls so user can customize the system without code changes. Requ
 - Backup/export: case data export, audit log export
 
 **Output:**
+
 - Admin panel UI
 - CRUD APIs for all configuration options
 - Configuration database schema
@@ -361,17 +386,19 @@ Archive all documents
 
 After Cursor builds each component, **user controls:**
 
-| Framework | User Customizes |
-|-----------|-----------------|
-| Task Management | Task types, statuses, transitions, display order |
-| Supplement Tracking | Which tasks require supplements, due date rules, alert thresholds |
-| Evidence Tracker | Evidence types, status values, custody rules |
-| Timeline | Event types, display colors, visual style |
-| Notifications | Trigger rules, recipient groups, delivery channels, do-not-disturb |
-| Risk Assessment | Sections, point values, score thresholds, approval workflow |
-| Warrants | Warrant types, status workflow, milestone notifications |
-| Roles & Permissions | Role definitions, permission mapping |
-| Admin Panel | All of the above without touching code |
+
+| Framework           | User Customizes                                                    |
+| ------------------- | ------------------------------------------------------------------ |
+| Task Management     | Task types, statuses, transitions, display order                   |
+| Supplement Tracking | Which tasks require supplements, due date rules, alert thresholds  |
+| Evidence Tracker    | Evidence types, status values, custody rules                       |
+| Timeline            | Event types, display colors, visual style                          |
+| Notifications       | Trigger rules, recipient groups, delivery channels, do-not-disturb |
+| Risk Assessment     | Sections, point values, score thresholds, approval workflow        |
+| Warrants            | Warrant types, status workflow, milestone notifications            |
+| Roles & Permissions | Role definitions, permission mapping                               |
+| Admin Panel         | All of the above without touching code                             |
+
 
 ---
 

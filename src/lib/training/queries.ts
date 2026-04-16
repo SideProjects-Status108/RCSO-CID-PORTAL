@@ -640,10 +640,11 @@ export async function getActivityProgressForTemplate(
 
 export async function createWeeklySession(
   pairing_id: string,
-  week_start: string
+  week_start: string,
+  week_end_override?: string
 ): Promise<WeeklyTrainingSession> {
   const week_start_date = week_start.trim()
-  const week_end_date = addDaysIsoDate(week_start_date, 6)
+  const week_end_date = week_end_override?.trim() || addDaysIsoDate(week_start_date, 6)
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('weekly_training_sessions')
@@ -930,4 +931,57 @@ export async function fetchExcellenceRecognitions(dit_user_id: string): Promise<
     .limit(100)
   if (error) throwTraining('Failed to load excellence recognitions', error)
   return (data ?? []).map((row) => mapExcellence(row as Record<string, unknown>))
+}
+
+export async function fetchWeeklySessionByPairingAndWeek(
+  pairingId: string,
+  weekStartDate: string
+): Promise<WeeklyTrainingSession | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('weekly_training_sessions')
+    .select('*')
+    .eq('pairing_id', pairingId)
+    .eq('week_start_date', weekStartDate.trim())
+    .maybeSingle()
+  if (error) throwTraining('Failed to load weekly session by week', error)
+  return data ? mapWeeklySession(data as Record<string, unknown>) : null
+}
+
+export async function deleteWeeklyCompetencyScore(sessionId: string, competencyKey: string): Promise<void> {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('weekly_competency_scores')
+    .delete()
+    .eq('session_id', sessionId)
+    .eq('competency_key', competencyKey)
+  if (error) throwTraining('Failed to delete competency score row', error)
+}
+
+/** Parallel prior-week scores for HUD (one RPC per key). */
+export async function fetchCompetencyPriorsMap(
+  ditRecordId: string,
+  competencyKeys: string[]
+): Promise<Record<string, number | null>> {
+  const entries = await Promise.all(
+    competencyKeys.map(async (k) => [k, await getPriorWeekScore(ditRecordId, k)] as const)
+  )
+  return Object.fromEntries(entries)
+}
+
+/** Create weekly session if missing (handles unique race with fetch fallback). */
+export async function ensureWeeklyTrainingSession(
+  pairing_id: string,
+  week_start_date: string,
+  week_end_date: string
+): Promise<WeeklyTrainingSession> {
+  const existing = await fetchWeeklySessionByPairingAndWeek(pairing_id, week_start_date)
+  if (existing) return existing
+  try {
+    return await createWeeklySession(pairing_id, week_start_date, week_end_date)
+  } catch {
+    const replay = await fetchWeeklySessionByPairingAndWeek(pairing_id, week_start_date)
+    if (replay) return replay
+    throwTraining('Could not create or load weekly training session')
+  }
 }
