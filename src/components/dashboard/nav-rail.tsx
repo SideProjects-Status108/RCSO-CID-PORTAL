@@ -52,7 +52,11 @@ export function NavRail({
     UserRole.admin,
     UserRole.supervision_admin,
   ])
-  const groups = useMemo(() => navRailGroupsVisible(showCaseTypesNav), [showCaseTypesNav])
+  const strictAdmin = profile.role === UserRole.admin
+  const groups = useMemo(
+    () => navRailGroupsVisible(showCaseTypesNav, strictAdmin),
+    [showCaseTypesNav, strictAdmin]
+  )
   const currentGroupId = getActiveNavGroupId(pathname, groups)
 
   const [openFlyoutId, setOpenFlyoutId] = useState<string | null>(null)

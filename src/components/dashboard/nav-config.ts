@@ -12,6 +12,8 @@ export type NavFlyoutChild = {
   label: string
   href: string
   adminOnly?: boolean
+  /** Shown only when `profile.role === admin` (not supervision_admin). */
+  strictAdminOnly?: boolean
   showRequestsBadge?: boolean
 }
 
@@ -38,6 +40,8 @@ const operationsChildren: NavFlyoutChild[] = [
   { label: 'Schedules', href: '/operations/schedules' },
   { label: 'Requests', href: '/operations/requests', showRequestsBadge: true },
   { label: 'Case types', href: '/operations/case-types', adminOnly: true },
+  { label: 'Mock data setup', href: '/admin/mock-data-setup', strictAdminOnly: true },
+  { label: 'Mock scenarios', href: '/admin/mock-data-scenarios', strictAdminOnly: true },
 ]
 
 const trainingChildren: NavFlyoutChild[] = [
@@ -81,11 +85,15 @@ export const navRailGroups: NavRailGroup[] = [
   { id: 'settings', kind: 'direct', label: 'Settings', href: '/settings', icon: Settings },
 ]
 
-export function navRailGroupsVisible(showCaseTypesNav: boolean): NavRailGroup[] {
+export function navRailGroupsVisible(showCaseTypesNav: boolean, strictAdmin: boolean): NavRailGroup[] {
   return navRailGroups
     .map((group) => {
       if (group.kind !== 'flyout') return group
-      const children = group.children.filter((c) => !c.adminOnly || showCaseTypesNav)
+      const children = group.children.filter((c) => {
+        if (c.strictAdminOnly && !strictAdmin) return false
+        if (c.adminOnly && !showCaseTypesNav) return false
+        return true
+      })
       if (children.length === 0) return null
       return { ...group, children }
     })
@@ -101,6 +109,8 @@ export const routeTitles: Record<string, string> = {
   '/operations/requests': 'Requests',
   '/operations/case-types': 'Case types',
   '/operations': 'Operations',
+  '/admin/mock-data-setup': 'Mock data setup',
+  '/admin/mock-data-scenarios': 'Mock test scenarios',
   '/forms': 'Forms & Documents',
   '/schedule': 'Schedule',
   '/requests': 'Requests',
@@ -144,7 +154,8 @@ export function groupContainsPathname(group: NavRailGroup, pathname: string): bo
     return (
       pathname.startsWith('/forms') ||
       pathname.startsWith('/schedule') ||
-      pathname.startsWith('/requests')
+      pathname.startsWith('/requests') ||
+      pathname.startsWith('/admin/')
     )
   }
   if (group.id === 'investigative') {
