@@ -2,19 +2,12 @@
 
 import { useCallback, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  ClipboardList,
-  FileQuestion,
-  GraduationCap,
-  RefreshCw,
-  Search as SearchIcon,
-} from 'lucide-react'
+import { ClipboardList, FileQuestion, RefreshCw, Search as SearchIcon } from 'lucide-react'
 
 import { BottomSheet } from '@/components/companion/bottom-sheet'
 import { CompanionCard } from '@/components/companion/companion-card'
 import { CompanionFlash } from '@/components/companion/companion-flash'
 import { DetectiveActivityFormSheet } from '@/components/companion/forms/DetectiveActivityFormSheet'
-import { DITObservationFormSheet } from '@/components/companion/forms/DITObservationFormSheet'
 import { CaseIntakeFormSheet } from '@/components/companion/forms/CaseIntakeFormSheet'
 import { GeneralRequestFormSheet } from '@/components/companion/forms/GeneralRequestFormSheet'
 import { FormValuesReadonly } from '@/components/forms/form-values-readonly'
@@ -27,33 +20,23 @@ import type { SubmissionDetail } from '@/lib/forms/queries'
 import { hapticSuccess } from '@/lib/haptic'
 import { cn } from '@/lib/utils'
 
-type SheetKey =
-  | 'detective_activity'
-  | 'dit_observation'
-  | 'case_intake'
-  | 'general'
-  | null
+type SheetKey = 'detective_activity' | 'case_intake' | 'general' | null
 
 const tileBtn =
   'flex min-h-[7.5rem] flex-col items-start justify-end gap-1 rounded-lg border border-border-subtle bg-bg-surface p-3 text-left transition-colors active:bg-bg-elevated'
 
 export function CompanionFormsView({
   userDisplayName,
-  showDitTile,
   templateIds,
   detectives,
-  ditTrainees,
   initialSubmissions,
 }: {
   userDisplayName: string
-  showDitTile: boolean
   templateIds: {
     detectiveActivity: string | null
-    ditObservation: string | null
     caseIntake: string | null
   }
   detectives: Pick<PersonnelDirectoryRow, 'id' | 'full_name'>[]
-  ditTrainees: Pick<PersonnelDirectoryRow, 'id' | 'full_name'>[]
   initialSubmissions: CompanionFormSubmissionListItem[]
 }) {
   const router = useRouter()
@@ -88,20 +71,12 @@ export function CompanionFormsView({
       title: string
       desc: string
       icon: typeof ClipboardList
-      hidden?: boolean
     }[] = [
       {
         key: 'detective_activity',
         title: 'Detective Activity',
         desc: 'Log hours and case work',
         icon: ClipboardList,
-      },
-      {
-        key: 'dit_observation',
-        title: 'DIT Observation',
-        desc: 'Daily FTO observation',
-        icon: GraduationCap,
-        hidden: !showDitTile,
       },
       {
         key: 'case_intake',
@@ -116,8 +91,8 @@ export function CompanionFormsView({
         icon: FileQuestion,
       },
     ]
-    return base.filter((t) => !t.hidden)
-  }, [showDitTile])
+    return base
+  }, [])
 
   async function openSubmissionRow(id: string) {
     setDetailOpen(true)
@@ -218,9 +193,7 @@ export function CompanionFormsView({
                         {new Date(s.created_at).toLocaleString()}
                       </p>
                     </div>
-                    <StatusStamp variant={st.variant}>
-                      {st.label}
-                    </StatusStamp>
+                    <StatusStamp variant={st.variant}>{st.label}</StatusStamp>
                   </button>
                 </li>
               )
@@ -234,15 +207,6 @@ export function CompanionFormsView({
         onClose={() => setOpenSheet(null)}
         templateId={templateIds.detectiveActivity}
         detectiveName={userDisplayName}
-        onSubmitted={onSubmitted}
-        onError={onError}
-      />
-      <DITObservationFormSheet
-        open={openSheet === 'dit_observation'}
-        onClose={() => setOpenSheet(null)}
-        templateId={templateIds.ditObservation}
-        ftoName={userDisplayName}
-        ditPersonnel={ditTrainees}
         onSubmitted={onSubmitted}
         onError={onError}
       />

@@ -63,7 +63,9 @@ export async function fetchPublishedTemplates(): Promise<FormTemplateRow[]> {
     .order('name', { ascending: true })
 
   if (error || !data) return []
-  return data.map((row) => mapTemplate(row as Record<string, unknown>))
+  // Weekly evaluation and other DIT training flows live under /training, not Forms.
+  const rows = data.filter((row) => (row as { category: string | null }).category !== 'training')
+  return rows.map((row) => mapTemplate(row as Record<string, unknown>))
 }
 
 export async function fetchDraftForTemplate(
