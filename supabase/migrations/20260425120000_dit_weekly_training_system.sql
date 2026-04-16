@@ -2,26 +2,8 @@
 -- competency scoring, unobserved tracking, deficiency workflow, excellence log.
 
 -- ---------------------------------------------------------------------------
--- SECURITY DEFINER helpers (invoker uid; search_path pinned)
+-- SECURITY DEFINER helper (only references public.fto_pairings — safe before new tables)
 -- ---------------------------------------------------------------------------
-
-CREATE OR REPLACE FUNCTION public.weekly_training_session_accessible(p_session_id uuid)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT
-    public.profile_reads_all_training()
-    OR EXISTS (
-      SELECT 1
-      FROM public.weekly_training_sessions w
-      JOIN public.fto_pairings fp ON fp.id = w.pairing_id
-      WHERE w.id = p_session_id
-        AND (fp.fto_id = (SELECT auth.uid()) OR fp.dit_id = (SELECT auth.uid()))
-    );
-$$;
 
 CREATE OR REPLACE FUNCTION public.weekly_training_pairing_accessible(p_pairing_id uuid)
 RETURNS boolean
@@ -40,35 +22,8 @@ AS $$
     );
 $$;
 
-CREATE OR REPLACE FUNCTION public.training_activity_exposure_accessible(p_exposure_id uuid)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT
-    public.profile_reads_all_training()
-    OR EXISTS (
-      SELECT 1
-      FROM public.training_activity_exposures e
-      JOIN public.dit_records dr ON dr.id = e.dit_record_id
-      LEFT JOIN public.fto_pairings fp
-        ON fp.dit_id = dr.user_id AND fp.is_active = true
-      WHERE e.id = p_exposure_id
-        AND (
-          dr.user_id = (SELECT auth.uid())
-          OR fp.fto_id = (SELECT auth.uid())
-        )
-    );
-$$;
-
-REVOKE ALL ON FUNCTION public.weekly_training_session_accessible(uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.weekly_training_pairing_accessible(uuid) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.training_activity_exposure_accessible(uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.weekly_training_session_accessible(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.weekly_training_pairing_accessible(uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.training_activity_exposure_accessible(uuid) TO authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 1. training_activity_templates
@@ -156,67 +111,7 @@ BEFORE UPDATE ON public.training_activity_exposures
 FOR EACH ROW
 EXECUTE PROCEDURE public.set_profiles_updated_at();
 
-ALTER TABLE public.training_activity_exposures ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "training_activity_exposures_select_scope"
-ON public.training_activity_exposures
-FOR SELECT
-TO authenticated
-USING (public.training_activity_exposure_accessible(id));
-
-CREATE POLICY "training_activity_exposures_insert_scope"
-ON public.training_activity_exposures
-FOR INSERT
-TO authenticated
-WITH CHECK (
-  public.profile_reads_all_training()
-  OR (
-    fto_id = (SELECT auth.uid())
-    AND EXISTS (
-      SELECT 1
-      FROM public.dit_records dr
-      JOIN public.fto_pairings fp ON fp.dit_id = dr.user_id AND fp.is_active = true
-      WHERE dr.id = dit_record_id
-        AND fp.fto_id = (SELECT auth.uid())
-    )
-  )
-);
-
-CREATE POLICY "training_activity_exposures_update_scope"
-ON public.training_activity_exposures
-FOR UPDATE
-TO authenticated
-USING (public.training_activity_exposure_accessible(id))
-WITH CHECK (
-  public.profile_reads_all_training()
-  OR (
-    fto_id = (SELECT auth.uid())
-    AND EXISTS (
-      SELECT 1
-      FROM public.dit_records dr
-      JOIN public.fto_pairings fp ON fp.dit_id = dr.user_id AND fp.is_active = true
-      WHERE dr.id = dit_record_id
-        AND fp.fto_id = (SELECT auth.uid())
-    )
-  )
-);
-
-CREATE POLICY "training_activity_exposures_delete_scope"
-ON public.training_activity_exposures
-FOR DELETE
-TO authenticated
-USING (
-  public.profile_reads_all_training()
-  OR (
-    EXISTS (
-      SELECT 1
-      FROM public.dit_records dr
-      JOIN public.fto_pairings fp ON fp.dit_id = dr.user_id AND fp.is_active = true
-      WHERE dr.id = dit_record_id
-        AND fp.fto_id = (SELECT auth.uid())
-    )
-  )
-);
+-- RLS for exposures is applied after training_activity_exposure_accessible() is created.
 
 -- ---------------------------------------------------------------------------
 -- 4. competency_masters (reference; created before weekly scores FK)
@@ -326,6 +221,122 @@ CREATE TRIGGER weekly_training_sessions_set_updated_at
 BEFORE UPDATE ON public.weekly_training_sessions
 FOR EACH ROW
 EXECUTE PROCEDURE public.set_profiles_updated_at();
+
+-- ---------------------------------------------------------------------------
+-- SECURITY DEFINER helpers that reference new tables (must run after CREATE TABLE)
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.weekly_training_session_accessible(p_session_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT
+    public.profile_reads_all_training()
+    OR EXISTS (
+      SELECT 1
+      FROM public.weekly_training_sessions w
+      JOIN public.fto_pairings fp ON fp.id = w.pairing_id
+      WHERE w.id = p_session_id
+        AND (fp.fto_id = (SELECT auth.uid()) OR fp.dit_id = (SELECT auth.uid()))
+    );
+$$;
+
+CREATE OR REPLACE FUNCTION public.training_activity_exposure_accessible(p_exposure_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT
+    public.profile_reads_all_training()
+    OR EXISTS (
+      SELECT 1
+      FROM public.training_activity_exposures e
+      JOIN public.dit_records dr ON dr.id = e.dit_record_id
+      LEFT JOIN public.fto_pairings fp
+        ON fp.dit_id = dr.user_id AND fp.is_active = true
+      WHERE e.id = p_exposure_id
+        AND (
+          dr.user_id = (SELECT auth.uid())
+          OR fp.fto_id = (SELECT auth.uid())
+        )
+    );
+$$;
+
+REVOKE ALL ON FUNCTION public.weekly_training_session_accessible(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.training_activity_exposure_accessible(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.weekly_training_session_accessible(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.training_activity_exposure_accessible(uuid) TO authenticated;
+
+-- ---------------------------------------------------------------------------
+-- RLS: training_activity_exposures, weekly_training_sessions
+-- ---------------------------------------------------------------------------
+
+ALTER TABLE public.training_activity_exposures ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "training_activity_exposures_select_scope"
+ON public.training_activity_exposures
+FOR SELECT
+TO authenticated
+USING (public.training_activity_exposure_accessible(id));
+
+CREATE POLICY "training_activity_exposures_insert_scope"
+ON public.training_activity_exposures
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  public.profile_reads_all_training()
+  OR (
+    fto_id = (SELECT auth.uid())
+    AND EXISTS (
+      SELECT 1
+      FROM public.dit_records dr
+      JOIN public.fto_pairings fp ON fp.dit_id = dr.user_id AND fp.is_active = true
+      WHERE dr.id = dit_record_id
+        AND fp.fto_id = (SELECT auth.uid())
+    )
+  )
+);
+
+CREATE POLICY "training_activity_exposures_update_scope"
+ON public.training_activity_exposures
+FOR UPDATE
+TO authenticated
+USING (public.training_activity_exposure_accessible(id))
+WITH CHECK (
+  public.profile_reads_all_training()
+  OR (
+    fto_id = (SELECT auth.uid())
+    AND EXISTS (
+      SELECT 1
+      FROM public.dit_records dr
+      JOIN public.fto_pairings fp ON fp.dit_id = dr.user_id AND fp.is_active = true
+      WHERE dr.id = dit_record_id
+        AND fp.fto_id = (SELECT auth.uid())
+    )
+  )
+);
+
+CREATE POLICY "training_activity_exposures_delete_scope"
+ON public.training_activity_exposures
+FOR DELETE
+TO authenticated
+USING (
+  public.profile_reads_all_training()
+  OR (
+    EXISTS (
+      SELECT 1
+      FROM public.dit_records dr
+      JOIN public.fto_pairings fp ON fp.dit_id = dr.user_id AND fp.is_active = true
+      WHERE dr.id = dit_record_id
+        AND fp.fto_id = (SELECT auth.uid())
+    )
+  )
+);
 
 ALTER TABLE public.weekly_training_sessions ENABLE ROW LEVEL SECURITY;
 
