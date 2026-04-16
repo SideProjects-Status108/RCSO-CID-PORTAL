@@ -96,3 +96,130 @@ export const EVALUATION_SCORE_LABELS: Record<EvaluationScoreKey, string> = {
   professionalism: 'Professionalism',
   response_to_training: 'Response to training',
 }
+
+// --- DIT weekly training (activity log, sessions, competencies, deficiency, excellence) ---
+
+export type ActivityTemplate = {
+  id: string
+  activity_name: string
+  category: string
+  required_exposures_phase_1: number
+  required_exposures_phase_2: number
+  required_exposures_phase_3: number
+  description: string | null
+}
+
+export type ActivityExposure = {
+  id: string
+  dit_record_id: string
+  activity_template_id: string
+  fto_id: string
+  exposure_date: string
+  case_complaint_number: string | null
+  role: 'observer' | 'assistant' | 'lead'
+  duration_minutes: number | null
+  fto_notes: string | null
+  created_at: string
+}
+
+export type WeeklyTrainingSession = {
+  id: string
+  pairing_id: string
+  week_start_date: string
+  week_end_date: string
+  status: 'draft' | 'submitted' | 'approved'
+  submitted_by: string | null
+  submitted_at: string | null
+  approved_by: string | null
+  approved_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type CompetencyMaster = {
+  key: string
+  label: string
+  category: string
+  sort_order: number
+  description: string | null
+}
+
+export type WeeklyCompetencyScore = {
+  id: string
+  session_id: string
+  competency_key: string
+  competency_label: string
+  category: string
+  score: number | null
+  explanation: string | null
+  explanation_required: boolean
+  prior_week_score: number | null
+  created_at: string
+  updated_at: string
+}
+
+export type UnobservedCompetency = {
+  id: string
+  session_id: string
+  competency_key: string
+  competency_label: string
+  days_since_last_observed: number
+  dit_notified_at: string | null
+  created_at: string
+}
+
+export type DeficiencyCompetency = {
+  competency_key: string
+  competency_label: string
+  score: number
+  fto_recommendation: string
+}
+
+export type DeficiencyForm = {
+  id: string
+  pairing_id: string
+  weekly_session_id: string
+  created_by: string
+  created_at: string
+  status:
+    | 'submitted'
+    | 'coordinator_reviewing'
+    | 'coaching_active'
+    | 'escalated_to_sgt'
+    | 'escalated_to_lt'
+    | 'resolved'
+  priority_level: 'routine' | 'urgent'
+  competencies_flagged: DeficiencyCompetency[]
+  additional_notes: string | null
+  updated_at: string
+}
+
+export type DeficiencyFormAction = {
+  id: string
+  deficiency_form_id: string
+  action_level: 'coordinator' | 'fto_sgt' | 'lt'
+  actor_id: string
+  action_type:
+    | 'coordinator_review'
+    | 'scheduled_meeting'
+    | 'escalate_to_sgt'
+    | 'escalate_to_lt'
+    | 'resolve'
+  action_notes: string | null
+  calendar_meeting_id: string | null
+  meeting_date: string | null
+  meeting_attendees: string[] | null
+  created_at: string
+}
+
+export type ExcellenceRecognition = {
+  id: string
+  session_id: string
+  competency_key: string
+  competency_label: string
+  dit_user_id: string
+  fto_user_id: string
+  explanation: string
+  sent_to_recipients: string[]
+  created_at: string
+}
