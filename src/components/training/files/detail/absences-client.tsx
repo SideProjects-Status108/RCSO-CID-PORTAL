@@ -50,11 +50,15 @@ export function AbsencesClient({
   absences,
   canDocument,
   canClose,
+  currentUserName,
+  currentUserBadge,
 }: {
   ditRecordId: string
   absences: DitAbsenceRecord[]
   canDocument: boolean
   canClose: boolean
+  currentUserName: string
+  currentUserBadge: string | null
 }) {
   const router = useRouter()
   const [modalOpen, setModalOpen] = useState(false)
@@ -109,6 +113,8 @@ export function AbsencesClient({
       {modalOpen ? (
         <DocumentAbsenceModal
           ditRecordId={ditRecordId}
+          currentUserName={currentUserName}
+          currentUserBadge={currentUserBadge}
           onClose={() => setModalOpen(false)}
           onCreated={() => {
             setModalOpen(false)
@@ -193,11 +199,15 @@ function AbsenceRow({
 
 function DocumentAbsenceModal({
   ditRecordId,
+  currentUserName,
+  currentUserBadge,
   onClose,
   onCreated,
   onError,
 }: {
   ditRecordId: string
+  currentUserName: string
+  currentUserBadge: string | null
   onClose: () => void
   onCreated: () => void
   onError: (msg: string) => void
@@ -309,7 +319,13 @@ function DocumentAbsenceModal({
         </Field>
 
         <div>
-          <SignaturePad ref={padRef} onChange={setEmpty} label="Your signature (optional)" />
+          <SignaturePad
+            ref={padRef}
+            onChange={setEmpty}
+            label="Your signature (optional)"
+            printedName={currentUserName}
+            printedBadge={currentUserBadge}
+          />
           <p className="mt-1 text-[11px] text-text-secondary">
             Sign to pre-complete the FTO step. If you leave this blank, the record will still
             route through the chain and you can sign later from your inbox.

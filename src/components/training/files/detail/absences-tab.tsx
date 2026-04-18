@@ -20,6 +20,8 @@ export async function AbsencesTab({ ditRecordId }: { ditRecordId: string }) {
       absences={absences}
       canDocument={canDocument}
       canClose={canClose}
+      currentUserName={session.profile.full_name}
+      currentUserBadge={session.profile.badge_number}
     />
   )
 }

@@ -21,7 +21,10 @@ export default async function TrainingSettingsPage() {
         </p>
       </header>
 
-      <SignatureQueue />
+      <SignatureQueue
+        currentUserName={session.profile.full_name}
+        currentUserBadge={session.profile.badge_number}
+      />
     </div>
   )
 }

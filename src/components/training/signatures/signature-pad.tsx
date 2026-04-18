@@ -21,6 +21,14 @@ type Props = {
   disabled?: boolean
   label?: string
   ref?: React.RefObject<SignaturePadHandle | null>
+  /**
+   * Printed identity rendered below the pad. The portal always records the
+   * authenticated user's full name and badge server-side; showing them here
+   * makes it explicit to the signer exactly what will be attached to the
+   * handwritten signature in the event it's illegible.
+   */
+  printedName?: string
+  printedBadge?: string | null
 }
 
 /**
@@ -44,6 +52,8 @@ export function SignaturePad({
   disabled = false,
   label = 'Signature',
   ref,
+  printedName,
+  printedBadge,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -238,9 +248,26 @@ export function SignaturePad({
           onPointerCancel={handlePointerUp}
         />
       </div>
+      {printedName ? (
+        <div
+          className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 rounded-md border border-border-subtle bg-bg-elevated px-3 py-2 text-xs"
+          aria-label="Printed signer identity"
+        >
+          <div>
+            <span className="text-text-secondary">Signed by: </span>
+            <span className="font-semibold text-text-primary">{printedName}</span>
+          </div>
+          <div className="text-text-secondary">
+            Badge:{' '}
+            <span className="font-mono text-text-primary">
+              {printedBadge && printedBadge.trim() ? printedBadge : '—'}
+            </span>
+          </div>
+        </div>
+      ) : null}
       <p className="text-[11px] text-text-secondary">
-        Sign with your finger, stylus, or mouse. Your signature is recorded with a timestamp and
-        device metadata.
+        Sign with your finger, stylus, or mouse. Your printed name and badge above are recorded
+        alongside the handwritten signature for legal clarity.
       </p>
     </div>
   )

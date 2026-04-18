@@ -134,7 +134,10 @@ export async function createAbsenceWithRoute(params: {
   endDate: string | null
   kind: AbsenceKind
   description: string | null
-  originator: Pick<Profile, 'id' | 'role' | 'is_training_supervisor'>
+  originator: Pick<
+    Profile,
+    'id' | 'role' | 'is_training_supervisor' | 'full_name' | 'badge_number'
+  >
   preSignedImage: string | null
   preSignedDeviceId?: string | null
   preSignedIpAddress?: string | null
@@ -179,6 +182,8 @@ export async function createAbsenceWithRoute(params: {
           {
             step: routingRules.absence_record[0],
             signerId: params.originator.id,
+            signerName: params.originator.full_name,
+            signerBadge: params.originator.badge_number ?? null,
             signatureImage: params.preSignedImage!,
             biometricMethod: null,
             deviceId: params.preSignedDeviceId ?? null,

@@ -17,7 +17,13 @@ const DOC_TYPE_LABELS: Record<DocSignatureType, string> = {
 
 type QueueResponse = { rows: DocumentSignatureRow[] }
 
-export function SignatureQueue() {
+export function SignatureQueue({
+  currentUserName,
+  currentUserBadge,
+}: {
+  currentUserName: string
+  currentUserBadge: string | null
+}) {
   const [rows, setRows] = useState<DocumentSignatureRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -149,6 +155,8 @@ export function SignatureQueue() {
                       ref={padRef}
                       onChange={(isEmpty) => setEmpty(isEmpty)}
                       disabled={submitting}
+                      printedName={currentUserName}
+                      printedBadge={currentUserBadge}
                     />
                     <div className="flex items-center justify-end gap-2">
                       <button

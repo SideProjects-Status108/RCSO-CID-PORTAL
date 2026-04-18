@@ -125,6 +125,8 @@ function mapSignatureEvent(r: Record<string, unknown>): SignatureEventRow {
     step_index: Number(r.step_index ?? 0),
     signer_role: r.signer_role as SignatureStep,
     signer_id: String(r.signer_id),
+    signer_name: String(r.signer_name ?? ''),
+    signer_badge: r.signer_badge != null ? String(r.signer_badge) : null,
     signature_image: String(r.signature_image ?? ''),
     biometric_method: r.biometric_method != null ? String(r.biometric_method) : null,
     device_id: r.device_id != null ? String(r.device_id) : null,
@@ -146,6 +148,8 @@ export async function createSignatureRoute(params: {
   preSigned?: Array<{
     step: SignatureStep
     signerId: string
+    signerName: string
+    signerBadge: string | null
     signatureImage: string
     biometricMethod?: string | null
     deviceId?: string | null
@@ -190,6 +194,8 @@ export async function createSignatureRoute(params: {
       step_index: idx,
       signer_role: p.step,
       signer_id: p.signerId,
+      signer_name: p.signerName,
+      signer_badge: p.signerBadge,
       signature_image: p.signatureImage,
       biometric_method: p.biometricMethod ?? null,
       device_id: p.deviceId ?? null,
@@ -212,7 +218,10 @@ export async function createSignatureRoute(params: {
  */
 export async function recordSignature(params: {
   signatureRow: DocumentSignatureRow
-  signer: Pick<Profile, 'id' | 'role' | 'is_training_supervisor'>
+  signer: Pick<
+    Profile,
+    'id' | 'role' | 'is_training_supervisor' | 'full_name' | 'badge_number'
+  >
   signatureImage: string
   biometricMethod?: string | null
   deviceId?: string | null
@@ -240,6 +249,8 @@ export async function recordSignature(params: {
       step_index: signatureRow.current_step,
       signer_role: expectedStep,
       signer_id: signer.id,
+      signer_name: signer.full_name,
+      signer_badge: signer.badge_number ?? null,
       signature_image: params.signatureImage,
       biometric_method: params.biometricMethod ?? null,
       device_id: params.deviceId ?? null,

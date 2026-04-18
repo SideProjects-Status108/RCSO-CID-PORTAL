@@ -276,6 +276,10 @@ export type SignatureEventRow = {
   step_index: number
   signer_role: SignatureStep
   signer_id: string
+  /** Printed name snapshot (from profiles.full_name) at the moment of signing. */
+  signer_name: string
+  /** Badge number snapshot at sign-time. Null for staff without badges. */
+  signer_badge: string | null
   signature_image: string
   biometric_method: string | null
   device_id: string | null
