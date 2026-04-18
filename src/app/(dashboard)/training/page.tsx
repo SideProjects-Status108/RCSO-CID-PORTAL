@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { CalendarDays, FileText, FolderOpen, Library, UserPlus, Users } from 'lucide-react'
 
@@ -16,14 +17,28 @@ export default async function TrainingDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="font-heading text-2xl font-semibold tracking-tight text-text-primary">
-          Training Dashboard
-        </h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-text-secondary">
-          Program overview for the Detective in Training pipeline. Use the tabs above to navigate
-          between sections.
-        </p>
+      <header className="flex items-start gap-4">
+        <Image
+          src="/branding/rcso-detective-badge.png"
+          alt=""
+          width={128}
+          height={128}
+          priority
+          className="hidden size-16 shrink-0 object-contain drop-shadow-md sm:block"
+          aria-hidden
+        />
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent-gold">
+            Detective in Training Program
+          </p>
+          <h1 className="font-heading text-2xl font-semibold tracking-tight text-text-primary">
+            Training Dashboard
+          </h1>
+          <p className="max-w-2xl text-sm leading-relaxed text-text-secondary">
+            Program overview for the Detective in Training pipeline. Use the tabs above to navigate
+            between sections.
+          </p>
+        </div>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

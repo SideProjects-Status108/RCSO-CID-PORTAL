@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, BadgeCheck, Mail, Phone } from 'lucide-react'
 
@@ -18,10 +19,20 @@ export function DitDetailHeader({ payload }: { payload: DitDetailPayload }) {
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight text-text-primary">
-            {profile.full_name}
-          </h1>
+        <div className="flex min-w-0 items-start gap-3">
+          <Image
+            src="/branding/rcso-detective-badge.png"
+            alt=""
+            width={96}
+            height={96}
+            priority
+            aria-hidden
+            className="hidden size-14 shrink-0 object-contain drop-shadow-md sm:block"
+          />
+          <div className="min-w-0">
+            <h1 className="font-heading text-2xl font-semibold tracking-tight text-text-primary">
+              {profile.full_name}
+            </h1>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-secondary">
             {profile.badge_number ? (
               <span className="inline-flex items-center gap-1">
@@ -41,6 +52,7 @@ export function DitDetailHeader({ payload }: { payload: DitDetailPayload }) {
                 {profile.phone_cell}
               </span>
             ) : null}
+            </div>
           </div>
         </div>
 

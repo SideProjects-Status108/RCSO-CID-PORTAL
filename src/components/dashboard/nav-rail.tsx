@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react'
@@ -331,11 +332,18 @@ export function NavRail({
       <Link
         href="/dashboard"
         onClick={() => setOpenFlyoutId(null)}
-        className="flex h-full w-full flex-col items-center justify-center px-1 text-center font-heading text-[9px] font-semibold leading-tight tracking-wide text-text-primary hover:text-accent-primary"
+        className="group flex h-full w-full items-center justify-center p-1.5 transition-opacity hover:opacity-80"
         title="CID PORTAL — Dashboard"
+        aria-label="CID PORTAL — Dashboard"
       >
-        <span>CID</span>
-        <span>PORTAL</span>
+        <Image
+          src="/branding/cid-portal-app-icon.png"
+          alt=""
+          width={96}
+          height={96}
+          priority
+          className="h-full w-full object-contain"
+        />
       </Link>
     </div>
   )

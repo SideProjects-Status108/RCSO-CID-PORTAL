@@ -1,11 +1,11 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { Shield } from 'lucide-react'
 
 import { sanitizeInternalRedirect } from '@/lib/auth/safe-redirect'
 import { createClient } from '@/lib/supabase/client'
@@ -56,8 +56,15 @@ export function LoginForm({ bootstrapSignupEnabled }: LoginFormProps) {
   return (
     <Card className="w-full max-w-md border-border-subtle bg-bg-surface shadow-none">
       <CardHeader className="space-y-3 text-center">
-        <div className="mx-auto flex size-12 items-center justify-center rounded-lg border border-border-subtle bg-bg-elevated">
-          <Shield className="size-7 text-accent-primary" strokeWidth={1.5} aria-hidden />
+        <div className="mx-auto flex size-24 items-center justify-center overflow-hidden rounded-2xl border border-border-subtle bg-black shadow-lg">
+          <Image
+            src="/branding/cid-portal-app-icon.png"
+            alt="Rutherford County Sheriff's Office CID Portal"
+            width={192}
+            height={192}
+            className="size-full object-contain"
+            priority
+          />
         </div>
         <CardTitle className="font-heading text-xl tracking-wide text-text-primary">
           CID PORTAL
