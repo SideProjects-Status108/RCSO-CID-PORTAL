@@ -9,6 +9,7 @@ export type Profile = {
   phone_office: string | null
   unit: string | null
   is_active: boolean
+  is_training_supervisor: boolean
   created_at: string
   updated_at: string
 }

@@ -12,7 +12,7 @@ export default async function TrainingDashboardPage() {
   const session = await getSessionUserWithProfile()
   if (!session) redirect('/login')
 
-  const showOnboarding = canManageOnboarding(session.profile.role)
+  const showOnboarding = canManageOnboarding(session.profile)
 
   return (
     <div className="space-y-6">

@@ -492,8 +492,12 @@ export async function createDitOnboardingAction(
   if (!session) {
     return { ok: false, code: 'UNAUTHORIZED', message: 'Sign in required.' }
   }
-  if (!canManageOnboarding(session.profile.role)) {
-    return { ok: false, code: 'FORBIDDEN', message: 'Only coordinators and supervision can onboard DITs.' }
+  if (!canManageOnboarding(session.profile)) {
+    return {
+      ok: false,
+      code: 'FORBIDDEN',
+      message: 'Only the FTO Coordinator or Training Supervisor can onboard DITs.',
+    }
   }
 
   const email = input.email.trim().toLowerCase()

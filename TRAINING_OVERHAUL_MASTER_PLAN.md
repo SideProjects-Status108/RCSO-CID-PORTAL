@@ -4,7 +4,7 @@ Master plan for the full 14-prompt Detective-in-Training (DIT) renovation of the
 
 The source prompts live in [CURSOR_PROMPTS_TRAINING_BUILD.md](CURSOR_PROMPTS_TRAINING_BUILD.md). This document is the execution spine: it locks shared foundations upfront so later segments don't have to re-decide them, and it maps every existing training file to an **absorb / retire / keep** decision so drift stays low across the ~18-session build.
 
-> Status: Segment A (Prompts 1-2) is ready to build. Update the **Status** column of [Segment index](#3-segment-index) as each segment ships.
+> Status: Segment A shipped. Segment A.1 role-model patch shipped (`is_training_supervisor` flag). Binder-derived + VARK + PTO-hybrid decisions locked below. Segment B ready to build. Update the **Status** column of [Segment index](#3-segment-index) as each segment ships.
 
 ---
 
@@ -12,15 +12,23 @@ The source prompts live in [CURSOR_PROMPTS_TRAINING_BUILD.md](CURSOR_PROMPTS_TRA
 
 These apply across all 14 prompts. Change them only with a master-plan update.
 
-- **Shell.** Keep the global `NavRail`; add a training-specific sub-nav. Sub-nav items: Dashboard, DIT Files, Schedule, Resources, Settings. The prompt-doc's "top navbar + collapsible left sidebar" is adapted to this.
+- **Shell.** Keep the global `NavRail`; add a training-specific sub-nav. Sub-nav items: Dashboard, DIT Files, Schedule, Resources, Settings.
 - **Route group.** Everything stays under `src/app/(dashboard)/training/*`.
 - **Eval model.** Keep `weekly_training_sessions` + `weekly_competency_scores` (20-competency weekly flow). **Retire** the legacy `evaluations` table + `TrainingEvaluationModal` at the end of Segment C.
 - **Signatures.** Build the core signature system **early** (Segment B foundation), so Weekly Eval / Deficiency / Certificate all consume a mature shared API. iPad UX polish + PDF watermarking ship in Segment C where they're first exercised.
 - **Legacy re-export routes** (`/training/{onboarding,dit-records,dit-evaluations,fto-schedule}`) are repurposed as we absorb their concepts; orphans deleted in the Segment C cleanup sweep.
+- **Role model (locked in Segment A.1).** Training writers = `admin | supervision_admin | fto_coordinator | is_training_supervisor=true`. The `is_training_supervisor` boolean on `profiles` is additive to `role`; at most one profile carries it at a time (partial unique index). Generic `supervision` is **read + sign-only** in Training. `detective` is **read-only scoped to DITs they're actively paired with**. Initial Training Supervisor: Sgt. Amanda McPherson (assigned via the DIT Files page header widget). When the Training Supervisor seat is vacant, Supervision Admin is the fallback signer at that step.
+- **Survey / VARK (Path B).** Custom scenario-based questions authored in-house; scored for Visual / Aural / Read-write / Kinesthetic. Results visible to writers only; DIT sees a thank-you screen.
+- **PTO hybrid (Route 1).** Adopt PBLE scenarios, journal-as-CTR-adjacent, and Board Review elements without replacing `weekly_training_sessions`. Six seed PBLEs: 1 Crime Scene + 2 Subpoena + 3 Search Warrant.
+- **Quiz model.** Non-gating diagnostic knowledge quizzes replace the binder's "topic coverage" 3-investigator-signoff grid. Score thresholds: >=80% green (no alert), 79-61% amber (notify FTO Coordinator), <=60% red (notify FTO Coordinator **and** Training Supervisor).
+- **Journal.** Required daily. Day-2 missed: gentle in-app nudge to DIT. Day-3+: notification to paired FTO. All flags bypassed while DIT is in `suspended` status; counter resets on return. Write-days = any day the DIT is on active duty (weekday baseline; adjust per `fto_pairings` + call-outs).
+- **Remedial extensions.** First remedial adds 14 days to `expected_graduation_date`. Each subsequent remedial adds 7 days. LT or Capt may override the extension value at sign time (0-60 range, stored with `extension_override_by`).
+- **Absence / suspended (new workflow).** New `dit_records.status` value `suspended`. New table `dit_absence_records` with kinds `illness | oji | bereavement | personal | sick` (where `sick` = single-day call-out, `illness` = extended/doctor-ordered). FTO documents; FTO Coordinator and Training Supervisor acknowledge (signature chain is acknowledgment-only, no reject path). While suspended: quiz deadlines pause, overlapping weekly evals auto-N/A, journal flags bypass, schedule grid renders paused. On close, `days_missed` auto-extends `expected_graduation_date` (audited separately from remedials).
+- **Program config.** Tunable numbers (extension days, quiz thresholds, journal flag windows, survey expiry) live in `training_program_config` (single-row). Editable by training writers only.
 - **Conventions** (set in Segment A, reused everywhere):
   - Server actions for form submit flows. Route handlers under `src/app/api/training/*` for fetches and signer endpoints.
   - Typed action errors: `{ ok: false, code: 'PROFILE_NOT_FOUND' | 'DUPLICATE_BADGE' | ..., message }`.
-  - RLS per table: read-scope by role via `src/lib/training/api-auth.ts` helpers; writes via server actions (service role) where elevated.
+  - RLS per table: read-scope by role via `src/lib/training/api-auth.ts` helpers; writes via server actions (service role) where elevated. Write gates use `isTrainingWriter(profile)`.
   - Client UI: shadcn/ui + existing design tokens (`bg-bg-app`, `text-text-primary`, `border-border-subtle`). No new color system.
   - Emails: keep `logTrainingEmailPreview` stub across Segments A-D; wire a real provider in Segment E.
 
@@ -56,10 +64,11 @@ flowchart LR
 
 | Segment | New tables / infra |
 |---|---|
-| A | `dit_surveys` (token, status, `expires_at`, `learning_style jsonb`) |
-| B | `document_signatures` (polymorphic: `doc_type`, `doc_id`, `routing_order text[]`, `current_step`, `current_signer_role`, `status`), `signature_events` (per-signer: image base64, timestamp, ip, device, biometric method) |
-| C | `case_assignments`, `call_out_logs`, `equipment_checkoffs` |
-| D | `training_documents`, `training_document_categories`, `training_resources`; Supabase storage bucket `training-documents` |
+| A | `dit_surveys` (token, status, `expires_at`, `learning_style jsonb`, `scores jsonb`, `narrative text`) |
+| A.1 | `profiles.is_training_supervisor` column + partial unique index + `is_training_writer()` RPC |
+| B | `document_signatures` (polymorphic: `doc_type`, `doc_id`, `routing_order text[]`, `current_step`, `current_signer_role`, `status`), `signature_events` (per-signer: image base64, timestamp, ip, device, biometric method), `dit_absence_records`, `dit_records.status += 'suspended'`, `dit_records.expected_graduation_date`, `training_program_config` (single-row), `dit_survey_questions` + `dit_survey_options` + `dit_survey_responses` (VARK) |
+| C | `case_assignments`, `call_out_logs`, `equipment_checkoffs`, `training_quizzes` + `training_quiz_questions` + `training_quiz_options` + `training_quiz_attempts` + `training_quiz_attempt_answers`, `dit_journal_entries` + `dit_journal_reviews`, `fto_ctr_entries`, `deficiency_forms.extension_days` + `extension_override_by` |
+| D | `training_documents`, `training_document_categories`, `training_resources`; Supabase storage bucket `training-documents`; `pto_pbles` + `pto_pble_artifacts`; `pto_board_reviews` + `pto_board_review_votes` |
 | E | `completion_certificates`, `fto_feedback_surveys`, `fto_feedback_responses` |
 
 ### Retirements
@@ -72,11 +81,12 @@ flowchart LR
 
 | Segment | Prompts | Ship goal | Status |
 |---|---|---|---|
-| A | 1, 2 | Shell + onboarding (profile + survey stub) | Not started |
-| B | 3, 4, 12 (foundation only) | Active DITs grid + DIT file detail + signature core | Not started |
-| C | 5, 10, 11 | Weekly Eval + Deficiency + legacy retirement | Not started |
-| D | 6, 7, 8, 9 | Activity, Cases/Call-Outs, Schedule grid, Documents/Resources | Not started |
-| E | 13, 14 + cleanup | Graduation cert + FTO feedback + delete orphans | Not started |
+| A | 1, 2 | Shell + onboarding (profile + survey stub) | Shipped |
+| A.1 | — | Role model patch: `is_training_supervisor` flag + access helper rewrite | Shipped |
+| B | 3, 4, 4b, 12 (foundation only) | Active DITs grid + DIT file detail + signature core + absence/suspended workflow + VARK survey delivery | Not started |
+| C | 5, 10, 10b, 11 | Weekly Eval (chain adds LT) + Deficiency (tiered extensions) + Quizzes (tiered alerts) + Journal + FTO CTR + legacy retirement | Not started |
+| D | 6, 7, 8, 9 | Activity, Cases/Call-Outs, Schedule grid, Documents/Resources, PBLEs (6 seeds), Board Review | Not started |
+| E | 13, 14 + cleanup | Graduation cert (chain: FTO Coord -> Training Sup -> LT -> Capt) + FTO feedback + Training Settings (McPherson assignment widget) + delete orphans | Not started |
 
 Prompt 12 is deliberately split: foundation in B, UX polish + PDF in C.
 
@@ -107,26 +117,63 @@ Deferred from Segment A:
 - Real email sending (stays on `logTrainingEmailPreview`).
 - Auth-user provisioning from Create Profile; must already exist as a profile (error `PROFILE_NOT_FOUND` otherwise).
 
-Access for Onboarding panel: `admin | supervision_admin | supervision | fto_coordinator` via the existing `trainingFullRead` helper (factored into `src/lib/training/access.ts`).
+Access for Onboarding panel: `isTrainingWriter(profile)` from `src/lib/training/access.ts` (admin / supervision_admin / fto_coordinator / Training Supervisor). Generic `supervision` is **not** a writer after Segment A.1.
 
 Detailed sub-plan of record: `.cursor/plans/training_overhaul_prompts_1-2_019f5d5d.plan.md`.
 
 ---
 
-## 5. Segment B — DIT roster, detail, signature core (Prompts 3, 4, 12-foundation)
+## 4.1 Segment A.1 — Role model patch (shipped)
+
+Small follow-up to Segment A that splits the training supervision tier before Segment B starts building on it.
+
+- Migration `20260425140000_training_supervisor_flag.sql`:
+  - `ALTER TABLE profiles ADD COLUMN is_training_supervisor boolean NOT NULL DEFAULT false`.
+  - Partial unique index `WHERE is_training_supervisor = true` (at most one).
+  - `is_training_writer()` SQL helper for later RLS.
+- `src/types/profile.ts` gains `is_training_supervisor: boolean`.
+- `src/lib/training/access.ts` rewritten:
+  - `isTrainingWriter(profile)` — new profile-aware write gate.
+  - `canManageOnboarding(profile)`, `canToggleDitStatus(profile)`, `canEditProgramConfig(profile)` — profile-aware.
+  - `canSignAsTrainingSupervisor(profile)` — true if flagged or `supervision_admin` (fallback).
+  - `trainingFullRead(role)` and `supervisionPlus(role)` retained for legacy read-only callsites.
+- Segment A callsites migrated to profile-aware helpers.
+
+Initial assignment of Sgt. Amanda McPherson as Training Supervisor is done via the DIT Files page header widget built in Segment B (not seeded in the migration, because her profile row may not exist at migration time across environments).
+
+---
+
+## 5. Segment B — DIT roster, detail, signature core, absence workflow (Prompts 3, 4, 4b, 12-foundation)
 
 ### Prompt 3 - Active DIT Files grid
 
 - Page: `src/app/(dashboard)/training/dit-files/page.tsx` (replaces Segment-A placeholder).
 - `src/components/training/files/dit-grid.tsx` - server-side fetch via new `fetchDitFilesOverview()` in `src/lib/training/queries.ts`. Computes status (green/amber/red/gray) from `avg_score`, coaching flag, and `unobserved_competencies` counts.
-- `src/components/training/files/dit-tile.tsx` - tile + FTO contact tooltip.
+- `src/components/training/files/dit-tile.tsx` - tile + FTO contact tooltip. Tiles for DITs in `suspended` status render with a distinct paused treatment.
+- Page header includes `src/components/training/files/training-supervisor-widget.tsx` — shows current Training Supervisor name (or "Vacant"); admins / supervision admins / fto_coordinator / current Training Supervisor can reassign via a dropdown of eligible `supervision` profiles. Calls a server action that flips `profiles.is_training_supervisor` (partial unique index enforces singleton).
 
 ### Prompt 4 - DIT file detail + Overview tab
 
 - Routes: `src/app/(dashboard)/training/dit-files/[id]/page.tsx` and `layout.tsx` (tab chrome).
-- Tabs driven by `?tab=overview|weekly|activity|cases|call-outs|notes`.
-- Overview tab reads `weekly_competency_scores`, `unobserved_competencies`, `deficiency_forms`, `dit_milestones`.
+- Tabs driven by `?tab=overview|weekly|activity|cases|call-outs|notes|absences`.
+- Overview tab reads `weekly_competency_scores`, `unobserved_competencies`, `deficiency_forms`, `dit_milestones`, `expected_graduation_date`.
+- Status banner shows current `dit_records.status` (active / suspended / on_hold / graduated / separated) with a "Document absence" / "Suspend" action visible only to training writers.
 - `src/lib/training/scoring.ts` - trend arrow, trajectory, on-track-for-graduation helpers (pure functions).
+
+### Prompt 4b - Absence / Suspended Status workflow (new)
+
+- Migration: `dit_absence_records` (id, dit_record_id FK, start_date, end_date nullable, kind enum `illness|oji|bereavement|personal|sick`, description text, status `draft|submitted|acknowledged|closed`, originated_by, timestamps). Adds `'suspended'` to `dit_records.status` check constraint. Adds `dit_records.expected_graduation_date date`.
+- Signature routing: `FTO -> FTO Coordinator -> Training Supervisor` (acknowledgment, not approval — no reject path).
+- UX on DIT file detail `?tab=absences`:
+  - List of absences with status, kind, date range, days counted.
+  - "Document absence" modal — FTO or writer. Kind, start/end (end optional), short description. On submit: creates record, pre-signs FTO step, queues Coordinator + Training Supervisor.
+  - Coordinator acknowledgment screen includes an inline "Also suspend DIT" checkbox (optional).
+  - "Close absence" action: writers or originating FTO. Sets `end_date` if null, status `closed`, computes `days_missed`, extends `expected_graduation_date` by that count, and (if DIT was suspended) flips status back to `active`.
+- Downstream effects:
+  - Weekly eval tab auto-marks sessions overlapping an acknowledged/closed absence as "N/A — DIT absent"; those sessions don't count in score history.
+  - Quiz deadlines shift by absence duration (computed at read time, not stored).
+  - Journal missed-day counter suppresses during suspension, resets on return.
+  - Schedule grid (Segment D) renders suspended weeks in a desaturated paused treatment.
 
 ### Prompt 12 foundation (signatures)
 
@@ -141,6 +188,13 @@ Detailed sub-plan of record: `.cursor/plans/training_overhaul_prompts_1-2_019f5d
 
 Explicitly deferred from Segment B to Segment C cap: biometric gate (Face ID / Touch ID / badge PIN prompt) and PDF watermark generation.
 
+### Prompt 2b - VARK survey (delivered in Segment B alongside signature core)
+
+- Public `/survey/[token]` page (no auth; token gates access). Scenario-based questions with up to 4 weighted options per question (one per V/A/R/K). Submit computes per-style scores and optional short narrative.
+- Tables: `dit_survey_questions`, `dit_survey_options`, `dit_survey_responses`. Extend `dit_surveys` with `scores jsonb` and `narrative text`.
+- Results visible to training writers only on the Onboarding / DIT file screens; DIT sees a thank-you page on submit.
+- Seed ~12 questions authored in-house (content deliverable tracked separately).
+
 ---
 
 ## 6. Segment C — Weekly Eval, Deficiency, legacy retirement (Prompts 5, 10, 11)
@@ -148,7 +202,21 @@ Explicitly deferred from Segment B to Segment C cap: biometric gate (Face ID / T
 ### Prompt 10 - Weekly Evaluation form + signature
 
 - Absorb `src/components/training/weekly-evaluation-form.tsx` into `src/components/training/weekly/eval-form.tsx`. Keep draft/submit endpoints at `/api/training/sessions/[id]/save` and `/submit`, then chain into signature core.
+- Signature chain: `FTO -> FTO Coordinator -> Training Supervisor -> LT` (final at LT — binder requirement).
+- Absence-aware: if any calendar day in the eval week falls inside an acknowledged `dit_absence_records` window, the eval is auto-flagged "N/A — DIT absent" and excluded from score history.
 - `src/lib/training/validation.ts` - 20-competency rules (all scored or not-observed; 1/2/5 require <=300 char explanation).
+
+### Prompt 10b - Diagnostic Quizzes (non-gating) + Journal (new)
+
+- Quiz tables: `training_quizzes`, `training_quiz_questions`, `training_quiz_options`, `training_quiz_attempts`, `training_quiz_attempt_answers`. Writers author; DIT attempts; score computed on submit.
+- Thresholds: >=80% green; 79-61% amber -> notification to FTO Coordinator; <=60% red -> notification to **both** FTO Coordinator and Training Supervisor. Quizzes are **non-gating** (score never blocks progression; it's a diagnostic signal).
+- Replaces the binder's "topic coverage" 3-senior-investigator-signoff grid.
+- Journal tables: `dit_journal_entries` (dit_record_id, entry_date, body, created_at) + `dit_journal_reviews` (entry_id, reviewer_id, notes, created_at). FTO Coordinator reviews (binder had Sgt; FTO Coordinator now owns).
+- Missed-day logic (runs on schedule tick / on page load):
+  - 2 consecutive missed write-days -> in-app nudge on DIT's own dashboard.
+  - 3+ missed write-days -> notification to paired FTO.
+  - Suspended status bypasses both; counter resets on return.
+- FTO CTR: `fto_ctr_entries` captures FTO's own daily coaching notes (distinct from the DIT journal). Visible to FTO, FTO Coordinator, Training Supervisor.
 
 ### Prompt 5 - Weekly Eval tab (history)
 
@@ -159,7 +227,8 @@ Explicitly deferred from Segment B to Segment C cap: biometric gate (Face ID / T
 ### Prompt 11 - Deficiency form + escalation
 
 - Absorb `src/components/training/deficiency-form.tsx` + `deficiency-coordinator-view.tsx` into `src/components/training/deficiency/*`.
-- Signature routing (FTO -> Coordinator -> Sgt -> Lt) via Segment B core.
+- Signature routing (`FTO -> FTO Coordinator -> Training Supervisor -> LT`) via Segment B core.
+- Extension tiering: add `deficiency_forms.extension_days integer NOT NULL DEFAULT 14` and `extension_override_by uuid REFERENCES auth.users(id)`. At LT sign-time UI: default is 14 for DIT's first remedial, 7 for subsequent; LT or Capt may override via an "Override" affordance (0-60 range, server-validated). On LT sign, apply `extension_days` to `dit_records.expected_graduation_date` additively. Audit trail preserves each remedial's `extension_days` independently.
 - Escalation uses existing `/api/training/deficiency-forms/[id]/{actions,escalate,schedule-meeting}`.
 
 ### Legacy retirement (end of Segment C)
@@ -193,6 +262,12 @@ Explicitly deferred from Segment B to Segment C cap: biometric gate (Face ID / T
 - New tables + Supabase storage bucket `training-documents` with RLS and signed-URL downloads.
 - `/training/resources` renders both sections. PDF viewer via `react-pdf`; fallback to "Open in new tab" if integration is heavy — pick per-PR.
 
+### PTO hybrid additions (PBLEs + Board Review)
+
+- `pto_pbles` (id, dit_record_id, phase, scenario_kind `crime_scene|subpoena|search_warrant`, title, rubric jsonb, assigned_at, due_at, status) + `pto_pble_artifacts` (file uploads via `training-documents` bucket).
+- Six seed PBLE scenarios: 1 Crime Scene + 2 Subpoena + 3 Search Warrant. Rubric content authored in-house.
+- `pto_board_reviews` + `pto_board_review_votes` for phase-end panel reviews (optional Segment D ship; may defer to E if scope presses).
+
 ---
 
 ## 8. Segment E — Graduation, feedback, cleanup (Prompts 13-14)
@@ -201,13 +276,23 @@ Explicitly deferred from Segment B to Segment C cap: biometric gate (Face ID / T
 
 - `completion_certificates` table.
 - PDF generation server-side via `pdf-lib` using signature images from `signature_events`.
-- Routing: Coordinator -> Lt -> Capt through signature core.
+- Routing: `FTO Coordinator -> Training Supervisor -> LT -> Capt` through signature core (final at Capt).
+- Equipment Check-Off routing also lives here as a related document: `FTO Coordinator -> Training Supervisor -> LT` (final at LT).
 - Auto-trigger hook on week-10 session submit; missing competencies branch to deficiency form instead.
+- Expected graduation date respects accumulated remedial extensions + absence extensions recorded on `dit_records.expected_graduation_date`.
 
 ### Prompt 14 - FTO Feedback survey
 
 - `fto_feedback_surveys` + `fto_feedback_responses`.
 - DIT-facing form; Coordinator/Sgt dashboard with aggregates; FTO-facing anonymized view (no DIT names or raw comments).
+
+### Training Settings page
+
+- `/training/settings` (writers only).
+- Training Supervisor assignment (mirrors the DIT Files header widget but with history/audit).
+- `training_program_config` editor: extension default days (14 / 7), quiz thresholds (80 / 60), journal flag windows (2 / 3), survey expiry (7).
+- Email template preview links.
+- Signature inbox entry point.
 
 ### Final cleanup
 
@@ -263,12 +348,17 @@ Each segment merges to `main` only when:
 
 ## 11. Signature routing reference (master)
 
+`sgt` as a routing step name is **retired** — replaced by `training_supervisor` throughout. Other Sergeants are read + sign-only and are not a routing step.
+
 | Document | Route | Final signer |
 |---|---|---|
-| Weekly Eval | FTO -> Coordinator -> SGT | SGT |
-| Equipment Check-Off | FTO -> Coordinator -> SGT | SGT |
-| Deficiency / Remedial | FTO -> Coordinator -> SGT -> LT | LT |
-| Completion Certificate | FTO -> Coordinator -> SGT -> LT -> CPT | CPT |
-| FTO Feedback Survey | DIT (self) -> Coordinator -> SGT | SGT (review) |
+| Weekly Eval | FTO -> FTO Coordinator -> Training Supervisor -> LT | LT |
+| Equipment Check-Off | FTO Coordinator -> Training Supervisor -> LT | LT |
+| Deficiency / Remedial | FTO -> FTO Coordinator -> Training Supervisor -> LT | LT |
+| Completion Certificate | FTO Coordinator -> Training Supervisor -> LT -> CPT | CPT |
+| FTO Feedback Survey | DIT (self) -> FTO Coordinator -> Training Supervisor | Training Supervisor (review) |
+| DIT Absence Record | FTO -> FTO Coordinator -> Training Supervisor | Training Supervisor (acknowledgment) |
+
+`canSignAsTrainingSupervisor(profile)` resolves the Training Supervisor step: `is_training_supervisor=true` OR `supervision_admin` (fallback when seat is vacant). All others fail the gate at that step.
 
 Implemented in `src/lib/training/signatures.ts` (Segment B) as `routingRules[doc_type] -> string[]`; `document_signatures.routing_order` is the per-row snapshot so rule changes don't retroactively alter in-flight documents.
