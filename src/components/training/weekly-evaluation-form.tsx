@@ -242,9 +242,24 @@ export function WeeklyEvaluationForm({
           method: 'POST',
           credentials: 'same-origin',
         })
-        const j = (await res.json()) as { error?: string }
+        const j = (await res.json()) as {
+          error?: string
+          signature_route_id?: string | null
+          auto_deficiency_id?: string | null
+        }
         if (!res.ok) throw new Error(j.error ?? 'Submit failed')
         await loadBundle()
+        // If the submit created a signature route OR a deficiency, expose
+        // a soft notice so the FTO knows where to go next. (We don't force
+        // a redirect; the FTO can sign from the in-app queue.)
+        if (j.signature_route_id) {
+          // eslint-disable-next-line no-console
+          console.info('[training] weekly eval submitted; signature route', j.signature_route_id)
+        }
+        if (j.auto_deficiency_id) {
+          // eslint-disable-next-line no-console
+          console.info('[training] deficiency draft auto-created', j.auto_deficiency_id)
+        }
         onSubmit?.(session.id)
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Submit failed')
@@ -295,6 +310,42 @@ export function WeeklyEvaluationForm({
       <div className="text-xs text-text-secondary">
         Week {week_start_date} – {week_end_date} · {dit_display_name} / {fto_display_name}
       </div>
+
+      {session ? (
+        <Card size="sm" className="border-border-subtle">
+          <CardContent className="flex flex-wrap items-start gap-3 pt-4 text-sm">
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={session.dit_absent_flag}
+                disabled={locked}
+                onChange={(e) => {
+                  const checked = e.target.checked
+                  void fetch(`/api/training/sessions/${session.id}/absent`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      dit_absent_flag: checked,
+                      dit_absent_reason: session.dit_absent_reason,
+                    }),
+                  })
+                    .then((r) => r.json())
+                    .then(() => loadBundle())
+                    .catch(() => setError('Failed to toggle DIT-absent flag'))
+                }}
+              />
+              <span className="text-text-primary">DIT absent this full week</span>
+            </label>
+            {session.dit_absent_flag ? (
+              <p className="text-xs text-text-secondary">
+                Scoring and the 1/2/5 explanation requirement are skipped. Reviewer surfaces will
+                show a &ldquo;DIT absent&rdquo; banner instead of scores.
+              </p>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {[...grouped.entries()].map(([category, rows]) => {
         const open = openCats.has(category)

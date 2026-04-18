@@ -1,15 +1,25 @@
 import { NextResponse } from 'next/server'
 
 import { getSessionUserWithProfile } from '@/lib/auth/get-session'
+import { applyExtensionToGraduationDate, clampOverrideDays } from '@/lib/training/deficiencies'
 import {
   fetchSignatureRoute,
   recordSignature,
 } from '@/lib/training/signatures'
+import { createClient } from '@/lib/supabase/server'
 
 type SignBody = {
   signature_image?: string
   biometric_method?: string | null
   device_id?: string | null
+  /**
+   * LT/Capt override of the tiered extension default. Only honored when
+   *   - this signature is on a deficiency route,
+   *   - the signer is at the 'lt' step, and
+   *   - the value is an integer in [0, 60].
+   * Otherwise ignored.
+   */
+  extension_days_override?: number
 }
 
 /**
@@ -55,6 +65,26 @@ export async function POST(
   const ip = xff ? xff.split(',')[0].trim() : null
 
   try {
+    // If this is a deficiency route and the signer is about to seal the LT
+    // step with an override, persist extension_days BEFORE recording the
+    // signature. This keeps the extension_applied_at hook consistent with
+    // the final stored value even when the route auto-completes.
+    if (
+      routeData.document.doc_type === 'deficiency' &&
+      routeData.document.current_signer_role === 'lt' &&
+      typeof body.extension_days_override === 'number'
+    ) {
+      const clamped = clampOverrideDays(body.extension_days_override)
+      const supabase = await createClient()
+      await supabase
+        .from('deficiency_forms')
+        .update({
+          extension_days: clamped,
+          extension_override_by: session.user.id,
+        })
+        .eq('id', routeData.document.doc_id)
+    }
+
     const result = await recordSignature({
       signatureRow: routeData.document,
       signer: session.profile,
@@ -63,10 +93,37 @@ export async function POST(
       deviceId: body.device_id ?? null,
       ipAddress: ip,
     })
+
+    // If the route just completed and it's a deficiency, apply the extension
+    // to the DIT's expected_graduation_date. Idempotent — safe to replay.
+    let graduationUpdate: { applied: boolean; newGraduationDate: string | null } | null = null
+    if (
+      result.document.status === 'completed' &&
+      result.document.doc_type === 'deficiency'
+    ) {
+      const supabase = await createClient()
+      const { data: form } = await supabase
+        .from('deficiency_forms')
+        .select('id, pairing_id, extension_days, extension_applied_at')
+        .eq('id', result.document.doc_id)
+        .maybeSingle()
+      if (form) {
+        graduationUpdate = await applyExtensionToGraduationDate({
+          form: form as {
+            id: string
+            pairing_id: string
+            extension_days: number
+            extension_applied_at: string | null
+          },
+        })
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       document: result.document,
       event: { id: result.event.id, signed_at: result.event.signed_at },
+      graduation_update: graduationUpdate,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to record signature'
