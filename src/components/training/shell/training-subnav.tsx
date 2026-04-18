@@ -13,6 +13,7 @@ type SubnavItem = {
 const items: SubnavItem[] = [
   { label: 'Dashboard', href: '/training' },
   { label: 'DIT Files', href: '/training/dit-files' },
+  { label: 'Quizzes', href: '/training/quizzes' },
   { label: 'Schedule', href: '/training/schedule' },
   { label: 'Resources', href: '/training/resources' },
   { label: 'Settings', href: '/training/settings' },

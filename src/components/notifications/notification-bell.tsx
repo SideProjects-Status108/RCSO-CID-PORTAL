@@ -52,7 +52,11 @@ function hrefFor(n: NotificationRow): string {
   if (n.reference_type === 'form_submission')
     return `/operations/forms?openSubmission=${n.reference_id}`
   if (n.reference_type === 'evaluation')
-    return `/training/dit-evaluations?evaluation=${n.reference_id}`
+    // Legacy evaluations surface retired in Segment C. The DIT Files list is
+    // the new entry point; Weekly Evaluations now live as a tab on each
+    // DIT's file. We preserve the evaluation id in the hash for any future
+    // per-file deep-link support (current page ignores it safely).
+    return `/training/dit-files#evaluation-${n.reference_id}`
   return `/operations/schedules?open=${n.reference_id}`
 }
 
