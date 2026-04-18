@@ -125,6 +125,7 @@ Checkbox checklist for onboarding meeting: 10-week program overview, probationar
 Real scenario-based learning-style assessment served to new DITs via a public token-gated page, plus a scored summary surface visible to training writers only.
 
 **Public survey page** at `/survey/[token]`:
+
 - No auth; the token (from `dit_surveys.token`) ties responses to one DIT.
 - ~12 scenario-based questions; up to 4 options per question, each option weighted across V/A/R/K in a `weights jsonb` column like `{v:1,a:0,r:0.25,k:0.5}`.
 - DIT picks one option per question, then writes an optional short narrative ("anything else your FTO should know?").
@@ -132,6 +133,7 @@ Real scenario-based learning-style assessment served to new DITs via a public to
 - Expired token (past `expires_at`) renders a read-only "link expired — contact FTO Coordinator" screen.
 
 **Data model additions** (one migration, Segment B):
+
 - Extend `dit_surveys` with `scores jsonb` and `narrative text`.
 - `dit_survey_questions(id, prompt, display_order, is_active)`.
 - `dit_survey_options(id, question_id FK, label, weights jsonb, display_order)`.
@@ -139,6 +141,7 @@ Real scenario-based learning-style assessment served to new DITs via a public to
 - Seed: 12 questions authored in-house (content deliverable; schema ships without them).
 
 **Coordinator review surface:**
+
 - When `status='completed'`, replace "Awaiting response" on the Onboarding card + DIT file Overview tab with a compact card: horizontal V/A/R/K bar chart, dominant-style label, quoted narrative.
 - Gated by `isTrainingWriter(profile)`. DIT sees a thank-you screen on submit, nothing else.
 
@@ -280,6 +283,7 @@ function getTrend(current: number | null, prior: number | null) {
 First-class workflow for documenting DIT absences (illness, OJI, bereavement, personal, sick-day) with a signature-acknowledgment chain, a new `suspended` DIT status, and automatic schedule extension on close.
 
 **Kinds** (locked):
+
 - `illness` — extended / doctor-ordered
 - `oji` — on-the-job injury
 - `bereavement` — family loss
@@ -287,11 +291,13 @@ First-class workflow for documenting DIT absences (illness, OJI, bereavement, pe
 - `sick` — single-day call-out
 
 **Migration:**
+
 - `ALTER TABLE dit_records` add `expected_graduation_date date`; drop + recreate status CHECK to include `'suspended'`.
 - Create `dit_absence_records(id, dit_record_id FK, start_date date NOT NULL, end_date date, kind text CHECK IN ('illness','oji','bereavement','personal','sick'), description text, status text CHECK IN ('draft','submitted','acknowledged','closed') DEFAULT 'submitted', originated_by uuid, created_at, updated_at)`.
 - RLS: writers full; FTO can insert+read for DITs in their active pairings; DIT can read own closed absences only.
 
 **UX on DIT file detail** `?tab=absences`:
+
 - List of absences: status, kind, date range, days counted, signature progress chip.
 - **"Document absence"** modal (FTO or writer). Fields: kind dropdown, start date (today default), end date (optional — leave blank for open-ended), short description. On submit: creates record, pre-signs FTO step, queues FTO Coordinator → Training Supervisor via signature core.
 - FTO Coordinator's acknowledgment screen has an inline **"Also suspend this DIT"** checkbox that flips `dit_records.status='suspended'` in the same action.
@@ -300,6 +306,7 @@ First-class workflow for documenting DIT absences (illness, OJI, bereavement, pe
 **Signature routing:** `FTO → FTO Coordinator → Training Supervisor` (acknowledgment, no reject path).
 
 **Downstream effects** (data surfaces exposed here; consumers in later prompts):
+
 - Weekly Eval (Prompt 10): sessions overlapping any acknowledged/closed absence auto-flag "N/A — DIT absent" and are excluded from score history.
 - Quizzes (Prompt 10b): deadlines shift by absence-day count at read time.
 - Journal (Prompt 10b): missed-day counter bypasses suspension; resets on return.
@@ -568,19 +575,23 @@ Mobile: 1 column
 Signature routing and extension rules below supersede any conflicting body text in Prompts 10/11/13. Master reference: `TRAINING_OVERHAUL_MASTER_PLAN.md` §11.
 
 **Prompt 10 — Weekly Eval:**
+
 - Signature chain: `FTO → FTO Coordinator → Training Supervisor → LT` (final at LT).
 - Absence-aware: if any calendar day in the eval week falls inside an acknowledged/closed `dit_absence_records` window, the eval auto-flags "N/A — DIT absent" and is excluded from `weekly_competency_scores` aggregations.
 
 **Prompt 11 — Deficiency / Remedial:**
+
 - Signature chain: `FTO → FTO Coordinator → Training Supervisor → LT` (final at LT).
 - Extension tiering: add `deficiency_forms.extension_days integer NOT NULL DEFAULT 14` and `extension_override_by uuid REFERENCES auth.users(id)`. Default resolves at LT-sign time: 0 prior LT-signed remedials on this DIT → 14 days; 1+ prior → 7 days. Render an "Override" affordance visible only to LT/Capt that accepts an integer 0–60 (server-validated). On LT signature, additively apply `extension_days` to `dit_records.expected_graduation_date`. Preserve each row's `extension_days` so the history shows "#1: +14, #2: +7, #3: +3 (LT override)".
 
 **Prompt 13 — Graduation + Equipment Check-Off:**
+
 - Completion Certificate chain: `FTO Coordinator → Training Supervisor → LT → Capt` (final at Capt; FTO drops off the front).
 - Equipment Check-Off chain: `FTO Coordinator → Training Supervisor → LT` (final at LT). Add as its own document type in the signature routing table.
 - Graduation-readiness reads must respect `dit_records.expected_graduation_date`, which is adjusted by both remedial extensions and closed absences.
 
 **Role naming (applies everywhere):**
+
 - "SGT" as a signing step is retired — replaced by `training_supervisor`.
 - Training writers = admin | supervision_admin | fto_coordinator | `is_training_supervisor=true`. Generic `supervision` is read + sign-only.
 - Supervision Admin is the fallback signer at the Training Supervisor step when the seat is vacant.
@@ -723,6 +734,7 @@ Replace the binder's "topic coverage" 3-senior-investigator-signoff grid with no
 ### Quiz model (non-gating, diagnostic only)
 
 **Tables:**
+
 - `training_quizzes(id, title, phase int, is_active bool, created_at)`.
 - `training_quiz_questions(id, quiz_id FK, prompt text, display_order int, correct_option_id uuid)`.
 - `training_quiz_options(id, question_id FK, label text, display_order int)`.
@@ -730,6 +742,7 @@ Replace the binder's "topic coverage" 3-senior-investigator-signoff grid with no
 - `training_quiz_attempt_answers(id, attempt_id FK, question_id FK, option_id FK, is_correct bool)`.
 
 **Behavior:**
+
 - Writers author quizzes (inline editor at `/training/settings` or per-DIT-file; builder's choice).
 - DIT attempts via their DIT file. Deadline is phase-aware; read-side shifts by absence-day count if any acknowledged absence overlaps.
 - On submit: compute `score_percent`. Thresholds (tunable via `training_program_config`):
@@ -741,10 +754,12 @@ Replace the binder's "topic coverage" 3-senior-investigator-signoff grid with no
 ### DIT daily journal
 
 **Tables:**
+
 - `dit_journal_entries(id, dit_record_id FK, entry_date date, body text, created_at, updated_at)` — unique `(dit_record_id, entry_date)`.
 - `dit_journal_reviews(id, entry_id FK, reviewer_id FK profiles, notes text, created_at)`.
 
 **Behavior:**
+
 - DIT writes. FTO Coordinator reviews. RLS: DIT read+write own; writers read+review all; paired FTO read.
 - Missed-day detection runs at page-load time (no cron). Starting from `coalesce(last_entry_date, dit_record.start_date)`, count weekdays, skipping any date inside an acknowledged/closed absence window:
   - **2 consecutive missed days** — in-app nudge on DIT dashboard: *"You've missed 2 days of journal entries. Let's get caught up!"*
@@ -754,9 +769,11 @@ Replace the binder's "topic coverage" 3-senior-investigator-signoff grid with no
 ### FTO CTR (coaching and training report)
 
 **Table:**
+
 - `fto_ctr_entries(id, pairing_id FK, entry_date date, body text, private_to_writers bool DEFAULT false, created_at, updated_at)`.
 
 **Behavior:**
+
 - Visible to the authoring FTO + all writers. `private_to_writers=true` hides from DIT (default off — most CTR is shared).
 - Independent from the DIT journal; this is FTO's own daily coaching notes.
 
