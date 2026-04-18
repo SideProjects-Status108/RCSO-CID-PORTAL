@@ -8,7 +8,7 @@ export type OverallRating =
 
 export type EvaluationStatus = 'draft' | 'submitted' | 'approved'
 
-export type DitRecordStatus = 'active' | 'on_hold' | 'graduated' | 'separated'
+export type DitRecordStatus = 'active' | 'on_hold' | 'suspended' | 'graduated' | 'separated'
 
 export type FtoPairingRow = {
   id: string
@@ -48,6 +48,7 @@ export type DitRecordRow = {
   current_phase: number
   start_date: string
   graduation_date: string | null
+  expected_graduation_date: string | null
   status: DitRecordStatus
   created_by: string
   created_at: string
@@ -222,4 +223,108 @@ export type ExcellenceRecognition = {
   explanation: string
   sent_to_recipients: string[]
   created_at: string
+}
+
+// --- Segment B: document signatures, absences, supervisor assignment ---
+
+export const DOC_SIGNATURE_TYPES = [
+  'weekly_eval',
+  'deficiency',
+  'equipment_checkoff',
+  'completion_cert',
+  'fto_feedback',
+  'absence_record',
+] as const
+
+export type DocSignatureType = (typeof DOC_SIGNATURE_TYPES)[number]
+
+export type SignatureStatus = 'in_progress' | 'completed' | 'cancelled'
+
+/**
+ * Routing step identifiers used in document_signatures.routing_order.
+ * 'sgt' is intentionally absent; Training Supervisor replaces it.
+ */
+export const SIGNATURE_STEPS = [
+  'fto',
+  'fto_coordinator',
+  'training_supervisor',
+  'lt',
+  'cpt',
+  'dit',
+] as const
+
+export type SignatureStep = (typeof SIGNATURE_STEPS)[number]
+
+export type DocumentSignatureRow = {
+  id: string
+  doc_type: DocSignatureType
+  doc_id: string
+  dit_record_id: string | null
+  routing_order: SignatureStep[]
+  current_step: number
+  current_signer_role: SignatureStep | null
+  status: SignatureStatus
+  created_by: string
+  created_at: string
+  updated_at: string
+  completed_at: string | null
+}
+
+export type SignatureEventRow = {
+  id: string
+  document_signature_id: string
+  step_index: number
+  signer_role: SignatureStep
+  signer_id: string
+  signature_image: string
+  biometric_method: string | null
+  device_id: string | null
+  ip_address: string | null
+  signed_at: string
+}
+
+export const ABSENCE_KINDS = [
+  'illness',
+  'oji',
+  'bereavement',
+  'personal',
+  'sick',
+] as const
+
+export type AbsenceKind = (typeof ABSENCE_KINDS)[number]
+
+export const ABSENCE_KIND_LABELS: Record<AbsenceKind, string> = {
+  illness: 'Illness (extended)',
+  oji: 'On-the-job injury',
+  bereavement: 'Bereavement',
+  personal: 'Personal',
+  sick: 'Sick day',
+}
+
+export type AbsenceStatus = 'draft' | 'submitted' | 'acknowledged' | 'closed'
+
+export type DitAbsenceRecord = {
+  id: string
+  dit_record_id: string
+  start_date: string
+  end_date: string | null
+  kind: AbsenceKind
+  description: string | null
+  status: AbsenceStatus
+  originated_by: string
+  created_at: string
+  updated_at: string
+}
+
+export type TrainingProgramConfig = {
+  id: 1
+  extension_days_first: number
+  extension_days_subsequent: number
+  quiz_amber_threshold: number
+  quiz_red_threshold: number
+  journal_nudge_days: number
+  journal_flag_fto_days: number
+  survey_expiry_days: number
+  updated_at: string
+  updated_by: string | null
 }

@@ -44,6 +44,8 @@ function mapDitRecord(r: Record<string, unknown>): DitRecordRow {
     current_phase: Number(r.current_phase ?? 1),
     start_date: String(r.start_date ?? ''),
     graduation_date: r.graduation_date != null ? String(r.graduation_date) : null,
+    expected_graduation_date:
+      r.expected_graduation_date != null ? String(r.expected_graduation_date) : null,
     status: r.status as DitRecordRow['status'],
     created_by: String(r.created_by),
     created_at: String(r.created_at ?? ''),

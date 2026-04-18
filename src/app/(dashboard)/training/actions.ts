@@ -440,6 +440,106 @@ export async function updateDitRecordStatusAction(
 }
 
 // ---------------------------------------------------------------------------
+// Segment B — Training Supervisor assignment (admin / supervision_admin /
+// fto_coordinator / existing Training Supervisor can reassign).
+// ---------------------------------------------------------------------------
+
+export type AssignTrainingSupervisorResult =
+  | { ok: true; assigned_profile_id: string | null }
+  | {
+      ok: false
+      code: 'UNAUTHORIZED' | 'FORBIDDEN' | 'TARGET_INELIGIBLE' | 'INTERNAL'
+      message: string
+    }
+
+/**
+ * Flip the is_training_supervisor flag so that exactly one profile holds it.
+ * Pass null to unassign (leaves the seat vacant). The partial unique index on
+ * profiles enforces singleton; we clear any existing holder before setting the
+ * new one to avoid the constraint window.
+ */
+export async function assignTrainingSupervisorAction(
+  targetProfileId: string | null
+): Promise<AssignTrainingSupervisorResult> {
+  const session = await getSessionUserWithProfile()
+  if (!session) return { ok: false, code: 'UNAUTHORIZED', message: 'Sign in required.' }
+
+  const actor = session.profile
+  const actorAllowed =
+    actor.role === UserRole.admin ||
+    actor.role === UserRole.supervision_admin ||
+    actor.role === UserRole.fto_coordinator ||
+    actor.is_training_supervisor === true
+  if (!actorAllowed) {
+    return {
+      ok: false,
+      code: 'FORBIDDEN',
+      message: 'Only admins, supervision admins, the FTO Coordinator, or the current Training Supervisor can reassign the seat.',
+    }
+  }
+
+  const { createServiceRoleClient } = await import('@/lib/supabase/admin')
+  const admin = createServiceRoleClient()
+  if (!admin) {
+    return {
+      ok: false,
+      code: 'INTERNAL',
+      message: 'Service role credentials are not configured on the server.',
+    }
+  }
+
+  // Validate target (if any) is an eligible role.
+  if (targetProfileId) {
+    const { data: target, error: tErr } = await admin
+      .from('profiles')
+      .select('id, role, is_active')
+      .eq('id', targetProfileId)
+      .maybeSingle()
+    if (tErr) return { ok: false, code: 'INTERNAL', message: tErr.message }
+    if (!target || !target.is_active) {
+      return {
+        ok: false,
+        code: 'TARGET_INELIGIBLE',
+        message: 'Selected profile is inactive or does not exist.',
+      }
+    }
+    const eligibleRoles: string[] = [
+      UserRole.supervision,
+      UserRole.supervision_admin,
+      UserRole.fto_coordinator,
+    ]
+    if (!eligibleRoles.includes(String(target.role))) {
+      return {
+        ok: false,
+        code: 'TARGET_INELIGIBLE',
+        message:
+          'Training Supervisor must hold a supervision, supervision_admin, or fto_coordinator role.',
+      }
+    }
+  }
+
+  // Clear any existing holder(s) first. Using service role to bypass the
+  // partial unique index collision window.
+  const { error: clearErr } = await admin
+    .from('profiles')
+    .update({ is_training_supervisor: false })
+    .eq('is_training_supervisor', true)
+  if (clearErr) return { ok: false, code: 'INTERNAL', message: clearErr.message }
+
+  if (targetProfileId) {
+    const { error: setErr } = await admin
+      .from('profiles')
+      .update({ is_training_supervisor: true })
+      .eq('id', targetProfileId)
+    if (setErr) return { ok: false, code: 'INTERNAL', message: setErr.message }
+  }
+
+  revalidatePath('/training')
+  revalidatePath('/training/dit-files')
+  return { ok: true, assigned_profile_id: targetProfileId }
+}
+
+// ---------------------------------------------------------------------------
 // Segment A — Onboarding: createDitOnboardingAction
 // ---------------------------------------------------------------------------
 
