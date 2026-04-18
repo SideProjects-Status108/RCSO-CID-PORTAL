@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
-import { PlaceholderSection } from '@/components/ui/placeholder-section'
 import { getSessionUserWithProfile } from '@/lib/auth/get-session'
+import { DitGrid } from '@/components/training/files/dit-grid'
 import { TrainingSupervisorWidget } from '@/components/training/files/training-supervisor-widget'
 
 export const dynamic = 'force-dynamic'
@@ -11,13 +11,20 @@ export default async function TrainingDitFilesPage() {
   if (!session) redirect('/login')
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <header className="space-y-1">
+        <h1 className="font-heading text-2xl font-semibold tracking-tight text-text-primary">
+          DIT Files
+        </h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-text-secondary">
+          Status-at-a-glance grid of every active Detective in Training. Click a tile to open the
+          DIT file.
+        </p>
+      </header>
+
       <TrainingSupervisorWidget />
 
-      <PlaceholderSection
-        title="DIT Files"
-        description="Active DITs, tile grid with status color-coding, and deep links to per-DIT dashboards. Built in Segment B (Prompts 3-4)."
-      />
+      <DitGrid />
     </div>
   )
 }

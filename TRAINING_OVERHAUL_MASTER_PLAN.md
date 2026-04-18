@@ -83,7 +83,7 @@ flowchart LR
 |---|---|---|---|
 | A | 1, 2 | Shell + onboarding (profile + survey stub) | Shipped |
 | A.1 | — | Role model patch: `is_training_supervisor` flag + access helper rewrite | Shipped |
-| B | 3, 4, 4b, 12 (foundation only) | Active DITs grid + DIT file detail + signature core + absence/suspended workflow + VARK survey delivery | Not started |
+| B | 3, 4, 4b, 12 (foundation only) | Active DITs grid + DIT file detail + signature core + absence/suspended workflow + VARK survey delivery | Shipped |
 | C | 5, 10, 10b, 11 | Weekly Eval (chain adds LT) + Deficiency (tiered extensions) + Quizzes (tiered alerts) + Journal + FTO CTR + legacy retirement | Not started |
 | D | 6, 7, 8, 9 | Activity, Cases/Call-Outs, Schedule grid, Documents/Resources, PBLEs (6 seeds), Board Review | Not started |
 | E | 13, 14 + cleanup | Graduation cert (chain: FTO Coord -> Training Sup -> LT -> Capt) + FTO feedback + Training Settings (McPherson assignment widget) + delete orphans | Not started |
