@@ -20,9 +20,15 @@ type QueueResponse = { rows: DocumentSignatureRow[] }
 export function SignatureQueue({
   currentUserName,
   currentUserBadge,
+  canOverrideDeficiency = false,
 }: {
   currentUserName: string
   currentUserBadge: string | null
+  /**
+   * True for LT/Capt + Training Supervisor. Gates the 0-60d extension
+   * override UI that appears when signing a deficiency at the LT step.
+   */
+  canOverrideDeficiency?: boolean
 }) {
   const [rows, setRows] = useState<DocumentSignatureRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -30,6 +36,7 @@ export function SignatureQueue({
   const [activeId, setActiveId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [empty, setEmpty] = useState(true)
+  const [overrideDays, setOverrideDays] = useState<string>('')
   const padRef = useRef<SignaturePadHandle | null>(null)
 
   const load = useCallback(async () => {
@@ -61,10 +68,22 @@ export function SignatureQueue({
     setSubmitting(true)
     setError(null)
     try {
+      const payload: Record<string, unknown> = { signature_image: image }
+      if (
+        row.doc_type === 'deficiency' &&
+        row.current_signer_role === 'lt' &&
+        canOverrideDeficiency &&
+        overrideDays.trim().length > 0
+      ) {
+        const n = Number.parseInt(overrideDays, 10)
+        if (Number.isFinite(n) && n >= 0 && n <= 60) {
+          payload.extension_days_override = n
+        }
+      }
       const res = await fetch(`/api/training/signatures/${row.id}/sign`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ signature_image: image }),
+        body: JSON.stringify(payload),
       })
       const body = (await res.json().catch(() => ({}))) as {
         error?: string
@@ -151,6 +170,28 @@ export function SignatureQueue({
 
                 {isActive ? (
                   <div className="mt-3 space-y-2 border-t border-border-subtle pt-3">
+                    {row.doc_type === 'deficiency' &&
+                    row.current_signer_role === 'lt' &&
+                    canOverrideDeficiency ? (
+                      <div className="flex flex-wrap items-center gap-2 rounded-md border border-border-subtle bg-bg-elevated p-2 text-xs">
+                        <label className="flex items-center gap-2 text-text-secondary">
+                          Override graduation extension (days, 0–60):
+                          <input
+                            type="number"
+                            min={0}
+                            max={60}
+                            placeholder="tier default"
+                            value={overrideDays}
+                            onChange={(e) => setOverrideDays(e.target.value)}
+                            disabled={submitting}
+                            className="w-20 rounded border border-border-subtle bg-bg-app px-2 py-1 text-text-primary"
+                          />
+                        </label>
+                        <span className="text-[11px] text-text-secondary">
+                          Leave blank to use tiered default (14d first remedial, 7d subsequent).
+                        </span>
+                      </div>
+                    ) : null}
                     <SignaturePad
                       ref={padRef}
                       onChange={(isEmpty) => setEmpty(isEmpty)}

@@ -4,9 +4,11 @@ import { fetchPersonnelByUserIds } from '@/lib/directory/queries'
 import { buildUnobservedCompetenciesEmail } from '@/lib/email/templates/training'
 import { logTrainingEmailPreview } from '@/lib/email/training-notifications'
 import { requireJsonSession, requireTrainingSessionEditor } from '@/lib/training/api-auth'
-import { extractLowScoreFlags, isLowScore } from '@/lib/training/eval-scoring'
+import { countPriorRemedials, defaultExtensionDays } from '@/lib/training/deficiencies'
+import { extractLowScoreFlags } from '@/lib/training/eval-scoring'
 import {
   createDeficiencyForm,
+  fetchDitRecordByUserId,
   fetchPairingById,
   fetchSessionCompetencyScores,
   fetchWeeklySession,
@@ -15,7 +17,6 @@ import {
   updateSessionStatus,
 } from '@/lib/training/queries'
 import { createSignatureRoute } from '@/lib/training/signatures'
-import { fetchDitRecordByUserId } from '@/lib/training/queries'
 
 const MIN_EXPLANATION = 12
 
@@ -134,6 +135,7 @@ export async function POST(_request: Request, ctx: { params: Promise<{ id: strin
           if (existingDef && 'id' in existingDef) {
             autoDeficiencyId = String((existingDef as { id: string }).id)
           } else {
+            const priorCount = ditRecordId ? await countPriorRemedials(ditRecordId) : 0
             const created = await createDeficiencyForm({
               pairing_id: session.pairing_id,
               weekly_session_id: session_id,
@@ -141,14 +143,20 @@ export async function POST(_request: Request, ctx: { params: Promise<{ id: strin
               priority_level: flags.some((f) => f.score <= 1) ? 'urgent' : 'routine',
               competencies_flagged: flags,
               additional_notes: null,
+              extension_days: defaultExtensionDays(priorCount),
             })
             autoDeficiencyId = created.id
+
+            // Kick off the deficiency signature route.
+            await createSignatureRoute({
+              docType: 'deficiency',
+              docId: created.id,
+              ditRecordId,
+              createdBy: gate.session.user.id,
+            })
           }
         }
       }
-
-      // Silence unused variable warning (low-score check uses helper)
-      void isLowScore
     }
 
     return NextResponse.json({

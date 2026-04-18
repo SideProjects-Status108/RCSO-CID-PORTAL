@@ -826,17 +826,24 @@ export async function createDeficiencyForm(form: Partial<DeficiencyForm>): Promi
 
   const competencies_flagged = parseDeficiencyCompetenciesFlagged(form.competencies_flagged as unknown)
 
+  const insertPayload: Record<string, unknown> = {
+    pairing_id,
+    weekly_session_id,
+    created_by: user.id,
+    status: form.status ?? 'submitted',
+    priority_level: form.priority_level ?? 'routine',
+    competencies_flagged,
+    additional_notes: form.additional_notes ?? null,
+  }
+  if (typeof form.extension_days === 'number') {
+    // Honor explicit caller-provided extension (e.g. tiered default computed
+    // by the route handler). Otherwise DB default of 14 applies.
+    insertPayload.extension_days = form.extension_days
+  }
+
   const { data, error } = await supabase
     .from('deficiency_forms')
-    .insert({
-      pairing_id,
-      weekly_session_id,
-      created_by: user.id,
-      status: form.status ?? 'submitted',
-      priority_level: form.priority_level ?? 'routine',
-      competencies_flagged,
-      additional_notes: form.additional_notes ?? null,
-    })
+    .insert(insertPayload)
     .select('*')
     .single()
   if (error || !data) throwTraining('Failed to create deficiency form', error)

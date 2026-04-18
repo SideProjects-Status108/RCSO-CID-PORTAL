@@ -7,10 +7,17 @@ import {
   isTrainingStaff,
 } from '@/lib/training/api-auth'
 import {
+  countPriorRemedials,
+  defaultExtensionDays,
+} from '@/lib/training/deficiencies'
+import {
   createDeficiencyForm,
   fetchDeficiencyFormsForCoordinator,
   fetchDeficiencyFormsForPairing,
+  fetchDitRecordByUserId,
+  fetchPairingById,
 } from '@/lib/training/queries'
+import { createSignatureRoute } from '@/lib/training/signatures'
 import type { DeficiencyForm } from '@/types/training'
 
 export async function GET(request: Request) {
@@ -74,8 +81,50 @@ export async function POST(request: Request) {
   }
 
   try {
-    const form = await createDeficiencyForm(body)
-    return NextResponse.json({ form })
+    // Seed tiered extension default (14d first remedial, 7d subsequent) when
+    // the caller doesn't specify. Caller can still override at the form.
+    let extensionDays = body.extension_days
+    if (typeof extensionDays !== 'number') {
+      const pairing = await fetchPairingById(body.pairing_id)
+      if (pairing) {
+        const dit = await fetchDitRecordByUserId(pairing.dit_id)
+        if (dit) {
+          const prior = await countPriorRemedials(dit.id)
+          extensionDays = defaultExtensionDays(prior)
+        }
+      }
+    }
+
+    const form = await createDeficiencyForm({
+      ...body,
+      extension_days: extensionDays,
+    })
+
+    // Kick off the signature route once. Idempotent — if one already exists
+    // for this deficiency, reuse it.
+    const supabase = await createClient()
+    let signatureRouteId: string | null = null
+    const { data: existing } = await supabase
+      .from('document_signatures')
+      .select('id')
+      .eq('doc_type', 'deficiency')
+      .eq('doc_id', form.id)
+      .maybeSingle()
+    if (existing && 'id' in existing) {
+      signatureRouteId = String((existing as { id: string }).id)
+    } else {
+      const pairing = await fetchPairingById(form.pairing_id)
+      const ditRecordId = pairing ? (await fetchDitRecordByUserId(pairing.dit_id))?.id ?? null : null
+      const route = await createSignatureRoute({
+        docType: 'deficiency',
+        docId: form.id,
+        ditRecordId,
+        createdBy: user.id,
+      })
+      signatureRouteId = route.id
+    }
+
+    return NextResponse.json({ form, signature_route_id: signatureRouteId })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Failed to create deficiency form'
     return NextResponse.json({ error: msg }, { status: 500 })

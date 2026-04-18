@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { getSessionUserWithProfile } from '@/lib/auth/get-session'
+import { UserRole, hasRole } from '@/lib/auth/roles'
 import { SignatureQueue } from '@/components/training/signatures/signature-queue'
 
 export const dynamic = 'force-dynamic'
@@ -24,6 +25,10 @@ export default async function TrainingSettingsPage() {
       <SignatureQueue
         currentUserName={session.profile.full_name}
         currentUserBadge={session.profile.badge_number}
+        canOverrideDeficiency={
+          session.profile.is_training_supervisor === true ||
+          hasRole(session.profile.role, [UserRole.admin, UserRole.supervision_admin])
+        }
       />
     </div>
   )
