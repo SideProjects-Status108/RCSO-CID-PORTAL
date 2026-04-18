@@ -53,14 +53,16 @@ const targets: Target[] = [
   },
   {
     file: 'rcso-detective-badge.png',
-    keyR: 255,
-    keyG: 255,
-    keyB: 255,
-    // White background with gold/blue subject — the gold has very light
-    // highlights, so we keep the "fully transparent" band tight and let the
-    // soft band feather the boundary.
+    keyR: 0,
+    keyG: 0,
+    keyB: 0,
+    // Pure-black background on the 2026-04-18 asset. The badge itself has
+    // dark navy + near-black filigree detail, so the "fully transparent"
+    // band has to stay very tight — otherwise we punch holes in the dark
+    // parts of the subject. The soft ramp handles the thin anti-aliased
+    // halo around the star's outer edge.
     fullTransThreshold: 300, // ≈ 10/channel
-    softTransThreshold: 3200, // ≈ 33/channel
+    softTransThreshold: 2400, // ≈ 28/channel
   },
 ]
 

@@ -22,9 +22,9 @@ export default async function TrainingDashboardPage() {
           src="/branding/rcso-detective-badge.png"
           alt=""
           width={256}
-          height={384}
+          height={256}
           priority
-          className="h-20 w-auto shrink-0 object-contain drop-shadow-[0_6px_16px_rgba(0,0,0,0.5)] sm:h-28 lg:h-32"
+          className="h-20 w-20 shrink-0 object-contain drop-shadow-[0_6px_16px_rgba(0,0,0,0.5)] sm:h-28 sm:w-28 lg:h-32 lg:w-32"
           aria-hidden
         />
         <div className="space-y-1">
