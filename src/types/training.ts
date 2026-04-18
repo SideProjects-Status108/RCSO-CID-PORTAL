@@ -133,6 +133,13 @@ export type WeeklyTrainingSession = {
   submitted_at: string | null
   approved_by: string | null
   approved_at: string | null
+  /**
+   * True when the DIT was absent for every workday in this week (overlap
+   * with an acknowledged dit_absence_records). Scoring is skipped; eval
+   * surfaces show a "DIT absent" banner.
+   */
+  dit_absent_flag: boolean
+  dit_absent_reason: string | null
   created_at: string
   updated_at: string
 }
@@ -192,6 +199,17 @@ export type DeficiencyForm = {
   priority_level: 'routine' | 'urgent'
   competencies_flagged: DeficiencyCompetency[]
   additional_notes: string | null
+  /**
+   * Days to extend the DIT's expected_graduation_date by once the LT signs
+   * the route. Default 14 on the DIT's first remedial of the program, 7 on
+   * subsequent remedials. LT or Capt may override at sign-time within
+   * 0..60 (enforced by CHECK constraint in migration 20260429120000).
+   */
+  extension_days: number
+  /** User id of LT or Capt who overrode the tier default, if any. */
+  extension_override_by: string | null
+  /** Set when the LT signature applied the extension to dit_records.expected_graduation_date (idempotent guard). */
+  extension_applied_at: string | null
   updated_at: string
 }
 
@@ -331,4 +349,110 @@ export type TrainingProgramConfig = {
   survey_expiry_days: number
   updated_at: string
   updated_by: string | null
+}
+
+// --- Segment C: quizzes, journal, FTO CTR, missed-day nudges ---
+
+export type QuizTier = 'green' | 'amber' | 'red'
+
+export const QUIZ_TIER_LABELS: Record<QuizTier, string> = {
+  green: 'On track',
+  amber: 'Needs attention',
+  red: 'Escalated',
+}
+
+export type TrainingQuiz = {
+  id: string
+  title: string
+  description: string | null
+  topic: string | null
+  is_published: boolean
+  pass_threshold_green: number
+  pass_threshold_amber: number
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export type TrainingQuizQuestion = {
+  id: string
+  quiz_id: string
+  prompt: string
+  display_order: number
+  explanation: string | null
+  created_at: string
+}
+
+export type TrainingQuizOption = {
+  id: string
+  question_id: string
+  label: string
+  /** Omitted by the public-takes API; only training writers see this. */
+  is_correct?: boolean
+  display_order: number
+  created_at: string
+}
+
+export type QuizAttemptStatus = 'in_progress' | 'submitted' | 'abandoned'
+
+export type TrainingQuizAttempt = {
+  id: string
+  quiz_id: string
+  dit_record_id: string
+  attempted_by: string
+  started_at: string
+  submitted_at: string | null
+  score_percent: number | null
+  tier: QuizTier | null
+  status: QuizAttemptStatus
+  created_at: string
+}
+
+export type TrainingQuizAttemptAnswer = {
+  id: string
+  attempt_id: string
+  question_id: string
+  option_id: string | null
+  is_correct: boolean | null
+  created_at: string
+}
+
+export type DitJournalEntry = {
+  id: string
+  dit_record_id: string
+  entry_date: string
+  body: string
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export type DitJournalReview = {
+  id: string
+  entry_id: string
+  reviewer_id: string
+  notes: string | null
+  created_at: string
+}
+
+export type FtoCtrEntry = {
+  id: string
+  dit_record_id: string
+  pairing_id: string | null
+  fto_id: string
+  entry_date: string
+  contact_hours: number | null
+  body: string
+  created_at: string
+  updated_at: string
+}
+
+export type MissedDayNudgeKind = 'dit_self' | 'fto_notify'
+
+export type DitMissedDayNudge = {
+  id: string
+  dit_record_id: string
+  nudge_date: string
+  nudge_kind: MissedDayNudgeKind
+  created_at: string
 }

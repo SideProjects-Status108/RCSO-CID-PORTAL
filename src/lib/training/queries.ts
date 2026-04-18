@@ -425,6 +425,8 @@ function mapWeeklySession(r: Record<string, unknown>): WeeklyTrainingSession {
     submitted_at: r.submitted_at != null ? String(r.submitted_at) : null,
     approved_by: r.approved_by != null ? String(r.approved_by) : null,
     approved_at: r.approved_at != null ? String(r.approved_at) : null,
+    dit_absent_flag: Boolean(r.dit_absent_flag),
+    dit_absent_reason: r.dit_absent_reason != null ? String(r.dit_absent_reason) : null,
     created_at: String(r.created_at ?? ''),
     updated_at: String(r.updated_at ?? ''),
   }
@@ -485,6 +487,11 @@ function mapDeficiencyForm(r: Record<string, unknown>): DeficiencyForm {
     priority_level: (r.priority_level as DeficiencyForm['priority_level']) ?? 'routine',
     competencies_flagged: parseDeficiencyCompetenciesFlagged(r.competencies_flagged),
     additional_notes: r.additional_notes != null ? String(r.additional_notes) : null,
+    extension_days: r.extension_days != null ? Number(r.extension_days) : 14,
+    extension_override_by:
+      r.extension_override_by != null ? String(r.extension_override_by) : null,
+    extension_applied_at:
+      r.extension_applied_at != null ? String(r.extension_applied_at) : null,
     updated_at: String(r.updated_at ?? ''),
   }
 }
