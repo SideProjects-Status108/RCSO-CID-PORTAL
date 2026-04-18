@@ -17,14 +17,14 @@ export default async function TrainingDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-start gap-4">
+      <header className="flex items-start gap-5">
         <Image
           src="/branding/rcso-detective-badge.png"
           alt=""
-          width={128}
-          height={128}
+          width={256}
+          height={384}
           priority
-          className="hidden size-16 shrink-0 object-contain drop-shadow-md sm:block"
+          className="h-20 w-auto shrink-0 object-contain drop-shadow-[0_6px_16px_rgba(0,0,0,0.5)] sm:h-28 lg:h-32"
           aria-hidden
         />
         <div className="space-y-1">

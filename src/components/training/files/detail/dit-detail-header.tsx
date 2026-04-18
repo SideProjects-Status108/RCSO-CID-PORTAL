@@ -23,11 +23,11 @@ export function DitDetailHeader({ payload }: { payload: DitDetailPayload }) {
           <Image
             src="/branding/rcso-detective-badge.png"
             alt=""
-            width={96}
-            height={96}
+            width={256}
+            height={384}
             priority
             aria-hidden
-            className="hidden size-14 shrink-0 object-contain drop-shadow-md sm:block"
+            className="h-16 w-auto shrink-0 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] sm:h-24"
           />
           <div className="min-w-0">
             <h1 className="font-heading text-2xl font-semibold tracking-tight text-text-primary">

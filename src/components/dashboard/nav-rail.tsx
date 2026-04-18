@@ -328,21 +328,21 @@ export function NavRail({
   )
 
   const wordmark = (
-    <div className="flex h-16 w-16 shrink-0 items-center justify-center border-b border-border-subtle">
+    <div className="flex h-20 w-16 shrink-0 items-center justify-center border-b border-border-subtle">
       <Link
         href="/dashboard"
         onClick={() => setOpenFlyoutId(null)}
-        className="group flex h-full w-full items-center justify-center p-1.5 transition-opacity hover:opacity-80"
+        className="group flex h-full w-full items-center justify-center transition-opacity hover:opacity-80"
         title="CID PORTAL — Dashboard"
         aria-label="CID PORTAL — Dashboard"
       >
         <Image
           src="/branding/cid-portal-app-icon.png"
           alt=""
-          width={96}
-          height={96}
+          width={128}
+          height={128}
           priority
-          className="h-full w-full object-contain"
+          className="h-[60px] w-[60px] object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.4)]"
         />
       </Link>
     </div>

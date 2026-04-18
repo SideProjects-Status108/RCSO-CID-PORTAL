@@ -14,7 +14,7 @@ export default function AuthLayout({
       */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.05]"
+        className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.09]"
       >
         <Image
           src="/branding/rcso-detective-badge.png"
@@ -22,7 +22,7 @@ export default function AuthLayout({
           width={1024}
           height={1024}
           priority
-          className="h-[min(90vh,640px)] w-auto"
+          className="h-[min(110vh,900px)] w-auto"
         />
       </div>
       <div className="relative z-10 w-full max-w-md">{children}</div>

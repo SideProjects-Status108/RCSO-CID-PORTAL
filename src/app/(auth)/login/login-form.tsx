@@ -56,16 +56,14 @@ export function LoginForm({ bootstrapSignupEnabled }: LoginFormProps) {
   return (
     <Card className="w-full max-w-md border-border-subtle bg-bg-surface shadow-none">
       <CardHeader className="space-y-3 text-center">
-        <div className="mx-auto flex size-24 items-center justify-center overflow-hidden rounded-2xl border border-border-subtle bg-black shadow-lg">
-          <Image
-            src="/branding/cid-portal-app-icon.png"
-            alt="Rutherford County Sheriff's Office CID Portal"
-            width={192}
-            height={192}
-            className="size-full object-contain"
-            priority
-          />
-        </div>
+        <Image
+          src="/branding/cid-portal-app-icon.png"
+          alt="Rutherford County Sheriff's Office CID Portal"
+          width={512}
+          height={512}
+          className="mx-auto h-40 w-40 object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,0.6)] sm:h-48 sm:w-48"
+          priority
+        />
         <CardTitle className="font-heading text-xl tracking-wide text-text-primary">
           CID PORTAL
         </CardTitle>
