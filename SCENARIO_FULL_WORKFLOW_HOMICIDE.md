@@ -1,4 +1,5 @@
 # Full Scenario Walkthrough: Homicide Investigation
+
 ## From Call-Out to Arrest to Closure
 
 **Case:** I-24 Shooting (Interstate 24 East @ MM 64.8)  
@@ -10,6 +11,7 @@
 ## PHASE 0: PRE-CALL (Friday July 11, 11pm - Saturday July 12, 8:00am)
 
 ### What Actually Happened (Case Timeline)
+
 - Victim and suspect had prior road rage incident (June 29)
 - Night before shooting: Victim stays at friend's house with dog
 - Morning of shooting: Victim leaves residence ~7:00am, stops at Red Bicycle Coffee ~7:25am
@@ -17,6 +19,7 @@
 - Victim leaves coffee shop, heads to I-24 westbound
 
 ### System Status: IDLE
+
 - No case in system
 - No war room
 - No tasks
@@ -29,6 +32,7 @@
 ### T+0 — SGT RECEIVES CALL (9:31am)
 
 **What Sgt. Does (OLD SYSTEM):**
+
 - Gets call from patrol: "Shooting on I-24, victim in vehicle, possible fatal"
 - Sgt. yells across bullpen: "We got a call-out! I-24 shooting!"
 - Someone grabs a whiteboard marker
@@ -36,44 +40,40 @@
 - Sgt. texts group chat: "Shooting I-24 need CID"
 
 **What Sgt. Does (NEW SYSTEM):**
+
 1. Opens CID Portal on computer
 2. Clicks: **"New Case"**
 3. Fills intake form:
-   - **Incident Type:** Shooting
-   - **Location:** Interstate 24, near Mile Marker 64.8
-   - **Date/Time:** Saturday July 12, 2025, ~09:31 (time of call)
-   - **Description:** Patrol reports vehicle with gunshot victim, possible fatality, subject still in vehicle
-   - **Initial Severity (Tier Estimate):** Homicide (Tier 3)
-   - **Reporting Officer:** [Name]
-
+  - **Incident Type:** Shooting
+  - **Location:** Interstate 24, near Mile Marker 64.8
+  - **Date/Time:** Saturday July 12, 2025, ~09:31 (time of call)
+  - **Description:** Patrol reports vehicle with gunshot victim, possible fatality, subject still in vehicle
+  - **Initial Severity (Tier Estimate):** Homicide (Tier 3)
+  - **Reporting Officer:** [Name]
 4. System displays: **"Confirm Tier 3 Homicide - Auto-load task template?"**
-
 5. Sgt. clicks **"Yes, Load Tier 3 Template"**
-
 6. System auto-generates task list (~30 tasks):
-   - Scene Security
-   - Body Recovery & Transport
-   - Initial Interviews (Witness, Suspect ID)
-   - Video Collection (Nearby businesses, traffic cameras)
-   - Evidence Collection (Casings, vehicle, phone)
-   - Autopsy Scheduling
-   - Canvass (Witness location, suspect vehicle)
-   - Warrant Preparation (Cell phone, GPS, vehicles)
-   - Timeline Documentation
-   - Family Notification
-   - Media Relations
-   - ... and more
-
+  - Scene Security
+  - Body Recovery & Transport
+  - Initial Interviews (Witness, Suspect ID)
+  - Video Collection (Nearby businesses, traffic cameras)
+  - Evidence Collection (Casings, vehicle, phone)
+  - Autopsy Scheduling
+  - Canvass (Witness location, suspect vehicle)
+  - Warrant Preparation (Cell phone, GPS, vehicles)
+  - Timeline Documentation
+  - Family Notification
+  - Media Relations
+  - ... and more
 7. Sgt. **edits task list** before committing:
-   - Removes: "Focus Time" (not applicable)
-   - Adds: "Notify County ME for autopsy"
-   - Checks: All tasks that require supplements
-
+  - Removes: "Focus Time" (not applicable)
+  - Adds: "Notify County ME for autopsy"
+  - Checks: All tasks that require supplements
 8. Sgt. clicks **"Assign Lead Detective"** → Selects **Amanda McPherson**
-
 9. Sgt. clicks **"ACTIVATE CASE"**
 
 ### System Reaction (Instant):
+
 - **Case created:** "250712-07867 | I-24 Shooting | Tier 3"
 - **War room display lights up** (if connected to CID portal on TV)
 - **Push notification to Amanda's phone:** "Case activated: I-24 Shooting, Tier 3. You are Lead Detective. 30 tasks loaded. Review and assign team."
@@ -91,6 +91,7 @@
 **Amanda on her iPad (arriving to CID conference room):**
 
 Sees:
+
 ```
 CASE: I-24 Shooting | Tier 3 | ACTIVE
 TASKS: 30 | Pending: 30 | In Progress: 0 | Waiting: 0 | Complete: 0
@@ -103,6 +104,7 @@ CRITICAL PATH (High Priority):
 ```
 
 Amanda's first action on iPad:
+
 1. Taps **Scene Security** task
 2. Assigns to **Det. [Name]** (patrol officer first responder)
 3. Assigns **Body Recovery** to **CSI Tech [Name]**
@@ -110,6 +112,7 @@ Amanda's first action on iPad:
 5. Assigns **Suspect Vehicle ID** to **Det. Whitaker**
 
 **iPad shows each assignment:**
+
 ```
 Assigned: Det. Quintana
 Task: Initial Witness Interview
@@ -121,6 +124,7 @@ Push notification sent to Det. Quintana
 ```
 
 Det. Quintana's iPad immediately shows:
+
 ```
 NEW TASK ASSIGNED:
 Initial Witness Interview - I-24 Shooting
@@ -136,6 +140,7 @@ Supplement: Interview Report required by July 14
 Det. Quintana taps **ACCEPT** → Task status changes to **"In Progress"**
 
 **War room display updates in real-time:**
+
 ```
 Task Board:
 PENDING (30)  │ ASSIGNED (5)  │ IN PROGRESS (1)  │ WAITING (0)  │ COMPLETE (0)
@@ -153,17 +158,19 @@ PENDING (30)  │ ASSIGNED (5)  │ IN PROGRESS (1)  │ WAITING (0)  │ COMPLE
 ### Scene Documentation (Multiple Detectives)
 
 **Det. Quintana (Initial Interview) — iPad at scene, 11:45am:**
+
 1. Opens interview form on iPad
 2. Interacts with witness (already spoken to by patrol)
 3. Takes notes directly on iPad (handwriting + form)
 4. Captures witness description of suspect vehicle:
-   - "Dark colored SUV"
-   - "Black male driver"
-   - "Rifle barrel visible out window"
+  - "Dark colored SUV"
+  - "Black male driver"
+  - "Rifle barrel visible out window"
 5. Takes photo of witness with iPad camera (geotagged automatically)
 6. Submits interview notes to CID portal
 
 **System action:**
+
 - Interview notes logged
 - Evidence: "Witness statement - Initial" created in Evidence tracker
 - Timeline event added: "11:45am - Witness interviewed at scene, suspect vehicle description obtained"
@@ -171,12 +178,13 @@ PENDING (30)  │ ASSIGNED (5)  │ IN PROGRESS (1)  │ WAITING (0)  │ COMPLE
 - Supplement reminder auto-created: "Due July 14: Interview Report from Det. Quintana"
 
 **Det. Whitaker (Suspect Vehicle ID) — iPad, remote search:**
+
 1. Starts at 12:15pm
 2. Receives task assignment
 3. Opens **"Evidence Collection - Video Canvas"** sub-task (linked to main task)
 4. Contacts Sgt. X at Metro Traffic Unit: "Need video from TDOT cameras on I-24 MM 63-66"
 5. Logs in evidence tracker:
-   ```
+  ```
    Evidence: TDOT Video - I-24 MM 64.8
    Status: Requested
    Requested From: Metro Police Traffic Unit
@@ -185,25 +193,27 @@ PENDING (30)  │ ASSIGNED (5)  │ IN PROGRESS (1)  │ WAITING (0)  │ COMPLE
    Expected Return: Same day (emergency footage)
    Linked Task: Suspect Vehicle ID
    Supplement: Video Review Report (required)
-   ```
+  ```
 6. Status shows on Amanda's war room display: **"Waiting For: TDOT video"**
 
 **CSI on scene (Evidence Collection) — iPad or paper:**
+
 1. Photographs shell casings (6 total, location tagged)
 2. Collects casings into evidence bag
 3. Photos uploaded from iPad:
-   ```
+  ```
    Evidence: .223 Fired Cartridge Casings (6)
    Photos: Geotagged, timestamped
    Status: Collected, Cataloged
    Sent To: Rutherford County Evidence Bay
    Next: TBI Ballistics Analysis
    Supplement: TBI Analysis Report (required, expected 7/20)
-   ```
+  ```
 
 **Amanda (Lead Detective) — War room, managing case:**
 
 War room display shows:
+
 ```
 TASK BOARD
 ────────────────────────────────────────
@@ -233,6 +243,7 @@ Next deadline: July 14 (Interview Report from Quintana)
 ```
 
 Amanda makes notes in **"Case Notes"** section on iPad:
+
 ```
 "7/12 11:33am - Case declared Tier 3 Homicide, Amanda McPherson (Lead)
 Road rage escalation suspected. Suspect vehicle not yet identified.
@@ -290,6 +301,7 @@ At 10:45am, Whitaker meets Sgt. X at truck stop, gets zip drive with TDOT footag
 Whitaker returns to CID, begins reviewing footage.
 
 **System update:**
+
 ```
 Evidence: TDOT Video - I-24 MM 63-66
 Status: Received (10:45am, 7/13)
@@ -302,6 +314,7 @@ or Complete (if suspect vehicle identified from video)
 ```
 
 Whitaker watches video carefully. Notes:
+
 - 07:31am: Red pickup (victim) passing northbound on I-24
 - 07:32am: Dark SUV (suspect) enters I-24, rapidly approaches red pickup
 - 07:32-07:35am: SUV swerves in front of pickup, driver of SUV points rifle barrel out window
@@ -309,6 +322,7 @@ Whitaker watches video carefully. Notes:
 - Victim's vehicle swerves, crashes into median
 
 **Whitaker immediately updates task:**
+
 ```
 Task: Suspect Vehicle ID
 Status: COMPLETE
@@ -335,6 +349,7 @@ Amanda reviews video herself (war room display can stream video).
 "7/13 11:15am - TDOT video reviewed. Suspect vehicle clearly dark SUV. Shots fired deliberately. Homicide (not accident or self-defense claim viable). Escalate to full major case. Activate mobile video enhancement with Metro. Initiate statewide BOLO for dark SUV."
 
 **Task board updates:**
+
 - **New task created:** "BOLO Issuance - Dark SUV (Statewide)"
 - **New task created:** "Video Enhancement & Facial Recognition"
 - **New task created:** "Canvass - Red Bicycle Coffee (6:30am-8:00am window)"
@@ -347,11 +362,13 @@ Amanda reviews video herself (war room display can stream video).
 Amanda and Det. [Name] attend autopsy.
 
 ME performs examination, documents:
+
 - Multiple gunshot wounds to head/torso
 - Skull cracked, cause of death confirmed: GSW
 - Ballistics: .223 caliber wounds consistent with shell casings found
 
 **Autopsy report filed as evidence:**
+
 ```
 Evidence: Medical Examiner's Report - Autopsy
 Type: Digital (PDF)
@@ -363,6 +380,7 @@ Supplement: Findings documented in ME report
 ```
 
 Amanda updates task:
+
 - **Autopsy** → **COMPLETE**
 - Case notes: "7/13 14:00 - Autopsy confirms death by gunshot. .223 caliber consistent with shell casings."
 
@@ -406,30 +424,35 @@ Outstanding: 24
 Amanda assigns tasks to detectives arriving for 0800 briefing:
 
 **To Det. Smith:**
+
 - Task: **Canvas - Red Bicycle Coffee (6:30am-8:00am window)**
 - Description: Victim was at Red Bicycle Coffee at ~7:25am. Suspect may have also been there. Interview staff, review doorbell/security footage, identify anyone who saw suspect vehicle in lot.
 - Deadline: 7/15
 - Supplement Required: Canvas Report (findings, interviews, video stills)
 
 **To Det. Brown:**
+
 - Task: **Video Enhancement & Facial Recognition**
 - Description: Work with Metro Video Unit to enhance TDOT footage, pull stills of suspect driver, attempt facial recognition through databases
 - Deadline: 7/16
 - Supplement Required: Video Analysis Report (stills, identification attempts, results)
 
 **To Det. Jones:**
+
 - Task: **Canvas - Neighborhood witness interviews**
 - Description: Expand beyond initial witness. Find anyone who saw dark SUV, heard gunshots, can provide additional vehicle description or direction of travel
 - Deadline: 7/16
 - Supplement Required: Canvas Report (witness list, statements)
 
 **To Evidence Tech:**
+
 - Task: **Cell Phone Data - Victim & Suspect (Warrant Prep)**
 - Description: Draft subpoena/warrant for victim's phone (call records, location data, text messages). Prepare for suspect phone data request once suspect identified.
 - Deadline: 7/15
 - Supplement Required: Warrant Preparation Document
 
 **Amanda updates Risk Assessment Form (auto-triggered for Tier 3):**
+
 ```
 RISK ASSESSMENT / THREAT ASSESSMENT
 
@@ -459,6 +482,7 @@ Interviews barista, reviews doorbell footage from 06:30am-08:30am window.
 **Finds:** Coffee shop video shows suspect vehicle pulling into parking lot at 07:38am.
 
 Doorbell footage shows:
+
 - 07:38am: Dark SUV enters lot from Nolensville Pike
 - 07:39-07:50am: Man exits vehicle (Black male, approximately 6 ft, dark clothing), enters coffee shop
 - 07:45am: Man speaks with Red Bicycle employee
@@ -468,6 +492,7 @@ Doorbell footage shows:
 - 08:57am: Man (different male) pulls into lot, picks up previous man
 
 **Det. Smith updates task:**
+
 ```
 Task: Canvas - Red Bicycle Coffee
 Status: IN PROGRESS → WAITING FOR
@@ -491,6 +516,7 @@ Amanda immediately reviews video, notes suspect was at same location as victim. 
 "7/14 10:45am - MAJOR DEVELOPMENT: Red Bicycle Coffee footage shows suspect vehicle and driver at same location as victim 13 minutes before shooting. Suspect exited vehicle, entered building, timeline consistent with road rage escalation at that location."
 
 **Amanda adds NEW TASK (emergency priority):**
+
 - Task: **Facial Recognition - Video Stills from Red Bicycle**
 - Assign to: Metro Police Detective with access to facial recognition database
 - Deadline: Today (7/14) EOD
@@ -528,6 +554,7 @@ Task: **Cell Phone Data - Warrant Prep**
 Status: IN PROGRESS
 
 They prepare subpoena/warrant for:
+
 - Victim's phone: Call records, text messages, location data (0600am-0930am 7/12)
 - Suspect's phone (once ID confirmed): Call records, location data, photos, apps
 - Suspect's vehicle (Nissan North America): GPS/Telematics data
@@ -535,6 +562,7 @@ They prepare subpoena/warrant for:
 Warrant documents drafted, reviewed by DA.
 
 **DA Amanda McPherson (Note: same first name as lead detective, different person):**
+
 - Reviews warrants for legal sufficiency
 - Approves and prepares for judge signature
 - Coordinates with judge to get warrant signed ASAP
@@ -544,24 +572,27 @@ Warrant documents drafted, reviewed by DA.
 DA calls Lead Detective Amanda: "Sw signed. We have the search warrant."
 
 **Lead Detective Amanda takes action (OLD SYSTEM):**
+
 - Yells to bullpen: "We got the warrant!"
 - Grabs marker, writes on whiteboard: "SW SIGNED"
 - Texts group chat: "Sw signed. Arrest warrants signed"
 
 **Lead Detective Amanda (NEW SYSTEM):**
 Same action, BUT ALSO:
+
 1. Updates Task in system: "Search Warrant Preparation" → **COMPLETE**
 2. Creates NEW TASK: "Execute Search Warrant"
 3. **Milestone Event Triggered:**
-   ```
+  ```
    Milestone: Search Warrant Signed
    Type: BROADCAST (Lead Detective configured this as team-wide)
    Message: "Search warrant signed by Judge [Name]. Execution prepared for 7/18. Outstanding investigative work team."
    Recipients: All detectives on case (15 people)
    Notification: Push alerts + in-app notification + group message
-   ```
+  ```
 
 **War Room Display Updates:**
+
 ```
 MILESTONES
 ═════════════════════════════════════════════
@@ -580,6 +611,7 @@ NEXT MILESTONE:
 ### Wednesday (7/16) — FINAL PREPARATIONS
 
 **Amanda's War Room Dashboard shows:**
+
 ```
 TASKS REMAINING BEFORE ARREST:
 □ Confirm suspect residence (for search warrant execution)
@@ -601,11 +633,13 @@ SUPPLEMENTS DUE TODAY (7/16):
 "Supplements due today. File your reports immediately. Case moving toward arrest/execution. Need documentation complete."
 
 Detectives receive push notifications, file supplements:
+
 - Det. Smith uploads Canvas Report PDF (interviews, video stills, timeline)
 - Det. Brown uploads Video Analysis Report (stills, enhancement notes)
 - Evidence Tech uploads documentation
 
 **System updates:**
+
 ```
 Supplements Filed: 3
 Outstanding: 26 (but team is focused, momentum is high)
@@ -618,6 +652,7 @@ Amanda hosts briefing in conference room. iPad or laptop for each detective.
 SWAT Commander joins (risk assessment already reviewed).
 
 Amanda presents:
+
 - Case summary (timeline, video, victim, suspect)
 - Suspect residence location & description
 - Risk assessment (30-point score = SWAT assists)
@@ -625,6 +660,7 @@ Amanda presents:
 - Team assignments for execution day
 
 Team sees on their devices:
+
 - Timeline of events
 - Video stills of suspect
 - Risk assessment details
@@ -646,6 +682,7 @@ Amanda does final briefing:
 SWAT team executes search warrant at suspect residence.
 
 **In the field (Detective assigned to search team):**
+
 - Opens iPad
 - Logs in real-time: "Residence secured," "Suspect detained," "Searching home office"
 - Uploads photos as evidence collected
@@ -661,6 +698,7 @@ Amanda watches in real-time as evidence is documented, photos uploaded, suspect 
 **Arrest warrant tasks now trigger:**
 
 Amanda creates NEW TASK WAVE:
+
 - Task: "Interview Suspect (Miranda warned)"
 - Task: "Interview Accomplice/Passenger"
 - Task: "Evidence Documentation - Search Warrant Items"
@@ -669,6 +707,7 @@ Amanda creates NEW TASK WAVE:
 - Task: "Lab submissions: DNA, fingerprints, ballistics"
 
 **Risk Assessment form completed** (now that suspect arrested):
+
 ```
 RISK ASSESSMENT - POST ARREST
 Threat level: CONTAINMENT COMPLETE (suspect in custody)
@@ -687,6 +726,7 @@ Task: Interview Suspect (Miranda warned)
 Opens iPad, conducts interview (or interviews are recorded, transcribed).
 
 Logs interview:
+
 ```
 Interview: Suspect
 Date: 7/18 11:00am
@@ -708,6 +748,7 @@ Supplement Required: Interview Report (due 7/20)
 ### Supplement Completion (Critical Path)
 
 Amanda checks **Supplement Tracker Dashboard:**
+
 ```
 SUPPLEMENTS STATUS - 7/20
 
@@ -734,6 +775,7 @@ Once all supplements are filed, Amanda updates case:
 Status: IN PROGRESS
 
 Final checklist:
+
 - ✓ Autopsy complete
 - ✓ Video analysis complete
 - ✓ Cell phone data obtained
@@ -744,6 +786,7 @@ Final checklist:
 - ✓ Risk assessment complete
 
 Amanda compiles **Case Summary** (auto-generated from system):
+
 ```
 CASE SUMMARY: I-24 Shooting (Homicide)
 Case #: 250712-07867
@@ -789,6 +832,7 @@ Amanda changes case status: **ACTIVE** → **CLOSED (FOR INVESTIGATION)**
 Task: "Case Documentation Complete" → **COMPLETE**
 
 **Case now shows as:**
+
 ```
 Case #: 250712-07867
 Status: CLOSED (Suspect arrested, prosecution phase)
@@ -798,6 +842,7 @@ Case ready for DA: YES
 ```
 
 System generates export for DA:
+
 - All documents
 - All evidence chain of custody
 - All supplement reports
@@ -813,6 +858,7 @@ System generates export for DA:
 ## WHAT THE SYSTEM PREVENTED/ENABLED
 
 ### Pain Points ELIMINATED:
+
 1. **"Who's doing what?"** → Task assignments crystal clear, real-time visibility
 2. **"Did Jones file his supplement?"** → Dashboard shows filed/outstanding, alerts if late
 3. **"Where's the TDOT video?"** → Evidence tracker shows status, who has it, when obtained
@@ -823,6 +869,7 @@ System generates export for DA:
 8. **Whiteboard chaos** → War room display automatically synced, readable from anywhere
 
 ### Morale MOMENTS PRESERVED:
+
 1. ✓ **"SW signed"** — Team-wide broadcast, celebrated milestone
 2. ✓ **"Suspect identified"** — Real-time updates as video analysis completes
 3. ✓ **"Arrest warrant signed"** — Another milestone moment
@@ -830,6 +877,7 @@ System generates export for DA:
 5. ✓ **"Case closed, ready for prosecution"** — Team sees completion
 
 ### Prosecutor's Needs MET:
+
 - Complete timeline
 - All evidence documented with chain of custody
 - All interviews supplemented
@@ -842,6 +890,7 @@ System generates export for DA:
 ## KEY INSIGHTS FOR BUILD
 
 ### Critical Features (MVP):
+
 1. **Task management** with status tracking
 2. **Supplement tracking** tied to tasks (outstanding/overdue alerts)
 3. **Evidence tracker** with chain of custody
@@ -852,6 +901,7 @@ System generates export for DA:
 8. **Milestone configuration** (lead detective decides what gets broadcast to team)
 
 ### What Makes It Work:
+
 - **Real-time synchronization:** War room display updates as detectives file reports
 - **Persistent record:** Nothing erased; everything timestamped and auditable
 - **Supplement enforcement:** Due dates, overdue alerts, no way to forget
@@ -859,6 +909,7 @@ System generates export for DA:
 - **Human moments preserved:** Team celebrations of milestones, group notifications when appropriate
 
 ### Configuration Points (User Controls):
+
 - Which tasks are in Tier 1/2/3 templates
 - Which tasks require supplements
 - Supplement due date offsets
@@ -873,11 +924,13 @@ System generates export for DA:
 If suspect had NOT been arrested, or investigation hit a wall:
 
 **Case status options:**
+
 1. **ACTIVE → PAUSED** (waiting for lab results, warrant, etc.)
 2. **ACTIVE → COLD CASE** (all leads exhausted, no arrest)
 3. **CLOSED (Arrest) → CLOSED (Conviction)**
 
 **Cold case system would show:**
+
 - Last activity date
 - Open questions (unsolved leads)
 - Evidence available for future investigation
@@ -887,6 +940,7 @@ If suspect had NOT been arrested, or investigation hit a wall:
 ---
 
 **This walkthrough proves the system works because:**
+
 - Every step is tracked
 - Nothing falls through cracks
 - Lead detective has visibility at all times

@@ -45,10 +45,11 @@ const operationsChildren: NavFlyoutChild[] = [
 ]
 
 const trainingChildren: NavFlyoutChild[] = [
-  { label: 'Onboarding', href: '/training/onboarding' },
-  { label: 'FTO Schedule', href: '/training/fto-schedule' },
-  { label: 'DIT Records', href: '/training/dit-records' },
-  { label: 'DIT Evaluations', href: '/training/dit-evaluations' },
+  { label: 'Dashboard', href: '/training' },
+  { label: 'DIT Files', href: '/training/dit-files' },
+  { label: 'Schedule', href: '/training/schedule' },
+  { label: 'Resources', href: '/training/resources' },
+  { label: 'Settings', href: '/training/settings' },
 ]
 
 const investigativeChildren: NavFlyoutChild[] = [
@@ -114,10 +115,10 @@ export const routeTitles: Record<string, string> = {
   '/forms': 'Forms & Documents',
   '/schedule': 'Schedule',
   '/requests': 'Requests',
-  '/training/onboarding': 'Onboarding',
-  '/training/fto-schedule': 'FTO Schedule',
-  '/training/dit-records': 'DIT Records',
-  '/training/dit-evaluations': 'DIT Evaluations',
+  '/training/dit-files': 'DIT Files',
+  '/training/schedule': 'Training Schedule',
+  '/training/resources': 'Training Resources',
+  '/training/settings': 'Training Settings',
   '/training': 'Training',
   '/tools/map': 'GeoMap',
   '/app/map': 'Field map',

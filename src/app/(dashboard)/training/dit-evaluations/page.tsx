@@ -1,5 +1,8 @@
-import TrainingHubPage from '../training-hub-page'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-
-export default TrainingHubPage
+// Legacy route: redirected to the new DIT Files section (Weekly Eval lives as a
+// tab on each DIT's file in Segment C). Scheduled for deletion in Segment C
+// cleanup (see TRAINING_OVERHAUL_MASTER_PLAN.md).
+export default function LegacyDitEvaluationsPage() {
+  redirect('/training/dit-files')
+}

@@ -1,10 +1,13 @@
 'use server'
 
+import { randomBytes } from 'node:crypto'
+
 import { revalidatePath } from 'next/cache'
 
 import { createClient } from '@/lib/supabase/server'
 import { getSessionUserWithProfile } from '@/lib/auth/get-session'
-import { hasRole, UserRole, type UserRoleValue } from '@/lib/auth/roles'
+import { UserRole, type UserRoleValue } from '@/lib/auth/roles'
+import { canManageOnboarding, supervisionPlus, trainingFullRead } from '@/lib/training/access'
 import { fetchProfileName, insertNotifications } from '@/lib/notifications/insert-notifications'
 import {
   fetchDitRecordById,
@@ -15,21 +18,9 @@ import {
   fetchMilestonesForRecord,
   fetchPairingPhaseEvents,
 } from '@/lib/training/queries'
+import { logTrainingEmailPreview } from '@/lib/email/training-notifications'
 import type { EvaluationScoreKey, EvaluationType, OverallRating } from '@/types/training'
 import { EVALUATION_SCORE_KEYS } from '@/types/training'
-
-function trainingFullRead(role: UserRoleValue) {
-  return hasRole(role, [
-    UserRole.admin,
-    UserRole.supervision_admin,
-    UserRole.supervision,
-    UserRole.fto_coordinator,
-  ])
-}
-
-function supervisionPlus(role: UserRoleValue) {
-  return hasRole(role, [UserRole.admin, UserRole.supervision_admin, UserRole.supervision])
-}
 
 function canReadPrivateNotes(role: UserRoleValue) {
   return trainingFullRead(role)
@@ -446,4 +437,225 @@ export async function updateDitRecordStatusAction(
 
   revalidatePath('/training')
   revalidatePath('/dashboard')
+}
+
+// ---------------------------------------------------------------------------
+// Segment A — Onboarding: createDitOnboardingAction
+// ---------------------------------------------------------------------------
+
+export type CreateDitOnboardingInput = {
+  firstName: string
+  lastName: string
+  email: string
+  cellNumber: string
+  badgeNumber: string
+}
+
+export type CreateDitOnboardingResult =
+  | {
+      ok: true
+      dit_record_id: string
+      dit_user_id: string
+      display_name: string
+      survey_link: string
+      survey_expires_at: string
+    }
+  | { ok: false; code: CreateDitOnboardingErrorCode; message: string }
+
+export type CreateDitOnboardingErrorCode =
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'PROFILE_NOT_FOUND'
+  | 'ALREADY_ACTIVE_DIT'
+  | 'DUPLICATE_BADGE'
+  | 'DUPLICATE_EMAIL'
+  | 'INTERNAL'
+
+function generateSurveyToken(): string {
+  return randomBytes(24).toString('base64url')
+}
+
+function sevenDaysFromNow(): string {
+  return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+}
+
+async function buildSurveyLink(token: string): Promise<string> {
+  const { getPublicOrigin } = await import('@/lib/url/public-origin')
+  const origin = await getPublicOrigin()
+  return `${origin}/survey/${token}`
+}
+
+export async function createDitOnboardingAction(
+  input: CreateDitOnboardingInput
+): Promise<CreateDitOnboardingResult> {
+  const session = await getSessionUserWithProfile()
+  if (!session) {
+    return { ok: false, code: 'UNAUTHORIZED', message: 'Sign in required.' }
+  }
+  if (!canManageOnboarding(session.profile.role)) {
+    return { ok: false, code: 'FORBIDDEN', message: 'Only coordinators and supervision can onboard DITs.' }
+  }
+
+  const email = input.email.trim().toLowerCase()
+  const badge = input.badgeNumber.trim()
+  const cell = input.cellNumber.trim()
+  const fullName = `${input.firstName.trim()} ${input.lastName.trim()}`.trim()
+
+  const supabase = await createClient()
+
+  // Look up the auth user by email using the service-role client (auth.users is
+  // not exposed to the SSR session client). profiles has no email column.
+  const { createServiceRoleClient } = await import('@/lib/supabase/admin')
+  const admin = createServiceRoleClient()
+  if (!admin) {
+    return {
+      ok: false,
+      code: 'INTERNAL',
+      message: 'Service role credentials are not configured on the server.',
+    }
+  }
+  const { data: list, error: listErr } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 })
+  if (listErr) {
+    return { ok: false, code: 'INTERNAL', message: listErr.message }
+  }
+  const match = list?.users.find((u) => (u.email ?? '').toLowerCase() === email)
+  if (!match) {
+    return {
+      ok: false,
+      code: 'PROFILE_NOT_FOUND',
+      message: 'No portal account found for that email. Create the account in Personnel first.',
+    }
+  }
+  return onboardAgainstUser(match.id, match.email ?? email)
+
+  async function onboardAgainstUser(
+    ditUserId: string,
+    resolvedEmail: string
+  ): Promise<CreateDitOnboardingResult> {
+    // 2. Badge uniqueness check (profiles).
+    const { data: badgeClash } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('badge_number', badge)
+      .neq('id', ditUserId)
+      .maybeSingle()
+    if (badgeClash) {
+      return {
+        ok: false,
+        code: 'DUPLICATE_BADGE',
+        message: 'That badge number is already assigned to another user.',
+      }
+    }
+
+    // 3. Update profile (set role=dit unless already higher; fill missing fields).
+    const { data: existingProfile, error: pErr } = await supabase
+      .from('profiles')
+      .select('id, role, full_name, badge_number, phone_cell')
+      .eq('id', ditUserId)
+      .maybeSingle()
+    if (pErr) {
+      return { ok: false, code: 'INTERNAL', message: pErr.message }
+    }
+
+    const patch: Record<string, unknown> = {}
+    if (!existingProfile?.full_name && fullName) patch.full_name = fullName
+    if (!existingProfile?.badge_number) patch.badge_number = badge
+    if (!existingProfile?.phone_cell) patch.phone_cell = cell
+    if (!existingProfile || existingProfile.role === 'detective' || !existingProfile.role) {
+      patch.role = UserRole.dit
+    }
+
+    if (!existingProfile) {
+      const { error: insErr } = await supabase.from('profiles').insert({
+        id: ditUserId,
+        role: UserRole.dit,
+        full_name: fullName,
+        badge_number: badge,
+        phone_cell: cell,
+      })
+      if (insErr) {
+        return { ok: false, code: 'INTERNAL', message: insErr.message }
+      }
+    } else if (Object.keys(patch).length > 0) {
+      const { error: updErr } = await supabase.from('profiles').update(patch).eq('id', ditUserId)
+      if (updErr) {
+        return { ok: false, code: 'INTERNAL', message: updErr.message }
+      }
+    }
+
+    // 4. Ensure dit_records row (no active closed record).
+    const { data: existingDit } = await supabase
+      .from('dit_records')
+      .select('id, status')
+      .eq('user_id', ditUserId)
+      .maybeSingle()
+
+    if (existingDit && ['active', 'on_hold'].includes(String(existingDit.status))) {
+      return {
+        ok: false,
+        code: 'ALREADY_ACTIVE_DIT',
+        message: 'That person is already an active DIT.',
+      }
+    }
+
+    let ditRecordId: string
+    if (!existingDit) {
+      const { data: inserted, error: drErr } = await supabase
+        .from('dit_records')
+        .insert({
+          user_id: ditUserId,
+          current_phase: 1,
+          start_date: new Date().toISOString().slice(0, 10),
+          status: 'active',
+          created_by: session!.user.id,
+        })
+        .select('id')
+        .single()
+      if (drErr || !inserted) {
+        return { ok: false, code: 'INTERNAL', message: drErr?.message ?? 'Failed to create DIT record' }
+      }
+      ditRecordId = String((inserted as { id: string }).id)
+    } else {
+      ditRecordId = String(existingDit.id)
+      await supabase
+        .from('dit_records')
+        .update({ status: 'active', start_date: new Date().toISOString().slice(0, 10) })
+        .eq('id', ditRecordId)
+    }
+
+    // 5. Issue (or refresh) a survey row.
+    const token = generateSurveyToken()
+    const expiresAt = sevenDaysFromNow()
+    const { error: sErr } = await supabase.from('dit_surveys').insert({
+      dit_record_id: ditRecordId,
+      token,
+      status: 'pending',
+      expires_at: expiresAt,
+      created_by: session!.user.id,
+    })
+    if (sErr) {
+      return { ok: false, code: 'INTERNAL', message: sErr.message }
+    }
+
+    const link = await buildSurveyLink(token)
+
+    logTrainingEmailPreview(
+      'onboarding_survey',
+      'Welcome to the CID Detective in Training program',
+      `<p>Hello ${fullName},</p><p>Please complete your pre-start survey within 7 days: <a href="${link}">${link}</a></p>`,
+      resolvedEmail
+    )
+
+    revalidatePath('/training')
+    revalidatePath('/dashboard')
+
+    return {
+      ok: true,
+      dit_record_id: ditRecordId,
+      dit_user_id: ditUserId,
+      display_name: fullName,
+      survey_link: link,
+      survey_expires_at: expiresAt,
+    }
+  }
 }
