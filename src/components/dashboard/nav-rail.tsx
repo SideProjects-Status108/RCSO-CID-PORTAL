@@ -11,6 +11,7 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -298,14 +299,16 @@ export function NavRail({
           align="end"
           className="w-56 border-border-subtle bg-bg-elevated text-text-primary"
         >
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col gap-0.5">
-              <span className="truncate font-medium">{profile.full_name || email || 'User'}</span>
-              <span className="truncate text-xs text-text-secondary capitalize">
-                {profile.role.replaceAll('_', ' ')}
-              </span>
-            </div>
-          </DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col gap-0.5">
+                <span className="truncate font-medium">{profile.full_name || email || 'User'}</span>
+                <span className="truncate text-xs text-text-secondary capitalize">
+                  {profile.role.replaceAll('_', ' ')}
+                </span>
+              </div>
+            </DropdownMenuLabel>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator className="bg-border-subtle" />
           <div className="p-1">
             <form action={signOut}>
@@ -485,16 +488,18 @@ export function NavRail({
                   side="top"
                   className="w-56 border-border-subtle bg-bg-elevated text-text-primary"
                 >
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="truncate font-medium">
-                        {profile.full_name || email || 'User'}
-                      </span>
-                      <span className="truncate text-xs text-text-secondary capitalize">
-                        {profile.role.replaceAll('_', ' ')}
-                      </span>
-                    </div>
-                  </DropdownMenuLabel>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="truncate font-medium">
+                          {profile.full_name || email || 'User'}
+                        </span>
+                        <span className="truncate text-xs text-text-secondary capitalize">
+                          {profile.role.replaceAll('_', ' ')}
+                        </span>
+                      </div>
+                    </DropdownMenuLabel>
+                  </DropdownMenuGroup>
                   <DropdownMenuSeparator className="bg-border-subtle" />
                   <div className="p-1">
                     <form action={signOut}>
