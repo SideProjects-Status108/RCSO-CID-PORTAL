@@ -58,13 +58,13 @@ BEGIN
   END IF;
 
   FOR p IN
-    SELECT polname
+    SELECT policyname
     FROM pg_policies
     WHERE schemaname = 'public'
       AND tablename = 'evaluations'
       AND cmd IN ('INSERT', 'UPDATE', 'DELETE')
   LOOP
-    EXECUTE format('DROP POLICY IF EXISTS %I ON public.evaluations', p.polname);
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.evaluations', p.policyname);
   END LOOP;
 END
 $$;
