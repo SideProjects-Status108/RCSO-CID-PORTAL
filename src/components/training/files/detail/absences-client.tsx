@@ -89,7 +89,7 @@ export function AbsencesClient({
       ) : null}
 
       {absences.length === 0 ? (
-        <div className="rounded-md border border-border-subtle bg-bg-card px-3 py-6 text-center text-xs text-text-tertiary">
+        <div className="rounded-md border border-border-subtle bg-bg-surface px-3 py-6 text-center text-xs text-text-secondary">
           No absences on record.
         </div>
       ) : (
@@ -155,7 +155,7 @@ function AbsenceRow({
   }
 
   return (
-    <li className="rounded-md border border-border-subtle bg-bg-card p-3">
+    <li className="rounded-md border border-border-subtle bg-bg-surface p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-sm font-medium text-text-primary">
@@ -167,7 +167,7 @@ function AbsenceRow({
               {meta.label}
             </span>
           </div>
-          <div className="mt-0.5 text-xs text-text-tertiary">
+          <div className="mt-0.5 text-xs text-text-secondary">
             {absence.start_date}
             {absence.end_date ? ` → ${absence.end_date}` : ' → open'}
           </div>
@@ -180,7 +180,7 @@ function AbsenceRow({
             type="button"
             onClick={handleClose}
             disabled={pending}
-            className="inline-flex items-center gap-1 rounded border border-border-subtle px-2 py-1 text-xs text-text-secondary hover:bg-bg-subtle hover:text-text-primary disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded border border-border-subtle px-2 py-1 text-xs text-text-secondary hover:bg-bg-elevated hover:text-text-primary disabled:opacity-50"
           >
             <Lock className="h-3 w-3" />
             {pending ? 'Closing…' : 'Close absence'}
@@ -249,14 +249,14 @@ function DocumentAbsenceModal({
     >
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-lg space-y-4 rounded-lg border border-border-subtle bg-bg-card p-5 shadow-xl"
+        className="w-full max-w-lg space-y-4 rounded-lg border border-border-subtle bg-bg-surface p-5 shadow-xl"
       >
         <header className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-text-primary">Document absence</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-text-tertiary hover:bg-bg-subtle"
+            className="rounded p-1 text-text-secondary hover:bg-bg-elevated"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -268,7 +268,7 @@ function DocumentAbsenceModal({
             <select
               value={kind}
               onChange={(e) => setKind(e.target.value as AbsenceKind)}
-              className="w-full rounded border border-border-subtle bg-bg-subtle px-2 py-1.5 text-sm text-text-primary"
+              className="w-full rounded border border-border-subtle bg-bg-elevated px-2 py-1.5 text-sm text-text-primary"
             >
               {ABSENCE_KINDS.map((k) => (
                 <option key={k} value={k}>
@@ -283,7 +283,7 @@ function DocumentAbsenceModal({
               required
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full rounded border border-border-subtle bg-bg-subtle px-2 py-1.5 text-sm text-text-primary"
+              className="w-full rounded border border-border-subtle bg-bg-elevated px-2 py-1.5 text-sm text-text-primary"
             />
           </Field>
           <Field label="End date (optional)">
@@ -292,7 +292,7 @@ function DocumentAbsenceModal({
               value={endDate}
               min={startDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full rounded border border-border-subtle bg-bg-subtle px-2 py-1.5 text-sm text-text-primary"
+              className="w-full rounded border border-border-subtle bg-bg-elevated px-2 py-1.5 text-sm text-text-primary"
             />
           </Field>
         </div>
@@ -303,14 +303,14 @@ function DocumentAbsenceModal({
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
             maxLength={500}
-            className="w-full rounded border border-border-subtle bg-bg-subtle px-2 py-1.5 text-sm text-text-primary"
+            className="w-full rounded border border-border-subtle bg-bg-elevated px-2 py-1.5 text-sm text-text-primary"
             placeholder="Brief context for the coordinator (e.g., flu, OJI scene details, dates)."
           />
         </Field>
 
         <div>
           <SignaturePad ref={padRef} onChange={setEmpty} label="Your signature (optional)" />
-          <p className="mt-1 text-[11px] text-text-tertiary">
+          <p className="mt-1 text-[11px] text-text-secondary">
             Sign to pre-complete the FTO step. If you leave this blank, the record will still
             route through the chain and you can sign later from your inbox.
           </p>
@@ -320,7 +320,7 @@ function DocumentAbsenceModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-subtle"
+            className="rounded px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-elevated"
             disabled={submitting}
           >
             Cancel

@@ -42,7 +42,7 @@ export function DitTile({ row }: { row: DitFilesOverviewRow }) {
   return (
     <Link
       href={`/training/dit-files/${row.dit_record_id}`}
-      className={`group relative flex flex-col gap-3 rounded-lg border border-border-subtle bg-bg-card p-4 ring-1 ring-inset ${style.ring} transition hover:border-border-strong hover:bg-bg-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary ${paused ? 'opacity-80' : ''}`}
+      className={`group relative flex flex-col gap-3 rounded-lg border border-border-subtle bg-bg-surface p-4 ring-1 ring-inset ${style.ring} transition hover:border-border-subtle hover:bg-bg-elevated focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary ${paused ? 'opacity-80' : ''}`}
     >
       {/* Status ribbon for paused states */}
       {paused ? (
@@ -65,7 +65,7 @@ export function DitTile({ row }: { row: DitFilesOverviewRow }) {
           <div className="flex items-baseline gap-2">
             <span className="truncate text-sm font-semibold text-text-primary">{row.dit_name}</span>
             {row.badge_number ? (
-              <span className="text-xs text-text-tertiary">#{row.badge_number}</span>
+              <span className="text-xs text-text-secondary">#{row.badge_number}</span>
             ) : null}
           </div>
           <div className="mt-0.5 text-xs text-text-secondary">
@@ -77,7 +77,7 @@ export function DitTile({ row }: { row: DitFilesOverviewRow }) {
       <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
         <ScoreCell avgScore={row.avg_score} />
         <div>
-          <dt className="text-text-tertiary">Unobserved</dt>
+          <dt className="text-text-secondary">Unobserved</dt>
           <dd className="font-medium text-text-primary">
             {row.unobserved_recent > 0 ? (
               <span className="inline-flex items-center gap-1">
@@ -91,7 +91,7 @@ export function DitTile({ row }: { row: DitFilesOverviewRow }) {
         </div>
         {row.open_deficiencies > 0 ? (
           <div className="col-span-2">
-            <dt className="text-text-tertiary">Deficiency</dt>
+            <dt className="text-text-secondary">Deficiency</dt>
             <dd className="inline-flex items-center gap-1 font-medium text-amber-300">
               <AlertTriangle className="h-3 w-3" />
               {row.open_deficiencies} open
@@ -100,7 +100,7 @@ export function DitTile({ row }: { row: DitFilesOverviewRow }) {
         ) : null}
         {row.expected_graduation_date ? (
           <div className="col-span-2">
-            <dt className="text-text-tertiary">Expected grad</dt>
+            <dt className="text-text-secondary">Expected grad</dt>
             <dd className="inline-flex items-center gap-1 font-medium text-text-secondary">
               <CalendarClock className="h-3 w-3" />
               {row.expected_graduation_date}
@@ -111,13 +111,13 @@ export function DitTile({ row }: { row: DitFilesOverviewRow }) {
 
       <div className="mt-auto border-t border-border-subtle pt-3">
         <div className="flex items-center gap-2 text-xs">
-          <User2 className="h-3.5 w-3.5 text-text-tertiary" />
+          <User2 className="h-3.5 w-3.5 text-text-secondary" />
           <span className="truncate font-medium text-text-secondary">
             {row.fto_name ?? <span className="italic">No active FTO</span>}
           </span>
           {row.fto_phone_cell ? (
             <span
-              className="ml-auto inline-flex items-center gap-1 text-text-tertiary"
+              className="ml-auto inline-flex items-center gap-1 text-text-secondary"
               title={row.fto_phone_cell}
             >
               <Phone className="h-3 w-3" />
@@ -133,7 +133,7 @@ export function DitTile({ row }: { row: DitFilesOverviewRow }) {
 function ScoreCell({ avgScore }: { avgScore: number | null }) {
   return (
     <div>
-      <dt className="text-text-tertiary">Avg score</dt>
+      <dt className="text-text-secondary">Avg score</dt>
       <dd className="font-medium text-text-primary">
         {avgScore == null ? (
           <span className="text-text-secondary">—</span>

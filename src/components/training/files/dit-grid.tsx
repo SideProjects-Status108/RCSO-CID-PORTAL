@@ -12,8 +12,8 @@ export async function DitGrid() {
 
   if (rows.length === 0) {
     return (
-      <section className="rounded-lg border border-border-subtle bg-bg-card p-8 text-center">
-        <Users className="mx-auto h-8 w-8 text-text-tertiary" aria-hidden />
+      <section className="rounded-lg border border-border-subtle bg-bg-surface p-8 text-center">
+        <Users className="mx-auto h-8 w-8 text-text-secondary" aria-hidden />
         <h2 className="mt-3 text-sm font-semibold text-text-primary">No active DITs</h2>
         <p className="mt-1 text-xs text-text-secondary">
           Onboard a new Detective in Training from the dashboard to see them here.
@@ -58,7 +58,7 @@ export async function DitGrid() {
 
 function Legend() {
   return (
-    <ul className="flex flex-wrap items-center gap-3 text-[11px] text-text-tertiary">
+    <ul className="flex flex-wrap items-center gap-3 text-[11px] text-text-secondary">
       <LegendDot className="bg-emerald-500" label="On track" />
       <LegendDot className="bg-amber-400" label="Needs attention" />
       <LegendDot className="bg-red-500" label="At risk" />

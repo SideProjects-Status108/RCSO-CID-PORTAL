@@ -59,16 +59,16 @@ export async function TrainingSupervisorWidget() {
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-bg-card px-4 py-3">
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-bg-surface px-4 py-3">
       <div className="flex items-center gap-3">
         <span
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-bg-subtle text-text-secondary"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-bg-elevated text-text-secondary"
           aria-hidden
         >
           <ShieldCheck className="h-4 w-4" />
         </span>
         <div className="min-w-0">
-          <div className="text-xs font-medium uppercase tracking-wide text-text-tertiary">
+          <div className="text-xs font-medium uppercase tracking-wide text-text-secondary">
             Training Supervisor
           </div>
           <div className="truncate text-sm font-medium text-text-primary">
@@ -76,11 +76,11 @@ export async function TrainingSupervisorWidget() {
               <>
                 {current.full_name}
                 {current.badge_number ? (
-                  <span className="ml-2 text-text-tertiary">#{current.badge_number}</span>
+                  <span className="ml-2 text-text-secondary">#{current.badge_number}</span>
                 ) : null}
               </>
             ) : (
-              <span className="italic text-text-tertiary">Vacant — Supervision Admin signs in the interim</span>
+              <span className="italic text-text-secondary">Vacant — Supervision Admin signs in the interim</span>
             )}
           </div>
         </div>

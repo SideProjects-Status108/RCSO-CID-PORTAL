@@ -10,11 +10,13 @@ export type SignaturePadHandle = {
 }
 
 type Props = {
-  /** Logical (CSS) width; canvas scales to device pixel ratio internally. */
-  width?: number
+  /**
+   * Logical (CSS) height in px. The canvas always expands to 100% of the
+   * parent's width and rescales its backing store when the width changes.
+   */
   height?: number
   className?: string
-  /** Fires whenever the stroke count changes (e.g. to enable a Submit button). */
+  /** Fires whenever empty-state changes (e.g. to enable a Submit button). */
   onChange?: (isEmpty: boolean) => void
   disabled?: boolean
   label?: string
@@ -22,16 +24,20 @@ type Props = {
 }
 
 /**
- * HTML5 Canvas signature pad. Captures pointer events (pen / touch / mouse)
- * and renders to a high-DPI offscreen canvas. Export via getDataUrl() on the
- * imperative handle.
+ * HTML5 Canvas signature pad.
  *
- * Note: if stroke smoothness proves insufficient on real tablets, upgrade to
- * signature_pad.js (explicitly scoped in the plan). For now, a plain canvas
- * keeps the bundle small.
+ * Responsive: the canvas is sized by CSS to 100% of its container width; a
+ * ResizeObserver syncs the backing pixel store when the container resizes,
+ * so strokes stay crisp at any DPR and the pad never overflows its parent
+ * (e.g. inside a narrow modal).
+ *
+ * Smooth strokes: each pointermove segment is rendered using a quadratic
+ * curve whose control point is the previous raw sample and whose endpoint
+ * is the midpoint between previous and current samples. The next segment
+ * starts at that midpoint, so there are no gaps (which previously produced
+ * a dashed appearance).
  */
 export function SignaturePad({
-  width = 520,
   height = 180,
   className,
   onChange,
@@ -39,42 +45,68 @@ export function SignaturePad({
   label = 'Signature',
   ref,
 }: Props) {
+  const containerRef = useRef<HTMLDivElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const drawingRef = useRef(false)
   const lastPointRef = useRef<{ x: number; y: number } | null>(null)
+  const lastMidRef = useRef<{ x: number; y: number } | null>(null)
+  const emptyRef = useRef(true)
   const [isEmpty, setIsEmpty] = useState(true)
 
   const setEmpty = useCallback(
     (next: boolean) => {
-      setIsEmpty((prev) => {
-        if (prev !== next) onChange?.(next)
-        return next
-      })
+      if (emptyRef.current === next) return
+      emptyRef.current = next
+      setIsEmpty(next)
+      onChange?.(next)
     },
     [onChange]
   )
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
-    canvas.width = width * dpr
-    canvas.height = height * dpr
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    ctx.scale(dpr, dpr)
+  const applyContextDefaults = (ctx: CanvasRenderingContext2D, dpr: number) => {
+    // setTransform resets any prior scale so repeated resizes don't stack.
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
-    ctx.lineWidth = 2
+    ctx.lineWidth = 2.2
     ctx.strokeStyle = '#111827'
-  }, [width, height])
+  }
+
+  // Size the backing store to match the CSS box (responsive + high-DPI).
+  // Note: resizing wipes the drawing. That's acceptable for a signature pad
+  // because the container width is stable once the modal is mounted.
+  useEffect(() => {
+    const container = containerRef.current
+    const canvas = canvasRef.current
+    if (!container || !canvas) return
+
+    const resize = () => {
+      const dpr = window.devicePixelRatio || 1
+      const cssWidth = Math.max(1, Math.floor(container.clientWidth))
+      const cssHeight = height
+      canvas.style.width = `${cssWidth}px`
+      canvas.style.height = `${cssHeight}px`
+      canvas.width = Math.floor(cssWidth * dpr)
+      canvas.height = Math.floor(cssHeight * dpr)
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      applyContextDefaults(ctx, dpr)
+      setEmpty(true)
+    }
+
+    resize()
+
+    const ro = new ResizeObserver(() => resize())
+    ro.observe(container)
+    return () => ro.disconnect()
+  }, [height, setEmpty])
 
   useImperativeHandle<SignaturePadHandle, SignaturePadHandle>(
     ref as React.Ref<SignaturePadHandle>,
     () => ({
       getDataUrl: () => {
         const canvas = canvasRef.current
-        if (!canvas || isEmpty) return null
+        if (!canvas || emptyRef.current) return null
         return canvas.toDataURL('image/png')
       },
       clear: () => {
@@ -82,12 +114,16 @@ export function SignaturePad({
         if (!canvas) return
         const ctx = canvas.getContext('2d')
         if (!ctx) return
+        const dpr = window.devicePixelRatio || 1
+        // Reset transform to clear in raw pixel space, then reapply.
+        ctx.setTransform(1, 0, 0, 1, 0, 0)
         ctx.clearRect(0, 0, canvas.width, canvas.height)
+        applyContextDefaults(ctx, dpr)
         setEmpty(true)
       },
-      isEmpty: () => isEmpty,
+      isEmpty: () => emptyRef.current,
     }),
-    [isEmpty, setEmpty]
+    [setEmpty]
   )
 
   const getLocalCoords = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -109,12 +145,14 @@ export function SignaturePad({
     drawingRef.current = true
     const point = getLocalCoords(event)
     lastPointRef.current = point
+    lastMidRef.current = point
+    // Draw an initial dot so single taps register as ink.
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     ctx.beginPath()
-    ctx.moveTo(point.x, point.y)
-    ctx.lineTo(point.x + 0.01, point.y + 0.01)
-    ctx.stroke()
+    ctx.arc(point.x, point.y, ctx.lineWidth / 2, 0, Math.PI * 2)
+    ctx.fillStyle = '#111827'
+    ctx.fill()
     setEmpty(false)
   }
 
@@ -126,21 +164,37 @@ export function SignaturePad({
     if (!ctx) return
     const point = getLocalCoords(event)
     const last = lastPointRef.current ?? point
-    const midX = (last.x + point.x) / 2
-    const midY = (last.y + point.y) / 2
+    const prevMid = lastMidRef.current ?? last
+    const mid = { x: (last.x + point.x) / 2, y: (last.y + point.y) / 2 }
+    // Smooth quadratic: start at previous midpoint, use previous sample as
+    // control, end at new midpoint. This keeps consecutive segments continuous.
     ctx.beginPath()
-    ctx.moveTo(last.x, last.y)
-    ctx.quadraticCurveTo(last.x, last.y, midX, midY)
+    ctx.moveTo(prevMid.x, prevMid.y)
+    ctx.quadraticCurveTo(last.x, last.y, mid.x, mid.y)
     ctx.stroke()
     lastPointRef.current = point
+    lastMidRef.current = mid
   }
 
   const handlePointerUp = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (!drawingRef.current) return
+    // Draw a final segment to the last raw sample so end strokes aren't cut short.
     const canvas = canvasRef.current
-    canvas?.releasePointerCapture(event.pointerId)
+    if (canvas) {
+      const ctx = canvas.getContext('2d')
+      const last = lastPointRef.current
+      const mid = lastMidRef.current
+      if (ctx && last && mid) {
+        ctx.beginPath()
+        ctx.moveTo(mid.x, mid.y)
+        ctx.lineTo(last.x, last.y)
+        ctx.stroke()
+      }
+      canvas.releasePointerCapture(event.pointerId)
+    }
     drawingRef.current = false
     lastPointRef.current = null
+    lastMidRef.current = null
   }
 
   const handleClear = () => {
@@ -148,7 +202,10 @@ export function SignaturePad({
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
+    const dpr = window.devicePixelRatio || 1
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
     ctx.clearRect(0, 0, canvas.width, canvas.height)
+    applyContextDefaults(ctx, dpr)
     setEmpty(true)
   }
 
@@ -160,26 +217,28 @@ export function SignaturePad({
           type="button"
           onClick={handleClear}
           disabled={disabled || isEmpty}
-          className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-text-tertiary hover:bg-bg-subtle hover:text-text-primary disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-text-secondary hover:bg-bg-elevated hover:text-text-primary disabled:opacity-50"
         >
           <Eraser className="h-3 w-3" />
           Clear
         </button>
       </div>
-      <canvas
-        ref={canvasRef}
-        role="img"
-        aria-label={label}
-        style={{ width, height, touchAction: 'none' }}
-        className={`rounded-md border border-border-subtle bg-white ${
-          disabled ? 'pointer-events-none opacity-60' : 'cursor-crosshair'
-        }`}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-      />
-      <p className="text-[11px] text-text-tertiary">
+      <div ref={containerRef} className="w-full">
+        <canvas
+          ref={canvasRef}
+          role="img"
+          aria-label={label}
+          style={{ touchAction: 'none', display: 'block' }}
+          className={`rounded-md border border-border-subtle bg-white ${
+            disabled ? 'pointer-events-none opacity-60' : 'cursor-crosshair'
+          }`}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+        />
+      </div>
+      <p className="text-[11px] text-text-secondary">
         Sign with your finger, stylus, or mouse. Your signature is recorded with a timestamp and
         device metadata.
       </p>

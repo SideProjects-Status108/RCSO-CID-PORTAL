@@ -45,11 +45,11 @@ export function DitDetailHeader({ payload }: { payload: DitDetailPayload }) {
         </div>
 
         <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-right text-xs">
-          <dt className="text-text-tertiary">Phase</dt>
+          <dt className="text-text-secondary">Phase</dt>
           <dd className="font-semibold text-text-primary">{record.current_phase}</dd>
-          <dt className="text-text-tertiary">Start date</dt>
+          <dt className="text-text-secondary">Start date</dt>
           <dd className="font-semibold text-text-primary">{started ?? '—'}</dd>
-          <dt className="text-text-tertiary">Active FTO</dt>
+          <dt className="text-text-secondary">Active FTO</dt>
           <dd className="font-semibold text-text-primary">
             {activePairing ? activePairing.fto_name : '—'}
           </dd>

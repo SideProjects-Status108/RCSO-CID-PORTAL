@@ -25,7 +25,7 @@ export default async function PublicSurveyPage({ params }: PageProps) {
     <div className="min-h-screen bg-bg-app px-4 py-10 md:px-8">
       <div className="mx-auto max-w-2xl space-y-6">
         <header className="space-y-2 text-center">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-text-tertiary">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-text-secondary">
             RCSO Detective Training Program
           </p>
           <h1 className="font-heading text-2xl font-semibold text-text-primary">

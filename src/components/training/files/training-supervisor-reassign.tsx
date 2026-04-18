@@ -50,14 +50,14 @@ export function TrainingSupervisorReassignButton({ currentId, eligible }: Props)
       <PopoverContent className="w-80 p-0" align="end">
         <div className="border-b border-border-subtle px-3 py-2">
           <div className="text-sm font-semibold text-text-primary">Assign Training Supervisor</div>
-          <p className="mt-0.5 text-xs text-text-tertiary">
+          <p className="mt-0.5 text-xs text-text-secondary">
             Pick from active supervision / supervision-admin / FTO Coordinator profiles. Only one
             person holds the seat at a time.
           </p>
         </div>
         <ul className="max-h-72 overflow-y-auto py-1">
           {eligible.length === 0 ? (
-            <li className="px-3 py-6 text-center text-sm text-text-tertiary">
+            <li className="px-3 py-6 text-center text-sm text-text-secondary">
               No eligible profiles found.
             </li>
           ) : (
@@ -69,17 +69,17 @@ export function TrainingSupervisorReassignButton({ currentId, eligible }: Props)
                     type="button"
                     disabled={pending || isCurrent}
                     onClick={() => submit(p.id)}
-                    className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-bg-subtle disabled:opacity-50"
+                    className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-bg-elevated disabled:opacity-50"
                   >
                     <span className="flex min-w-0 flex-col">
                       <span className="truncate font-medium text-text-primary">{p.full_name}</span>
-                      <span className="truncate text-xs text-text-tertiary">
+                      <span className="truncate text-xs text-text-secondary">
                         {formatRole(p.role)}
                         {p.badge_number ? ` · #${p.badge_number}` : ''}
                       </span>
                     </span>
                     {isCurrent ? (
-                      <span className="shrink-0 rounded-full bg-bg-subtle px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
+                      <span className="shrink-0 rounded-full bg-bg-elevated px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-secondary">
                         Current
                       </span>
                     ) : null}

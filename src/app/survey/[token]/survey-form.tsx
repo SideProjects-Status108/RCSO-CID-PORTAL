@@ -96,9 +96,9 @@ export function SurveyForm({ token, questions, ditName }: Props) {
                   <span className={dominant ? 'font-semibold text-text-primary' : 'text-text-secondary'}>
                     {STYLE_LABELS[t.key]}
                   </span>
-                  <span className="font-mono text-text-tertiary">{t.score}</span>
+                  <span className="font-mono text-text-secondary">{t.score}</span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-bg-subtle">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-bg-elevated">
                   <div
                     className={`h-full rounded-full ${dominant ? 'bg-accent-primary' : 'bg-accent-primary/50'}`}
                     style={{ width: `${pct}%` }}
@@ -128,7 +128,7 @@ export function SurveyForm({ token, questions, ditName }: Props) {
         {questions.map((q, idx) => (
           <li key={q.id} className="space-y-3">
             <div className="font-medium text-text-primary">
-              <span className="mr-1 text-text-tertiary">{idx + 1}.</span>
+              <span className="mr-1 text-text-secondary">{idx + 1}.</span>
               {q.prompt}
             </div>
             <div className="space-y-2">
@@ -140,7 +140,7 @@ export function SurveyForm({ token, questions, ditName }: Props) {
                     className={`flex cursor-pointer items-start gap-2 rounded-md border px-3 py-2 text-sm ${
                       checked
                         ? 'border-accent-primary bg-accent-primary/5'
-                        : 'border-border-subtle hover:bg-bg-subtle'
+                        : 'border-border-subtle hover:bg-bg-elevated'
                     }`}
                   >
                     <input
@@ -164,14 +164,14 @@ export function SurveyForm({ token, questions, ditName }: Props) {
 
       <label className="block space-y-2">
         <span className="text-sm font-medium text-text-primary">
-          Anything else your FTO should know? <span className="text-text-tertiary">(optional)</span>
+          Anything else your FTO should know? <span className="text-text-secondary">(optional)</span>
         </span>
         <textarea
           value={narrative}
           onChange={(e) => setNarrative(e.target.value)}
           rows={3}
           maxLength={2000}
-          className="w-full rounded border border-border-subtle bg-bg-subtle px-3 py-2 text-sm text-text-primary"
+          className="w-full rounded border border-border-subtle bg-bg-elevated px-3 py-2 text-sm text-text-primary"
           placeholder="Background, prior assignments, learning preferences, etc."
         />
       </label>
@@ -183,7 +183,7 @@ export function SurveyForm({ token, questions, ditName }: Props) {
       ) : null}
 
       <div className="flex items-center justify-between">
-        <span className="text-xs text-text-tertiary">
+        <span className="text-xs text-text-secondary">
           {Object.keys(answers).length}/{questions.length} answered
         </span>
         <button

@@ -43,8 +43,8 @@ export function DitDetailTabNav({
             aria-selected={isActive}
             className={`relative -mb-px rounded-t-md px-3 py-2 text-sm font-medium transition ${
               isActive
-                ? 'border border-border-subtle border-b-transparent bg-bg-card text-text-primary'
-                : 'text-text-secondary hover:bg-bg-subtle hover:text-text-primary'
+                ? 'border border-border-subtle border-b-transparent bg-bg-surface text-text-primary'
+                : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary'
             }`}
           >
             {tab.label}

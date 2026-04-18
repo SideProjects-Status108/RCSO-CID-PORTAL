@@ -25,12 +25,12 @@ export async function VarkResultsCard({ ditRecordId }: { ditRecordId: string }) 
 
   if (survey.status !== 'completed' || !survey.scores) {
     return (
-      <section className="rounded-lg border border-border-subtle bg-bg-card p-4 md:col-span-2 lg:col-span-3">
+      <section className="rounded-lg border border-border-subtle bg-bg-surface p-4 md:col-span-2 lg:col-span-3">
         <header className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
             Learning-style survey
           </h3>
-          <span className="rounded-full bg-bg-subtle px-2 py-0.5 text-[10px] uppercase tracking-wide text-text-tertiary">
+          <span className="rounded-full bg-bg-elevated px-2 py-0.5 text-[10px] uppercase tracking-wide text-text-secondary">
             {survey.status === 'expired' ? 'Expired' : 'Pending'}
           </span>
         </header>
@@ -50,12 +50,12 @@ export async function VarkResultsCard({ ditRecordId }: { ditRecordId: string }) 
   const max = Math.max(...totals.map((t) => t.score), 1)
 
   return (
-    <section className="rounded-lg border border-border-subtle bg-bg-card p-4 md:col-span-2 lg:col-span-3">
+    <section className="rounded-lg border border-border-subtle bg-bg-surface p-4 md:col-span-2 lg:col-span-3">
       <header className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
           Learning-style survey
         </h3>
-        <div className="text-[11px] text-text-tertiary">
+        <div className="text-[11px] text-text-secondary">
           Completed {survey.completedAt?.slice(0, 10) ?? ''} · Dominant:{' '}
           <span className="font-semibold text-text-primary">
             {survey.dominant.map((k) => STYLE_LABELS[k]).join(' + ')}
@@ -73,9 +73,9 @@ export async function VarkResultsCard({ ditRecordId }: { ditRecordId: string }) 
                 <span className={dominant ? 'font-semibold text-text-primary' : 'text-text-secondary'}>
                   {STYLE_LABELS[t.key]}
                 </span>
-                <span className="font-mono text-text-tertiary">{t.score}</span>
+                <span className="font-mono text-text-secondary">{t.score}</span>
               </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-bg-subtle">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-bg-elevated">
                 <div
                   className={`h-full rounded-full ${dominant ? 'bg-accent-primary' : 'bg-accent-primary/40'}`}
                   style={{ width: `${pct}%` }}
@@ -87,7 +87,7 @@ export async function VarkResultsCard({ ditRecordId }: { ditRecordId: string }) 
       </ul>
 
       {survey.narrative ? (
-        <div className="mt-3 rounded border border-border-subtle bg-bg-subtle/40 p-3 text-xs text-text-secondary">
+        <div className="mt-3 rounded border border-border-subtle bg-bg-elevated/40 p-3 text-xs text-text-secondary">
           <p className="font-medium text-text-primary">DIT note:</p>
           <p className="mt-1 whitespace-pre-wrap">{survey.narrative}</p>
         </div>

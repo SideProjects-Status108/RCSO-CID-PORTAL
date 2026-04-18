@@ -14,8 +14,8 @@ import { VarkResultsCard } from './vark-results-card'
 function TrendIcon({ direction }: { direction: TrendDirection }) {
   if (direction === 'up') return <ArrowUp className="h-4 w-4 text-emerald-400" aria-label="Up" />
   if (direction === 'down') return <ArrowDown className="h-4 w-4 text-red-400" aria-label="Down" />
-  if (direction === 'flat') return <Minus className="h-4 w-4 text-text-tertiary" aria-label="Flat" />
-  return <ArrowRight className="h-4 w-4 text-text-tertiary" aria-label="Unknown" />
+  if (direction === 'flat') return <Minus className="h-4 w-4 text-text-secondary" aria-label="Flat" />
+  return <ArrowRight className="h-4 w-4 text-text-secondary" aria-label="Unknown" />
 }
 
 export function DitOverviewTab({ payload }: { payload: DitDetailPayload }) {
@@ -51,7 +51,7 @@ export function DitOverviewTab({ payload }: { payload: DitDetailPayload }) {
           <TrendIcon direction={trend} />
         </div>
         <p className="mt-1 text-xs text-text-secondary">{TRAJECTORY_LABELS[trajectory]}</p>
-        <p className="mt-0.5 text-[11px] text-text-tertiary">
+        <p className="mt-0.5 text-[11px] text-text-secondary">
           Rolling mean of the last {Math.min(3, weekSummaries.length)} submitted weeks
         </p>
       </Card>
@@ -75,7 +75,7 @@ export function DitOverviewTab({ payload }: { payload: DitDetailPayload }) {
           <span className="text-sm text-text-secondary">/ {milestoneProgress.total || '—'}</span>
         </div>
         <div
-          className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-bg-subtle"
+          className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-bg-elevated"
           role="progressbar"
           aria-valuenow={milestonePct}
           aria-valuemin={0}
@@ -112,7 +112,7 @@ export function DitOverviewTab({ payload }: { payload: DitDetailPayload }) {
 
       <Card title="Score history" className="md:col-span-2 lg:col-span-3">
         {weekSummaries.length === 0 ? (
-          <p className="text-xs text-text-tertiary">
+          <p className="text-xs text-text-secondary">
             No submitted weekly evaluations yet.
           </p>
         ) : (
@@ -122,7 +122,7 @@ export function DitOverviewTab({ payload }: { payload: DitDetailPayload }) {
                 <span className="text-text-secondary">Week of {w.week_start_date}</span>
                 <span className="font-semibold text-text-primary">
                   {w.sample_count > 0 ? w.avg_score.toFixed(2) : '—'}
-                  <span className="ml-2 text-[11px] font-normal text-text-tertiary">
+                  <span className="ml-2 text-[11px] font-normal text-text-secondary">
                     {w.sample_count} competenc{w.sample_count === 1 ? 'y' : 'ies'}
                   </span>
                 </span>
@@ -146,9 +146,9 @@ function Card({
 }) {
   return (
     <section
-      className={`rounded-lg border border-border-subtle bg-bg-card p-4 ${className ?? ''}`}
+      className={`rounded-lg border border-border-subtle bg-bg-surface p-4 ${className ?? ''}`}
     >
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-text-tertiary">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
         {title}
       </h3>
       <div className="mt-2">{children}</div>
