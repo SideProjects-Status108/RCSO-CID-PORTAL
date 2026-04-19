@@ -94,6 +94,25 @@ export async function POST(
       ipAddress: ip,
     })
 
+    // If the route just completed and it's an equipment check-off, flip
+    // the row to 'signed'. Idempotent; runs as the signer so RLS on
+    // equipment_checkoffs_update_writer must allow the signer. Only
+    // training writers sign equipment check-offs (Coord/TS/LT), so the
+    // writer check is implicitly satisfied by the signature-step gate.
+    if (
+      result.document.status === 'completed' &&
+      result.document.doc_type === 'equipment_checkoff'
+    ) {
+      try {
+        const { markEquipmentCheckoffSigned } = await import(
+          '@/lib/training/equipment-queries'
+        )
+        await markEquipmentCheckoffSigned(result.document.doc_id)
+      } catch {
+        /* best-effort */
+      }
+    }
+
     // If the route just completed and it's a completion certificate,
     // flip completion_certificates.status → 'signed' and re-render the
     // PDF with the collected signatures embedded so the final artifact

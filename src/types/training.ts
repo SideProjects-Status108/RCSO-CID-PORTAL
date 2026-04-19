@@ -640,6 +640,48 @@ export type ScheduleRow = {
   cells: ScheduleCell[]
 }
 
+// --- Segment E: equipment check-off ---
+
+export type EquipmentCheckoffItem = {
+  key: string
+  label: string
+  checked: boolean
+  serial: string | null
+  note: string | null
+}
+
+export type EquipmentCheckoffStatus = 'draft' | 'issued' | 'signed' | 'voided'
+
+export type EquipmentCheckoff = {
+  id: string
+  dit_record_id: string
+  status: EquipmentCheckoffStatus
+  items: EquipmentCheckoffItem[]
+  notes: string | null
+  signature_route_id: string | null
+  issued_by: string | null
+  issued_at: string | null
+  signed_at: string | null
+  voided_at: string | null
+  voided_by: string | null
+  void_reason: string | null
+  created_at: string
+  updated_at: string
+}
+
+export const EQUIPMENT_CHECKOFF_DEFAULT_ITEMS: Array<Pick<EquipmentCheckoffItem, 'key' | 'label'>> = [
+  { key: 'duty_weapon', label: 'Duty weapon + magazines' },
+  { key: 'bwc', label: 'Body-worn camera' },
+  { key: 'radio', label: 'Portable radio + charger' },
+  { key: 'taser', label: 'TASER + cartridges' },
+  { key: 'badge_credentials', label: 'Badge + ID credentials' },
+  { key: 'vehicle_keys', label: 'Assigned vehicle keys / fob' },
+  { key: 'laptop', label: 'Agency laptop / MDT' },
+  { key: 'vest', label: 'Ballistic vest (soft + plates)' },
+  { key: 'raid_jacket', label: 'Raid jacket' },
+  { key: 'uniform_items', label: 'Uniform items / BDUs' },
+]
+
 // --- Segment E: completion certificates ---
 
 export type CompletionCertificateStatus = 'draft' | 'issued' | 'signed' | 'voided'
