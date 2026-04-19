@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "ingest:tn-code": "tsx scripts/ingest-tn-code.ts",
-    "generate:icons": "tsx scripts/generate-icons.ts"
+    "generate:icons": "tsx scripts/generate-icons.ts",
+    "training:seed-shadow": "tsx scripts/training-shadow/seed.ts",
+    "training:reset-shadow": "tsx scripts/training-shadow/reset.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.88.0",

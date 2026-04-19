@@ -23,6 +23,18 @@
  *
  * If unset, defaults to 'stub'. Call sites do NOT need to change when
  * providers are swapped.
+ *
+ * Recipient safelist (failsafe):
+ *
+ *   TRAINING_EMAIL_SAFELIST_DOMAINS=comma,separated,domains
+ *
+ * Even when a live provider is configured, outbound mail is ONLY sent
+ * to recipients whose domain appears in the safelist. Anything outside
+ * the safelist is downgraded to a preview log and tagged
+ * '[training-email:BLOCKED]' so a bug or typo can never leak a real
+ * message to a real supervisor. If the env var is unset we fall back
+ * to a conservative default that covers MailSlurp + common test
+ * domains.
  */
 
 export type TrainingEmailProvider = 'stub' | 'smtp' | 'resend'
@@ -121,12 +133,53 @@ async function sendViaResend(payload: TrainingEmailPayload): Promise<boolean> {
   }
 }
 
-function logPreview(payload: TrainingEmailPayload) {
-  if (process.env.NODE_ENV !== 'development') return
+function logPreview(payload: TrainingEmailPayload, reason?: string) {
+  // Blocked-send warnings are ALWAYS logged (never gated on NODE_ENV)
+  // so operators see them in production logs; preview-only logs
+  // remain dev-only to avoid noise.
+  const isBlock = reason === 'blocked'
+  if (!isBlock && process.env.NODE_ENV !== 'development') return
   const preview = payload.html.replace(/\s+/g, ' ').trim().slice(0, 280)
+  const tag = isBlock ? 'BLOCKED' : payload.kind
   console.info(
-    `[training-email:${payload.kind}] to=${payload.to ?? '(n/a)'} subject=${payload.subject} preview=${preview}…`,
+    `[training-email:${tag}] to=${payload.to ?? '(n/a)'} subject=${payload.subject} preview=${preview}…`,
   )
+}
+
+const DEFAULT_SAFELIST = [
+  'mailslurp.mx',
+  'mailslurp.com',
+  'mailslurp.net',
+  'example.com',
+  'test.rcso.local',
+]
+
+function parseSafelist(): string[] {
+  const raw = (process.env.TRAINING_EMAIL_SAFELIST_DOMAINS ?? '').trim()
+  if (!raw) return DEFAULT_SAFELIST
+  return raw
+    .split(',')
+    .map((d) => d.trim().toLowerCase())
+    .filter((d) => d.length > 0)
+}
+
+/**
+ * Returns true if the recipient's domain is in the safelist. Null or
+ * missing recipients always return false (nothing to send). Matches on
+ * exact-suffix so 'mailslurp.mx' allows '*.mailslurp.mx' but also any
+ * literal address ending in that domain.
+ */
+function isRecipientAllowed(to: string | null | undefined): boolean {
+  if (!to) return false
+  const at = to.lastIndexOf('@')
+  if (at < 0) return false
+  const domain = to.slice(at + 1).trim().toLowerCase()
+  if (!domain) return false
+  const safelist = parseSafelist()
+  for (const d of safelist) {
+    if (domain === d || domain.endsWith(`.${d}`)) return true
+  }
+  return false
 }
 
 /**
@@ -138,6 +191,16 @@ export async function dispatchTrainingEmail(
   payload: TrainingEmailPayload,
 ): Promise<boolean> {
   const provider = resolveProvider()
+
+  // Hard safelist: no matter the provider, we refuse to send to any
+  // domain outside the safelist. Downgraded to a preview log with a
+  // BLOCKED tag so a typo in a profile row or a future code change
+  // can never deliver a real message to a real supervisor.
+  if (provider !== 'stub' && !isRecipientAllowed(payload.to)) {
+    logPreview(payload, 'blocked')
+    return false
+  }
+
   if (provider === 'smtp') {
     const ok = await sendViaSmtp(payload)
     if (!ok) logPreview(payload)
