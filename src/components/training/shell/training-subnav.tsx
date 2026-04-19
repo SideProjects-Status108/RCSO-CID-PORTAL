@@ -16,6 +16,7 @@ const items: SubnavItem[] = [
   { label: 'Quizzes', href: '/training/quizzes' },
   { label: 'Schedule', href: '/training/schedule' },
   { label: 'Resources', href: '/training/resources' },
+  { label: 'Feedback', href: '/training/feedback' },
   { label: 'Settings', href: '/training/settings' },
 ]
 

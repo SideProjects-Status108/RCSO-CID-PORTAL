@@ -12,6 +12,7 @@ import {
 import { VarkResultsCard } from './vark-results-card'
 import { GraduationCard } from './graduation-card'
 import { EquipmentCard } from './equipment-card'
+import { FeedbackCard } from './feedback-card'
 
 function TrendIcon({ direction }: { direction: TrendDirection }) {
   if (direction === 'up') return <ArrowUp className="h-4 w-4 text-emerald-400" aria-label="Up" />
@@ -45,6 +46,7 @@ export async function DitOverviewTab({ payload }: { payload: DitDetailPayload })
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       <GraduationCard ditRecordId={record.id} />
       <EquipmentCard ditRecordId={record.id} />
+      <FeedbackCard ditRecordId={record.id} />
       <VarkResultsCard ditRecordId={record.id} />
 
       <Card title="Trajectory">

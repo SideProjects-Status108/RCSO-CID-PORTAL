@@ -94,6 +94,23 @@ export async function POST(
       ipAddress: ip,
     })
 
+    // If the route just completed and it's an FTO-feedback survey, flip
+    // the row to 'acknowledged' so it moves out of the coordinator/TS
+    // inbox and becomes visible to the FTO (anonymized).
+    if (
+      result.document.status === 'completed' &&
+      result.document.doc_type === 'fto_feedback'
+    ) {
+      try {
+        const { markSurveyAcknowledged } = await import(
+          '@/lib/training/feedback-queries'
+        )
+        await markSurveyAcknowledged(result.document.doc_id)
+      } catch {
+        /* best-effort */
+      }
+    }
+
     // If the route just completed and it's an equipment check-off, flip
     // the row to 'signed'. Idempotent; runs as the signer so RLS on
     // equipment_checkoffs_update_writer must allow the signer. Only

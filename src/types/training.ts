@@ -640,6 +640,86 @@ export type ScheduleRow = {
   cells: ScheduleCell[]
 }
 
+// --- Segment E: FTO feedback survey ---
+
+export type FtoFeedbackStatus = 'draft' | 'submitted' | 'acknowledged' | 'voided'
+
+export type FtoFeedbackRubricKey =
+  | 'communication'
+  | 'knowledge'
+  | 'mentorship'
+  | 'professionalism'
+  | 'fairness'
+  | 'overall'
+
+export type FtoFeedbackRubricItem = {
+  key: FtoFeedbackRubricKey
+  label: string
+  description: string
+}
+
+export const FTO_FEEDBACK_RUBRIC: FtoFeedbackRubricItem[] = [
+  {
+    key: 'communication',
+    label: 'Communication',
+    description: 'Gave clear expectations and constructive feedback.',
+  },
+  {
+    key: 'knowledge',
+    label: 'Job knowledge',
+    description: 'Demonstrated mastery of investigative policy and practice.',
+  },
+  {
+    key: 'mentorship',
+    label: 'Mentorship',
+    description: 'Invested in my development and answered questions patiently.',
+  },
+  {
+    key: 'professionalism',
+    label: 'Professionalism',
+    description: 'Modeled agency values and appropriate conduct.',
+  },
+  {
+    key: 'fairness',
+    label: 'Fairness',
+    description: 'Applied standards consistently and without bias.',
+  },
+  {
+    key: 'overall',
+    label: 'Overall experience',
+    description: 'How positive was your time paired with this FTO overall?',
+  },
+]
+
+export type FtoFeedbackRatings = Partial<Record<FtoFeedbackRubricKey, number>>
+
+export type FtoFeedbackSurvey = {
+  id: string
+  dit_record_id: string
+  fto_id: string
+  pairing_id: string | null
+  status: FtoFeedbackStatus
+  ratings: FtoFeedbackRatings
+  comments: string | null
+  signature_route_id: string | null
+  submitted_at: string | null
+  acknowledged_at: string | null
+  voided_at: string | null
+  voided_by: string | null
+  void_reason: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type FtoFeedbackAggregate = {
+  fto_id: string
+  fto_name: string | null
+  response_count: number
+  /** Mean rating per rubric key, only for keys with at least one response. */
+  means: Partial<Record<FtoFeedbackRubricKey, number>>
+  overall_mean: number | null
+}
+
 // --- Segment E: equipment check-off ---
 
 export type EquipmentCheckoffItem = {
