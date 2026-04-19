@@ -12,23 +12,19 @@ import {
 import { DitOverviewTab } from '@/components/training/files/detail/overview-tab'
 import { AbsencesTab } from '@/components/training/files/detail/absences-tab'
 import { JournalTab } from '@/components/training/files/detail/journal-tab'
+import { ActivityTab } from '@/components/training/files/detail/activity-tab'
 import { PlaceholderSection } from '@/components/ui/placeholder-section'
 
 export const dynamic = 'force-dynamic'
 
 const TAB_PLACEHOLDERS: Record<
-  Exclude<DitDetailTabId, 'overview' | 'absences' | 'journal'>,
+  Exclude<DitDetailTabId, 'overview' | 'absences' | 'journal' | 'activity'>,
   { title: string; description: string }
 > = {
   weekly: {
     title: 'Weekly Evaluations',
     description:
       'History of weekly evaluations for this DIT with signature chain and deficiency links. Built in Segment C (Prompts 5 + 10).',
-  },
-  activity: {
-    title: 'Activity',
-    description:
-      'Activity logger and exposure counts per competency. Built in Segment D (Prompts 6-7).',
   },
   cases: {
     title: 'Cases & Call-Outs',
@@ -83,6 +79,8 @@ export default async function TrainingDitDetailPage({
           <AbsencesTab ditRecordId={payload.record.id} />
         ) : activeTab === 'journal' ? (
           <JournalTab ditRecordId={payload.record.id} />
+        ) : activeTab === 'activity' ? (
+          <ActivityTab ditRecordId={payload.record.id} />
         ) : (
           <PlaceholderSection
             title={TAB_PLACEHOLDERS[activeTab].title}
