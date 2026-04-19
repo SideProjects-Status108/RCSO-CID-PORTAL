@@ -275,8 +275,7 @@ async function ensureCompetencyKeys(client: SupabaseClient): Promise<string[]> {
 async function ensureActivityTemplate(
   client: SupabaseClient,
   name: string,
-  category: 'scene' | 'subpoena' | 'search_warrant' | 'interview' | 'other',
-  createdBy: string,
+  category: string,
 ): Promise<string> {
   const { data: existing } = await client
     .from('training_activity_templates')
@@ -289,10 +288,10 @@ async function ensureActivityTemplate(
     .insert({
       activity_name: name,
       category,
-      target_exposures: 3,
+      required_exposures_phase_1: 1,
+      required_exposures_phase_2: 2,
+      required_exposures_phase_3: 1,
       description: null,
-      is_active: true,
-      created_by: createdBy,
     })
     .select('id')
     .single()
@@ -502,26 +501,22 @@ async function main() {
   const actCrimeScene = await ensureActivityTemplate(
     client,
     'Crime Scene Response',
-    'scene',
-    coordId,
+    'Scene Response',
   )
   const actInterview = await ensureActivityTemplate(
     client,
     'Interview — Suspect',
-    'interview',
-    coordId,
+    'Interviews',
   )
   const actSubpoena = await ensureActivityTemplate(
     client,
     'Subpoena Drafted',
-    'subpoena',
-    coordId,
+    'Legal Process',
   )
   const actWarrant = await ensureActivityTemplate(
     client,
     'Search Warrant Drafted',
-    'search_warrant',
-    coordId,
+    'Legal Process',
   )
 
   async function seedExposure(
@@ -607,7 +602,8 @@ async function main() {
     .from('pto_pble_templates')
     .select('id, title, scenario_kind, rubric')
     .eq('scenario_kind', 'crime_scene')
-    .order('display_order', { ascending: true })
+    .eq('is_active', true)
+    .order('created_at', { ascending: true })
     .limit(1)
     .maybeSingle()
   if (tpl?.id) {
