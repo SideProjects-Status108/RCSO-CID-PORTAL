@@ -18,6 +18,7 @@ import {
 } from '@/lib/training/queries'
 import { createSignatureRoute } from '@/lib/training/signatures'
 import { programWeekIndex, DEFAULT_PROGRAM_WEEKS } from '@/lib/training/scheduling'
+import { fetchProgramConfig } from '@/lib/training/program-config'
 import { upsertCertificateDraft, fetchCertificateForDit } from '@/lib/training/certificate-queries'
 
 const MIN_EXPLANATION = 12
@@ -174,13 +175,15 @@ export async function POST(_request: Request, ctx: { params: Promise<{ id: strin
       if (pairing && autoDeficiencyId == null) {
         const ditRecord = await fetchDitRecordByUserId(pairing.dit_id)
         if (ditRecord?.start_date) {
+          const cfg = await fetchProgramConfig().catch(() => null)
+          const targetWeek = cfg?.program_week_count ?? DEFAULT_PROGRAM_WEEKS
           const weekIdx = programWeekIndex({
             programStartDate: ditRecord.start_date,
             sessionStartDate: session.week_start_date,
             sessionEndDate: session.week_end_date,
-            weekCount: DEFAULT_PROGRAM_WEEKS,
+            weekCount: targetWeek,
           })
-          if (weekIdx === DEFAULT_PROGRAM_WEEKS) {
+          if (weekIdx === targetWeek) {
             const existingCert = await fetchCertificateForDit(ditRecord.id)
             if (!existingCert || existingCert.status === 'voided') {
               const { createClient: createSupabase } = await import('@/lib/supabase/server')

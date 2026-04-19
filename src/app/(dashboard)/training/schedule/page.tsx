@@ -7,6 +7,7 @@ import { isTrainingWriter } from '@/lib/training/access'
 import { UserRole, hasRole } from '@/lib/auth/roles'
 import { fetchDitRecordsList, type DitRecordsListMode } from '@/lib/training/queries'
 import { buildScheduleRowsForDits } from '@/lib/training/schedule-data'
+import { fetchProgramConfig } from '@/lib/training/program-config'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,7 +33,10 @@ export default async function TrainingSchedulePage() {
     (r) => r.status === 'active' || r.status === 'on_hold' || r.status === 'suspended',
   )
 
-  const rows = await buildScheduleRowsForDits(activeRecords)
+  const cfg = await fetchProgramConfig()
+  const rows = await buildScheduleRowsForDits(activeRecords, {
+    weekCount: cfg.program_week_count,
+  })
 
   return (
     <div className="space-y-5">

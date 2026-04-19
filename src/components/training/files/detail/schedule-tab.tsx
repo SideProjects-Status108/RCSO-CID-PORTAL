@@ -1,6 +1,7 @@
 import { ScheduleGrid } from '@/components/training/schedule/schedule-grid'
 import { fetchDitRecordById } from '@/lib/training/queries'
 import { buildScheduleRowsForDits } from '@/lib/training/schedule-data'
+import { fetchProgramConfig } from '@/lib/training/program-config'
 
 /**
  * Per-DIT schedule tab: one-row grid for this DIT. Reuses the shared
@@ -11,7 +12,10 @@ export async function ScheduleTab({ ditRecordId }: { ditRecordId: string }) {
   const record = await fetchDitRecordById(ditRecordId)
   if (!record) return null
 
-  const rows = await buildScheduleRowsForDits([record])
+  const cfg = await fetchProgramConfig()
+  const rows = await buildScheduleRowsForDits([record], {
+    weekCount: cfg.program_week_count,
+  })
 
   return (
     <div className="space-y-4">
