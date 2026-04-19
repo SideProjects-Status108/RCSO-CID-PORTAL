@@ -49,6 +49,7 @@ const trainingChildren: NavFlyoutChild[] = [
   { label: 'DIT Files', href: '/training/dit-files' },
   { label: 'Schedule', href: '/training/schedule' },
   { label: 'Resources', href: '/training/resources' },
+  { label: 'Feedback', href: '/training/feedback' },
   { label: 'Settings', href: '/training/settings' },
 ]
 
@@ -118,6 +119,7 @@ export const routeTitles: Record<string, string> = {
   '/training/dit-files': 'DIT Files',
   '/training/schedule': 'Training Schedule',
   '/training/resources': 'Training Resources',
+  '/training/feedback': 'FTO Feedback',
   '/training/settings': 'Training Settings',
   '/training': 'Training',
   '/tools/map': 'GeoMap',
