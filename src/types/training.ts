@@ -456,3 +456,186 @@ export type DitMissedDayNudge = {
   nudge_kind: MissedDayNudgeKind
   created_at: string
 }
+
+// --- Segment D: cases, call-outs, documents, PBLEs ---
+
+export const CASE_ROLES = ['lead', 'assist', 'observer'] as const
+export type CaseRole = (typeof CASE_ROLES)[number]
+
+export const CASE_STATUSES = ['open', 'closed', 'inactive'] as const
+export type CaseStatus = (typeof CASE_STATUSES)[number]
+
+export type CaseAssignment = {
+  id: string
+  dit_record_id: string
+  case_number: string | null
+  complaint_number: string | null
+  title: string
+  dit_role: CaseRole
+  status: CaseStatus
+  assigned_at: string
+  closed_at: string | null
+  assigned_by: string
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type CallOutLog = {
+  id: string
+  dit_record_id: string
+  responded_at: string
+  duration_minutes: number
+  incident_type: string | null
+  case_number: string | null
+  off_duty: boolean
+  comp_time_eligible: boolean
+  responded_with: string | null
+  notes: string | null
+  logged_by: string
+  created_at: string
+  updated_at: string
+}
+
+export const DOCUMENT_CATEGORIES = [
+  'policy',
+  'reference',
+  'form',
+  'training_material',
+  'other',
+] as const
+export type DocumentCategory = (typeof DOCUMENT_CATEGORIES)[number]
+
+export const DOCUMENT_VISIBILITIES = ['all', 'staff'] as const
+export type DocumentVisibility = (typeof DOCUMENT_VISIBILITIES)[number]
+
+export type TrainingDocument = {
+  id: string
+  title: string
+  description: string | null
+  category: DocumentCategory
+  visibility: DocumentVisibility
+  storage_bucket: string
+  object_path: string
+  mime_type: string
+  byte_size: number
+  uploaded_by: string
+  created_at: string
+  updated_at: string
+}
+
+export const PBLE_SCENARIO_KINDS = [
+  'crime_scene',
+  'subpoena',
+  'search_warrant',
+] as const
+export type PbleScenarioKind = (typeof PBLE_SCENARIO_KINDS)[number]
+
+export const PBLE_SCENARIO_LABELS: Record<PbleScenarioKind, string> = {
+  crime_scene: 'Crime Scene',
+  subpoena: 'Subpoena',
+  search_warrant: 'Search Warrant',
+}
+
+export const PBLE_STATUSES = [
+  'assigned',
+  'in_progress',
+  'submitted',
+  'scored',
+  'passed',
+  'failed',
+] as const
+export type PbleStatus = (typeof PBLE_STATUSES)[number]
+
+/** One criterion entry in a PBLE rubric (both template + instance). */
+export type PbleRubricCriterion = {
+  key: string
+  label: string
+  max_score: number
+}
+
+/** One scored criterion on a PBLE instance (rubric_scores column). */
+export type PbleRubricScore = {
+  criterion_key: string
+  score: number
+  notes: string | null
+}
+
+export type PbleTemplate = {
+  id: string
+  scenario_kind: PbleScenarioKind
+  title: string
+  description: string | null
+  recommended_phase: number
+  rubric: PbleRubricCriterion[]
+  is_active: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type Pble = {
+  id: string
+  dit_record_id: string
+  template_id: string | null
+  phase: number
+  scenario_kind: PbleScenarioKind
+  title: string
+  rubric: PbleRubricCriterion[]
+  rubric_scores: PbleRubricScore[]
+  status: PbleStatus
+  assigned_by: string
+  assigned_at: string
+  due_at: string | null
+  submitted_at: string | null
+  scored_by: string | null
+  scored_at: string | null
+  overall_notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type PbleArtifact = {
+  id: string
+  pble_id: string
+  uploaded_by: string
+  title: string
+  storage_bucket: string
+  object_path: string
+  mime_type: string
+  byte_size: number
+  created_at: string
+}
+
+// --- Schedule grid cell shape (client-facing) ---
+
+export type ScheduleCellStatus =
+  | 'not_started' // week is in the future / pairing hasn't started
+  | 'draft' // weekly session exists but not submitted
+  | 'submitted' // submitted but not yet approved
+  | 'approved' // signed through the chain
+  | 'suspended' // DIT was suspended that week
+  | 'absent' // DIT was fully absent that week
+  | 'no_pairing' // no active pairing for that week
+
+export type ScheduleCell = {
+  week_index: number // 1..10
+  week_start: string
+  week_end: string
+  status: ScheduleCellStatus
+  /** FTO user id driving the color chip; null when no_pairing. */
+  fto_id: string | null
+  /** Cached color from profiles.fto_color; null -> client hashes fto_id. */
+  fto_color: string | null
+  fto_name: string | null
+  session_id: string | null
+}
+
+export type ScheduleRow = {
+  dit_record_id: string
+  dit_user_id: string
+  dit_name: string
+  phase: number
+  start_date: string
+  cells: ScheduleCell[]
+}
