@@ -22,6 +22,38 @@ import type {
 
 export const DEFAULT_PROGRAM_WEEKS = 10
 
+/**
+ * Compute the 1-indexed program week (1..N) for a given weekly session
+ * relative to the DIT's program_start_date. Returns null when the session
+ * window falls entirely before the program start or beyond the nominal
+ * weekCount horizon. Week boundaries are treated as half-open overlap to
+ * tolerate slightly-shifted sessions (holiday weeks etc).
+ */
+export function programWeekIndex(params: {
+  programStartDate: string
+  sessionStartDate: string
+  sessionEndDate: string
+  weekCount?: number
+}): number | null {
+  const weekCount = params.weekCount ?? DEFAULT_PROGRAM_WEEKS
+  const start = new Date(`${params.programStartDate}T00:00:00Z`)
+  for (let i = 0; i < weekCount; i++) {
+    const wStart = new Date(start)
+    wStart.setUTCDate(wStart.getUTCDate() + i * 7)
+    const wEnd = new Date(wStart)
+    wEnd.setUTCDate(wEnd.getUTCDate() + 6)
+    const wStartIso = wStart.toISOString().slice(0, 10)
+    const wEndIso = wEnd.toISOString().slice(0, 10)
+    if (
+      params.sessionStartDate <= wEndIso &&
+      wStartIso <= params.sessionEndDate
+    ) {
+      return i + 1
+    }
+  }
+  return null
+}
+
 export type BuildScheduleParams = {
   weekCount?: number
   programStartDate: string // ISO yyyy-mm-dd, Monday

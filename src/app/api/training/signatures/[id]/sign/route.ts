@@ -94,6 +94,29 @@ export async function POST(
       ipAddress: ip,
     })
 
+    // If the route just completed and it's a completion certificate,
+    // flip completion_certificates.status → 'signed' and re-render the
+    // PDF with the collected signatures embedded so the final artifact
+    // in storage matches the audit trail.
+    if (
+      result.document.status === 'completed' &&
+      result.document.doc_type === 'completion_cert'
+    ) {
+      try {
+        const { finalizeCompletionCertificate } = await import(
+          '@/lib/training/certificate-finalize'
+        )
+        await finalizeCompletionCertificate({
+          certificateId: result.document.doc_id,
+          signatureRouteId: result.document.id,
+        })
+      } catch {
+        // Best-effort: if re-rendering the PDF or marking signed fails,
+        // the row is still tracked as complete via document_signatures
+        // and a writer can re-issue from the DIT file.
+      }
+    }
+
     // If the route just completed and it's a deficiency, apply the extension
     // to the DIT's expected_graduation_date. Idempotent — safe to replay.
     let graduationUpdate: { applied: boolean; newGraduationDate: string | null } | null = null

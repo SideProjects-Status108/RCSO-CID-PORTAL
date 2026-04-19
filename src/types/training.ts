@@ -639,3 +639,29 @@ export type ScheduleRow = {
   start_date: string
   cells: ScheduleCell[]
 }
+
+// --- Segment E: completion certificates ---
+
+export type CompletionCertificateStatus = 'draft' | 'issued' | 'signed' | 'voided'
+
+export type CompletionCertificate = {
+  id: string
+  dit_record_id: string
+  issued_by: string | null
+  issued_at: string | null
+  status: CompletionCertificateStatus
+  pdf_object_path: string | null
+  signature_route_id: string | null
+  dit_full_name: string | null
+  dit_badge_number: string | null
+  program_start_date: string | null
+  program_end_date: string | null
+  effective_graduation_date: string | null
+  notes: string | null
+  signed_at: string | null
+  voided_at: string | null
+  voided_by: string | null
+  void_reason: string | null
+  created_at: string
+  updated_at: string
+}

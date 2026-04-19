@@ -10,6 +10,7 @@ import {
 } from '@/lib/training/scoring'
 
 import { VarkResultsCard } from './vark-results-card'
+import { GraduationCard } from './graduation-card'
 
 function TrendIcon({ direction }: { direction: TrendDirection }) {
   if (direction === 'up') return <ArrowUp className="h-4 w-4 text-emerald-400" aria-label="Up" />
@@ -18,7 +19,7 @@ function TrendIcon({ direction }: { direction: TrendDirection }) {
   return <ArrowRight className="h-4 w-4 text-text-secondary" aria-label="Unknown" />
 }
 
-export function DitOverviewTab({ payload }: { payload: DitDetailPayload }) {
+export async function DitOverviewTab({ payload }: { payload: DitDetailPayload }) {
   const { weekSummaries, milestoneProgress, openDeficiencies, recentUnobserved, record } = payload
 
   const { trajectory, meanScore } = computeTrajectory(weekSummaries)
@@ -41,6 +42,7 @@ export function DitOverviewTab({ payload }: { payload: DitDetailPayload }) {
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <GraduationCard ditRecordId={record.id} />
       <VarkResultsCard ditRecordId={record.id} />
 
       <Card title="Trajectory">

@@ -17,6 +17,8 @@ import {
   updateSessionStatus,
 } from '@/lib/training/queries'
 import { createSignatureRoute } from '@/lib/training/signatures'
+import { programWeekIndex, DEFAULT_PROGRAM_WEEKS } from '@/lib/training/scheduling'
+import { upsertCertificateDraft, fetchCertificateForDit } from '@/lib/training/certificate-queries'
 
 const MIN_EXPLANATION = 12
 
@@ -159,11 +161,69 @@ export async function POST(_request: Request, ctx: { params: Promise<{ id: strin
       }
     }
 
+    // Segment E — Prompt 13: week-10 graduation hook.
+    // If this session overlaps the 10th program week AND no auto-deficiency
+    // was created AND the DIT doesn't already have a non-voided certificate,
+    // pre-seed a draft completion_certificate row so training writers can
+    // issue the PDF + open the Coord → TS → LT → Capt signature chain from
+    // the DIT file. We do NOT render the PDF or open the signature route
+    // here — that stays an explicit writer action via
+    // POST /api/training/certificates/issue.
+    let graduationDraftId: string | null = null
+    try {
+      if (pairing && autoDeficiencyId == null) {
+        const ditRecord = await fetchDitRecordByUserId(pairing.dit_id)
+        if (ditRecord?.start_date) {
+          const weekIdx = programWeekIndex({
+            programStartDate: ditRecord.start_date,
+            sessionStartDate: session.week_start_date,
+            sessionEndDate: session.week_end_date,
+            weekCount: DEFAULT_PROGRAM_WEEKS,
+          })
+          if (weekIdx === DEFAULT_PROGRAM_WEEKS) {
+            const existingCert = await fetchCertificateForDit(ditRecord.id)
+            if (!existingCert || existingCert.status === 'voided') {
+              const { createClient: createSupabase } = await import('@/lib/supabase/server')
+              const supa = await createSupabase()
+              const { data: ditProfile } = await supa
+                .from('profiles')
+                .select('full_name, badge_number')
+                .eq('id', pairing.dit_id)
+                .maybeSingle()
+              const p =
+                (ditProfile as { full_name: string | null; badge_number: string | null } | null) ??
+                { full_name: null, badge_number: null }
+              const draft = await upsertCertificateDraft({
+                dit_record_id: ditRecord.id,
+                dit_full_name: p.full_name,
+                dit_badge_number: p.badge_number,
+                program_start_date: ditRecord.start_date,
+                program_end_date:
+                  ditRecord.expected_graduation_date ?? ditRecord.graduation_date ?? null,
+                effective_graduation_date:
+                  ditRecord.graduation_date ??
+                  ditRecord.expected_graduation_date ??
+                  new Date().toISOString().slice(0, 10),
+                notes: null,
+              })
+              graduationDraftId = draft.id
+            }
+          }
+        }
+      }
+    } catch {
+      // Graduation hook is best-effort; don't block the weekly submit
+      // response if the draft seed fails. Writers can still issue
+      // manually from the DIT file.
+      graduationDraftId = null
+    }
+
     return NextResponse.json({
       success: true,
       unobserved_count: unobserved.length,
       signature_route_id: signatureRouteId,
       auto_deficiency_id: autoDeficiencyId,
+      graduation_draft_id: graduationDraftId,
     })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Failed to submit evaluation'
