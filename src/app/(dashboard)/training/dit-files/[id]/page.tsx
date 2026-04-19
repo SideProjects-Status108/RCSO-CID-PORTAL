@@ -35,7 +35,7 @@ const TAB_PLACEHOLDERS: Record<
   notes: {
     title: 'Notes',
     description:
-      'FTO coaching notes (separate from the DIT Journal tab). Built in Segment D.',
+      'FTO coaching notes (separate from the DIT Journal tab). Built in Segment E.',
   },
 }
 
