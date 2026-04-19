@@ -116,6 +116,37 @@ file.
 
 ---
 
+## Wipe old dev/test accounts (keep shadow + you)
+
+If you had dev/test accounts in Supabase from before the shadow seeder
+existed, you can clean them out with:
+
+```
+# 1. Preview only — prints who WOULD be deleted, no changes made
+npm run training:purge-non-shadow
+
+# 2. Actually delete
+npm run training:purge-non-shadow -- --confirm
+```
+
+The script **always keeps**:
+
+- every user tagged `app_metadata.shadow === true` (the 13 seeded)
+- every email listed in `PROTECTED_EMAILS` inside
+  `scripts/training-shadow/purge-non-shadow.ts` (currently
+  `bstanley@rcsotn.org`)
+
+Everything else is deleted. Deleting an auth user cascades through
+profiles, DIT records, pairings, weekly sessions, scores, activity
+exposures, cases, call-outs, PBLEs, certificates, equipment
+check-offs, and feedback surveys — so one run clears the whole
+training module for any non-shadow user.
+
+To protect another admin in the future, add their email to
+`PROTECTED_EMAILS` in that script.
+
+---
+
 ## How the email guard actually protects you
 
 `src/lib/email/training-notifications.ts` → `dispatchTrainingEmail`:
