@@ -10,7 +10,8 @@
     "ingest:tn-code": "tsx scripts/ingest-tn-code.ts",
     "generate:icons": "tsx scripts/generate-icons.ts",
     "training:seed-shadow": "tsx scripts/training-shadow/seed.ts",
-    "training:reset-shadow": "tsx scripts/training-shadow/reset.ts"
+    "training:reset-shadow": "tsx scripts/training-shadow/reset.ts",
+    "training:cleanup-non-shadow": "tsx scripts/training-shadow/cleanup-non-shadow.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.88.0",
