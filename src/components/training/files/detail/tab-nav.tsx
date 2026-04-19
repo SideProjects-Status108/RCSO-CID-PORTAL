@@ -6,6 +6,7 @@ export const DIT_DETAIL_TABS = [
   { id: 'activity', label: 'Activity' },
   { id: 'cases', label: 'Cases & Call-Outs' },
   { id: 'schedule', label: 'Schedule' },
+  { id: 'pbles', label: 'PBLEs' },
   { id: 'journal', label: 'Journal' },
   { id: 'notes', label: 'Notes' },
   { id: 'absences', label: 'Absences' },
