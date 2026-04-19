@@ -214,7 +214,7 @@ export function CasesClient(props: Props) {
       {canWrite ? (
         <div className="flex flex-wrap gap-2">
           <Button
-            variant="primary"
+            variant="default"
             size="sm"
             onClick={() => setView((v) => (v === 'add_case' ? null : 'add_case'))}
           >
@@ -270,7 +270,7 @@ export function CasesClient(props: Props) {
               <Textarea id="case-notes" value={caseNotes} onChange={(e) => setCaseNotes(e.target.value)} rows={3} />
             </div>
             <div className="flex justify-end">
-              <Button onClick={submitCase} disabled={pending} variant="primary">
+              <Button onClick={submitCase} disabled={pending} variant="default">
                 {pending ? 'Saving…' : 'Save case'}
               </Button>
             </div>
@@ -333,7 +333,7 @@ export function CasesClient(props: Props) {
               <Textarea id="co-notes" value={coNotes} onChange={(e) => setCoNotes(e.target.value)} rows={3} />
             </div>
             <div className="flex justify-end">
-              <Button onClick={submitCallOut} disabled={pending} variant="primary">
+              <Button onClick={submitCallOut} disabled={pending} variant="default">
                 {pending ? 'Saving…' : 'Save call-out'}
               </Button>
             </div>

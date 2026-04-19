@@ -146,7 +146,7 @@ export function ActivityClient(props: Props) {
           <div className="flex items-center gap-3">
             <CompletionChip percent={totalPercent} />
             {canLog ? (
-              <Button onClick={() => setOpen((v) => !v)} variant="primary" size="sm">
+              <Button onClick={() => setOpen((v) => !v)} variant="default" size="sm">
                 {open ? 'Cancel' : 'Log exposure'}
               </Button>
             ) : null}
@@ -218,7 +218,7 @@ export function ActivityClient(props: Props) {
             </div>
             {error ? <p className="text-sm text-rose-400">{error}</p> : null}
             <div className="flex justify-end">
-              <Button onClick={submit} disabled={pending} variant="primary">
+              <Button onClick={submit} disabled={pending} variant="default">
                 {pending ? 'Saving…' : 'Save exposure'}
               </Button>
             </div>

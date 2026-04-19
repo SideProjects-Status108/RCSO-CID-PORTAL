@@ -14,12 +14,13 @@ import { AbsencesTab } from '@/components/training/files/detail/absences-tab'
 import { JournalTab } from '@/components/training/files/detail/journal-tab'
 import { ActivityTab } from '@/components/training/files/detail/activity-tab'
 import { CasesTab } from '@/components/training/files/detail/cases-tab'
+import { ScheduleTab } from '@/components/training/files/detail/schedule-tab'
 import { PlaceholderSection } from '@/components/ui/placeholder-section'
 
 export const dynamic = 'force-dynamic'
 
 const TAB_PLACEHOLDERS: Record<
-  Exclude<DitDetailTabId, 'overview' | 'absences' | 'journal' | 'activity' | 'cases'>,
+  Exclude<DitDetailTabId, 'overview' | 'absences' | 'journal' | 'activity' | 'cases' | 'schedule'>,
   { title: string; description: string }
 > = {
   weekly: {
@@ -79,6 +80,8 @@ export default async function TrainingDitDetailPage({
           <ActivityTab ditRecordId={payload.record.id} />
         ) : activeTab === 'cases' ? (
           <CasesTab ditRecordId={payload.record.id} />
+        ) : activeTab === 'schedule' ? (
+          <ScheduleTab ditRecordId={payload.record.id} />
         ) : (
           <PlaceholderSection
             title={TAB_PLACEHOLDERS[activeTab].title}
