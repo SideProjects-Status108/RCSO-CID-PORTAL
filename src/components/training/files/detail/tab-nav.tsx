@@ -8,7 +8,6 @@ export const DIT_DETAIL_TABS = [
   { id: 'schedule', label: 'Schedule' },
   { id: 'pbles', label: 'PBLEs' },
   { id: 'journal', label: 'Journal' },
-  { id: 'notes', label: 'Notes' },
   { id: 'absences', label: 'Absences' },
 ] as const
 

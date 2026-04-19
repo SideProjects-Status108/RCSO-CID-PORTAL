@@ -4,11 +4,7 @@ import { getSessionUserWithProfile } from '@/lib/auth/get-session'
 import { fetchDitDetailPayload } from '@/lib/training/dit-detail'
 import { DitDetailHeader } from '@/components/training/files/detail/dit-detail-header'
 import { DitStatusBanner } from '@/components/training/files/detail/status-banner'
-import {
-  DitDetailTabNav,
-  parseTabParam,
-  type DitDetailTabId,
-} from '@/components/training/files/detail/tab-nav'
+import { DitDetailTabNav, parseTabParam } from '@/components/training/files/detail/tab-nav'
 import { DitOverviewTab } from '@/components/training/files/detail/overview-tab'
 import { AbsencesTab } from '@/components/training/files/detail/absences-tab'
 import { JournalTab } from '@/components/training/files/detail/journal-tab'
@@ -16,28 +12,9 @@ import { ActivityTab } from '@/components/training/files/detail/activity-tab'
 import { CasesTab } from '@/components/training/files/detail/cases-tab'
 import { ScheduleTab } from '@/components/training/files/detail/schedule-tab'
 import { PblesTab } from '@/components/training/files/detail/pbles-tab'
-import { PlaceholderSection } from '@/components/ui/placeholder-section'
+import { WeeklyTab } from '@/components/training/files/detail/weekly-tab'
 
 export const dynamic = 'force-dynamic'
-
-const TAB_PLACEHOLDERS: Record<
-  Exclude<
-    DitDetailTabId,
-    'overview' | 'absences' | 'journal' | 'activity' | 'cases' | 'schedule' | 'pbles'
-  >,
-  { title: string; description: string }
-> = {
-  weekly: {
-    title: 'Weekly Evaluations',
-    description:
-      'History of weekly evaluations for this DIT with signature chain and deficiency links. Built in Segment C (Prompts 5 + 10).',
-  },
-  notes: {
-    title: 'Notes',
-    description:
-      'FTO coaching notes (separate from the DIT Journal tab). Built in Segment E.',
-  },
-}
 
 export default async function TrainingDitDetailPage({
   params,
@@ -88,12 +65,9 @@ export default async function TrainingDitDetailPage({
           <ScheduleTab ditRecordId={payload.record.id} />
         ) : activeTab === 'pbles' ? (
           <PblesTab ditRecordId={payload.record.id} />
-        ) : (
-          <PlaceholderSection
-            title={TAB_PLACEHOLDERS[activeTab].title}
-            description={TAB_PLACEHOLDERS[activeTab].description}
-          />
-        )}
+        ) : activeTab === 'weekly' ? (
+          <WeeklyTab ditRecordId={payload.record.id} />
+        ) : null}
       </div>
     </div>
   )

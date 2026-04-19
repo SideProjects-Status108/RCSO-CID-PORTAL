@@ -1031,6 +1031,100 @@ export async function fetchWeeklySessionsForPairing(
   return data.map((r) => mapWeeklySession(r as Record<string, unknown>))
 }
 
+/**
+ * List every weekly training session for a DIT record across all their
+ * pairings (active + historical), newest week first. Used by the DIT
+ * File → Weekly Evals tab.
+ */
+export async function fetchWeeklySessionsForDitRecord(
+  ditRecordId: string
+): Promise<Array<WeeklyTrainingSession & { fto_id: string | null; fto_name: string | null }>> {
+  const supabase = await createClient()
+
+  const { data: rec, error: recErr } = await supabase
+    .from('dit_records')
+    .select('user_id')
+    .eq('id', ditRecordId)
+    .maybeSingle()
+  if (recErr || !rec) return []
+  const ditUserId = String((rec as { user_id: string }).user_id)
+
+  const { data: pairings, error: pErr } = await supabase
+    .from('fto_pairings')
+    .select('id, fto_id')
+    .eq('dit_id', ditUserId)
+  if (pErr || !pairings || pairings.length === 0) return []
+
+  const pairingById = new Map<string, string>()
+  for (const p of pairings) {
+    const row = p as { id: string; fto_id: string }
+    pairingById.set(String(row.id), String(row.fto_id))
+  }
+  const pairingIds = Array.from(pairingById.keys())
+
+  const { data: sessions, error: sErr } = await supabase
+    .from('weekly_training_sessions')
+    .select('*')
+    .in('pairing_id', pairingIds)
+    .order('week_start_date', { ascending: false })
+  if (sErr || !sessions) return []
+
+  const ftoIds = Array.from(new Set(Array.from(pairingById.values())))
+  const { data: ftoProfiles } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .in('id', ftoIds)
+  const nameById = new Map<string, string>()
+  for (const row of ftoProfiles ?? []) {
+    const r = row as { id: string; full_name: string | null }
+    nameById.set(String(r.id), r.full_name ?? '—')
+  }
+
+  return sessions.map((row) => {
+    const s = mapWeeklySession(row as Record<string, unknown>)
+    const ftoId = pairingById.get(s.pairing_id) ?? null
+    return {
+      ...s,
+      fto_id: ftoId,
+      fto_name: ftoId ? (nameById.get(ftoId) ?? null) : null,
+    }
+  })
+}
+
+/**
+ * Average weekly competency score per session_id for the given sessions.
+ * Returns a Map of session_id → { avg, count }. Sessions with no scores
+ * are simply omitted from the map.
+ */
+export async function fetchSessionScoreAverages(
+  sessionIds: string[]
+): Promise<Map<string, { avg: number; count: number }>> {
+  const out = new Map<string, { avg: number; count: number }>()
+  if (sessionIds.length === 0) return out
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('weekly_competency_scores')
+    .select('session_id, score')
+    .in('session_id', sessionIds)
+  if (error || !data) return out
+
+  const agg = new Map<string, { sum: number; count: number }>()
+  for (const row of data) {
+    const r = row as { session_id: string; score: number | null }
+    if (r.score == null) continue
+    const sid = String(r.session_id)
+    const cur = agg.get(sid) ?? { sum: 0, count: 0 }
+    cur.sum += Number(r.score)
+    cur.count += 1
+    agg.set(sid, cur)
+  }
+  for (const [sid, v] of agg.entries()) {
+    if (v.count === 0) continue
+    out.set(sid, { avg: v.sum / v.count, count: v.count })
+  }
+  return out
+}
+
 export async function fetchDeficiencyFormsForPairing(pairingId: string): Promise<DeficiencyForm[]> {
   const supabase = await createClient()
   const { data, error } = await supabase

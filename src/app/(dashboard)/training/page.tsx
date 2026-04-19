@@ -68,9 +68,9 @@ export default async function TrainingDashboardPage() {
 
         <SectionCard
           title="Documents"
-          description="Weekly evaluations, deficiency forms, completion certificates, and other signed artifacts."
+          description="Required reading, policy memos, completion certificates, and other uploaded training artifacts."
           icon={FileText}
-          href="/training/dit-files"
+          href="/training/resources"
         />
 
         <SectionCard
