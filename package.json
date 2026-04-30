@@ -9,6 +9,7 @@
     "lint": "eslint",
     "ingest:tn-code": "tsx scripts/ingest-tn-code.ts",
     "generate:icons": "tsx scripts/generate-icons.ts",
+    "generate:cfcs": "tsx scripts/generate-cfcs-docx.ts",
     "training:seed-shadow": "tsx scripts/training-shadow/seed.ts",
     "training:reset-shadow": "tsx scripts/training-shadow/reset.ts",
     "training:purge-non-shadow": "tsx scripts/training-shadow/purge-non-shadow.ts"

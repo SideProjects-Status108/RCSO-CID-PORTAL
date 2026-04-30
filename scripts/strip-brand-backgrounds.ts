@@ -6,6 +6,8 @@
  *                              the badge + CID PORTAL wordmark in color.
  *   rcso-detective-badge.png — source has a pure-white background, preserve
  *                              the gold/blue badge.
+ *   rcso-sheriff-badge-source.png — black-bg sheriff star; outputs
+ *                              rcso-cfcs-watermark.png (Case File Cover Sheet).
  *
  * Run:
  *   npx tsx scripts/strip-brand-backgrounds.ts
@@ -22,6 +24,13 @@ import { createCanvas, loadImage } from 'canvas'
 
 type Target = {
   file: string
+  /**
+   * When set, output is written here instead of overwriting `file`
+   * (read from `file` in `public/branding/`).
+   */
+  outFile?: string
+  /** Multiply alpha after keying (0–1) for watermarks / washout. Default 1. */
+  alphaScale?: number
   /** Background color to strip. */
   keyR: number
   keyG: number
@@ -64,6 +73,17 @@ const targets: Target[] = [
     fullTransThreshold: 300, // ≈ 10/channel
     softTransThreshold: 2400, // ≈ 28/channel
   },
+  {
+    file: 'rcso-sheriff-badge-source.png',
+    outFile: 'rcso-cfcs-watermark.png',
+    // Slightly higher alpha than raw strip so the CFCS form text stays readable.
+    alphaScale: 0.32,
+    keyR: 0,
+    keyG: 0,
+    keyB: 0,
+    fullTransThreshold: 300,
+    softTransThreshold: 2400,
+  },
 ]
 
 async function strip(target: Target) {
@@ -72,6 +92,8 @@ async function strip(target: Target) {
     console.warn('skip (missing):', src)
     return
   }
+
+  const outPath = path.join(BRAND_DIR, target.outFile ?? target.file)
 
   const img = await loadImage(src)
   const canvas = createCanvas(img.width, img.height)
@@ -82,6 +104,7 @@ async function strip(target: Target) {
   const data = imageData.data
 
   const { keyR, keyG, keyB, fullTransThreshold, softTransThreshold } = target
+  const alphaScale = target.alphaScale ?? 1
   const span = softTransThreshold - fullTransThreshold
 
   for (let i = 0; i < data.length; i += 4) {
@@ -94,15 +117,16 @@ async function strip(target: Target) {
     } else if (dist < softTransThreshold) {
       // Linear ramp: closer to background = more transparent.
       const t = (dist - fullTransThreshold) / span
-      data[i + 3] = Math.round(255 * t)
+      data[i + 3] = Math.round(255 * t * alphaScale)
+    } else {
+      data[i + 3] = Math.min(255, Math.round(255 * alphaScale))
     }
-    // else: keep original alpha (255 for JPEG source)
   }
 
   ctx.putImageData(imageData, 0, 0)
   const out = canvas.toBuffer('image/png')
-  fs.writeFileSync(src, out)
-  console.log('wrote', src, `(${out.length} bytes, ${img.width}x${img.height})`)
+  fs.writeFileSync(outPath, out)
+  console.log('wrote', outPath, `(${out.length} bytes, ${img.width}x${img.height})`)
 }
 
 async function main() {
